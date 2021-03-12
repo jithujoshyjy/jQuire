@@ -1,0 +1,2 @@
+# jQuire
+jQuery UI Reciter
