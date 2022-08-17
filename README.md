@@ -26,11 +26,11 @@ $.add({ HelloWorld }) // register this as a new component
 $.render[
     _.tag = document.body, // the tag in which to render contents; JQuery also works!! $("body").get(0)
     $.div[
-        _.Mark = 120, // props are case insensitive for now :(
+        _.Mark = 120, // props are case insensitive
         $.HelloWorld[
             _.world = "earth",
             $.div[
-                _.slot = "main", // slots don't work yet
+                _.slot = "main",
                 _.onclick = evt => console.log(_parents(this).mark),
                 $.text["🎉"+_parents.mark] // this creates an HTML TextNode
             ]
