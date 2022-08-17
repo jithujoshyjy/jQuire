@@ -32,7 +32,7 @@ $.render[
             $.div[
                 _.slot = "main", // slots don't work yet
                 _.onclick = evt => console.log(_parents(this).mark),
-                $.text["🎉"+_parents(this).mark] // this creates an HTML TextNode
+                $.text["🎉"+_parents.mark] // this creates an HTML TextNode
             ]
         ]
     ],
