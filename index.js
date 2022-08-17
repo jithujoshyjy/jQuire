@@ -76,13 +76,23 @@ const jquire = {
             }
         })
     },
-    text() {
+    text(strings = null, ...values) {
         const parentElm = elementStack.slice(-1)?.[0]
 
-        return new Proxy({}, {
+        const createTextNodeFromArgs = (strings = null, ...values) => {
+            const result = [strings[0]]
+            values.forEach((value, i) => 
+                result.push(value, strings[i + 1]))
+            
+            const textNode = document.createTextNode(result.join(''))
+            parentElm && parentElm.body.append(textNode)
+            return textNode
+        }
+
+        return new Proxy(createTextNodeFromArgs, {
             get(target, prop, reciever) {
                 const textNode = document.createTextNode(prop)
-                parentElm.body.append(textNode)
+                parentElm && parentElm.body.append(textNode)
                 return textNode
             }
         })
@@ -119,7 +129,7 @@ const jquire = {
  * @description Returns a property on the current element
  * @type {ProxyConstructor}
  */
-const _self = new Proxy(function (ctx=this) {
+const _self = new Proxy(function (ctx = this) {
     return ctx.data
 }, {
     get(target, prop, reciever) {
@@ -131,7 +141,7 @@ const _self = new Proxy(function (ctx=this) {
  * @description returns a property on the immediate parent elements
  * @type {ProxyConstructor}
  */
-const _parent = new Proxy(function (ctx=this) {
+const _parent = new Proxy(function (ctx = this) {
     return ctx.parent?.data ?? {}
 }, {
     get(target, prop, reciever) {
@@ -143,9 +153,9 @@ const _parent = new Proxy(function (ctx=this) {
  * @description returns a property on any of the parent elements
  * @type {ProxyConstructor}
  */
-const _parents = new Proxy(function (ctx=this) {
+const _parents = new Proxy(function (ctx = this) {
     const getCurrentElm = () => ctx
-    
+
     return new Proxy(getCurrentElm(), {
         get(target, prop, reciever) {
             /**
