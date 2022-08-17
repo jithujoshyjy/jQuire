@@ -21,7 +21,7 @@ $.add({ HelloWorld })
 ```
 
 ### Rendering Content
-```
+```javascript
 $.render[
     _.tag = document.body, // the tag in which to render contents; JQuery also works!! $("body").get(0)
     $.div[
