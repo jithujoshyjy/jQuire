@@ -4,7 +4,7 @@ import * as jquery from "./node_modules/jquery/dist/jquery.min.js"
  * @typedef {{ type: "html", name: string, body: DocumentFragment, data: object, parent: JQElement }} JQHTMLElement
  */
 /**
- * @typedef {{ type: "custom", name: string, body: DocumentFragment, data: object, parent: JQElement }} JQCustomElement
+ * @typedef {{ type: "custom", name: string, body: DocumentFragment, data: object, parent: JQElement, slots?: JQHTMLElement[] }} JQCustomElement
  */
 /**
  * @typedef {{ type: "partial", name: string, parent: null, create: (childElement: JQCustomElement) => JQCustomElement }} JQPartialElement
@@ -77,10 +77,41 @@ const jquire = {
                 currentElement = currentNode = elm
 
                 newElmConstructor()
-                elementStack.pop()
+                const slots = elm.slots || []
+                for (let slot of slots) {
+                    const slotName = slot.body.getAttribute("name")
+                    if (slotName) {
+                        const slotNodes = []
+                        for (let child of childElement.body.childNodes) {
+                            if (child.getAttribute?.("slot") === slotName) {
+                                slotNodes.push(child.cloneNode(true))
+                                child.remove()
+                            }
+                        }
+                        if (slotNodes.length) {
+                            const fragment = document.createDocumentFragment()
+                            fragment.append(...slotNodes)
+                            slot.parent?.body.replaceChild(fragment, slot.body)
+                        }
+                    } else {
+                        const slotNodes = []
+                        for (let child of childElement.body.childNodes) {
+                            if (!child.getAttribute?.("slot")) {
+                                slotNodes.push(child.cloneNode(true))
+                                child.remove()
+                            }
+                        }
+                        if (slotNodes.length) {
+                            const fragment = document.createDocumentFragment()
+                            fragment.append(...slotNodes)
+                            slot.parent?.body.replaceChild(fragment, slot.body)
+                        }
+                    }
+                }
+
                 childElement && elm.body.appendChild(childElement.body)
 
-                return elm
+                return elementStack.pop()
             }
             newElements.push(newPartialElement)
         }
@@ -148,40 +179,6 @@ const jquire = {
                 elementStack.pop()
                 target.data.tag.append(target.body)
                 return target.body
-            }
-        })
-    },
-
-    slot() {
-        const fragment = document.createDocumentFragment()
-        const slotEl = document.createElement("slot")
-        const template = document.createElement("template")
-        template.appendChild(slotEl)
-        const parentElm = elementStack.slice(-1)?.[0]
-        /**
-         * @type {JQCustomElement}
-         */
-        const elm = { type: "custom", name: "slot", body: fragment, data: {}, parent: parentElm }
-        elementStack.push(elm)
-        currentElement = currentNode = elm
-
-        return new Proxy(elm, {
-            get(target, prop, reciever) {
-                if (prop in target)
-                    return target[prop]
-
-                const hasOnlyStringBody = elm.body.childNodes.length == 0 &&
-                    Object.keys(elm.data).length == 0
-
-                if (hasOnlyStringBody)
-                    elm.body.append(prop)
-
-                currentElement = currentNode = parentElm ?? null
-                template.appendChild(elm.body)
-                elm.body = template.content
-                parentElm && parentElm.body.append(elm.body)
-                elementStack.pop()
-                return elementStack.pop()
             }
         })
     }
@@ -299,7 +296,7 @@ function createJQHTMLElement(elmName) {
             if (prop in target)
                 return target[prop]
 
-            const hasOnlyStringBody = elm.body.childNodes.length == 0 &&
+            const hasOnlyStringBody = elm.body.childNodes?.length == 0 &&
                 Object.keys(elm.data).length == 0 &&
                 elm.body.attributes.length == 0
 
@@ -308,6 +305,9 @@ function createJQHTMLElement(elmName) {
 
             parentElm && parentElm.body.append(elm.body)
             currentElement = currentNode = parentElm ?? null
+
+            if (parentElm && parentElm.type == "custom" && elmName == "slot")
+                parentElm.slots = [...(parentElm.slots || []), elm]
 
             return elementStack.pop()
         }
@@ -341,8 +341,13 @@ function createJQCustomElement(elmName) {
             if (prop in target)
                 return target[prop]
 
-            const childHTMLElements = Array.from(newElement.body.childNodes)
             newElement = newElementConstructor.create(newElement)
+
+            const hasOnlyStringBody = newElement.body.childNodes?.length == 0 &&
+                Object.keys(newElement.data).length == 0
+
+            if (hasOnlyStringBody)
+                newElement.body.append(prop)
 
             parentElm && parentElm.body.append(newElement.body)
             currentElement = currentNode = parentElm ?? null
@@ -461,8 +466,6 @@ function handleElmProxyPropAccess(target, prop, reciever) {
         return jquire.text()
     if (prop == "render")
         return jquire.render()
-    if (prop == "slot")
-        return jquire.slot()
     if (typeof jquire[prop] == "function")
         return jquire[prop]
 }
