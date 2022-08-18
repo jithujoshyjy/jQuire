@@ -12,8 +12,8 @@ import { $, _, _self, _parent, _parents } from "./index.js"
 ### Create a component
 ```javascript
 // define your component
-const HelloWorld = $.new[
-    _.world = "World", // attribute of your component works kind of like props in react
+const HelloWorld = () => [
+    _.world ??= "World", // attribute of your component works kind of like props in react
     $.slot[_.name="main"],
     $.text["Hello " + _self.world]
 ]
@@ -26,7 +26,7 @@ $.add({ HelloWorld }) // register this as a new component
 $.render[
     _.tag = document.body, // the tag in which to render contents; JQuery also works!! $("body").get(0)
     $.div[
-        _.Mark = 120, // props are case insensitive
+        _.Mark = 120, // attributes are case insensitive
         $.HelloWorld[
             _.world = "earth",
             $.div[
