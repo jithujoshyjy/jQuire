@@ -84,3 +84,25 @@ $.div[
     ]
 ]
 ```
+
+### What about CSS??
+Works just like normal css; no scoped styles yet :( but it's on the horizon!
+```javascript
+$.style[`
+    :root {
+        font-size: 16px;
+        font-family: Roboto;
+    }
+    body {
+        background-color: lightgrey;
+    }
+    header {
+      display: grid;
+      justify-items: center;
+      align-items: center;
+    }
+    h1 {
+      margin: 0;
+    }
+`]
+```
