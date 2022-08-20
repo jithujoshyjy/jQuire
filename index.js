@@ -283,7 +283,13 @@ function createJQHTMLElement(elmName) {
     /**
      * @type {JQHTMLElement}
      */
-    const elm = { type: "html", name: elmName, body: document.createElement(elmName), data: {}, parent: parentElm ?? null }
+    const elm = {
+        type: "html",
+        name: elmName,
+        body: document.createElement(elmName),
+        data: {},
+        parent: parentElm ?? null
+    }
 
     if (elm.body instanceof HTMLUnknownElement)
         throw new Error(`InvalidHTMLElement: '${elmName}' is not a valid HTML element.`)
@@ -309,6 +315,7 @@ function createJQHTMLElement(elmName) {
             if (parentElm && parentElm.type == "custom" && elmName == "slot")
                 parentElm.slots = [...(parentElm.slots || []), elm]
 
+            elm.data = createDataAttrProxy(elm)
             return elementStack.pop()
         }
     })
@@ -326,11 +333,16 @@ function createJQCustomElement(elmName) {
         throw new Error(`NotDefined: Custom element - '${elmName}' is not defined.`)
 
     const parentElm = elementStack.slice(-1)?.[0]
+
     /**
      * @type {JQCustomElement}
      */
     let newElement = {
-        type: "custom", name: elmName, body: new DocumentFragment(), data: {}, parent: parentElm ?? null
+        type: "custom",
+        name: elmName,
+        body: new DocumentFragment(),
+        data: {},
+        parent: parentElm ?? null
     }
 
     elementStack.push(newElement)
@@ -352,6 +364,7 @@ function createJQCustomElement(elmName) {
             parentElm && parentElm.body.append(newElement.body)
             currentElement = currentNode = parentElm ?? null
 
+            newElement.data = createDataAttrProxy(newElement)
             return elementStack.pop()
         }
     })
@@ -397,14 +410,16 @@ function createHTMLAttribute({ attrName, attrObj }, elm, defVal = "") {
  * @param {string} attr
  * @param {JQElement} elm
  * @param {any} defVal
- * @returns {void}
+ * @returns {object}
  * @throws Will throw an error if the attribute is not a valid html attribute.
  */
 function createDataAttribute(attr, elm, defVal = null) {
-    const attrKebabCase = toKebabCase(attr)
-    const attrCamelCase = toCamelCase(attrKebabCase)
+    const attrCamelCase = toCamelCase(attr)
     if (elm.type == "html") {
-        elm.body.dataset[attrCamelCase] = defVal.toString()
+        const isPrimitive = typeof ["string", "boolean", "number", "bigint"].includes(defVal)
+        const isNullish = [undefined, null].includes(defVal)
+        if (isNullish || isPrimitive)
+            elm.body.dataset[attrCamelCase] = defVal.toString()
         elm.data[attrCamelCase] = typeof defVal == "function" ?
             arrowFnToRegularFn(defVal).bind(elm) : defVal
     }
@@ -412,6 +427,7 @@ function createDataAttribute(attr, elm, defVal = null) {
         elm.data[attrCamelCase] = typeof defVal == "function" ?
             arrowFnToRegularFn(defVal).bind(elm) : defVal
     }
+    return elm.data
 }
 
 /**
@@ -497,6 +513,36 @@ function handleAttrProxyPropAssign(target, prop, value) {
     if (!currentElement)
         throw new Error(`OutOfScopeAttribute: Attribute '${prop}' cannot be accessed outside an element`)
     return createAttribute(prop, currentElement, value) || true
+}
+
+/**
+ * @param {JQElement} elm 
+ * @returns {ProxyConstructor new<object>}
+ */
+function createDataAttrProxy(elm) {
+    return new Proxy(elm.data, {
+        set(target, prop, value) {
+            if (!prop in target)
+                throw new ReferenceError(`Data attribute '${prop}' not defined on the element '${elm.name}'`)
+
+            { // same as createDataAttribute(attr, elm, defVal = null)
+                const attrCamelCase = toCamelCase(prop)
+                if (elm.type == "html") {
+                    const isPrimitive = typeof ["string", "boolean", "number", "bigint"].includes(value)
+                    const isNullish = [undefined, null].includes(value)
+                    if (isNullish || isPrimitive)
+                        elm.body.dataset[attrCamelCase] = value.toString()
+                    target[attrCamelCase] = typeof value == "function" ?
+                        arrowFnToRegularFn(value).bind(elm) : value
+                }
+                else if (["custom", "partial"].includes(elm.type)) {
+                    target[attrCamelCase] = typeof value == "function" ?
+                        arrowFnToRegularFn(value).bind(elm) : value
+                }
+                return elm.data
+            }
+        }
+    })
 }
 
 /**
