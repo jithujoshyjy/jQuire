@@ -4,9 +4,13 @@ jQuery UI Reciter
 > This is not a serious project. It's just me fooling around with JavaScript.
 > Do not recommend using this for any kind of work.
 
-### Imports
+### Installation and Imports
+```
+npm install jquire
+```
+after installation 👇
 ```javascript
-import { $, _, _self, _parent, _parents } from "./index.js"
+import { $, _, _self, _parent, _parents } from "./node_modules/jquire/jquire.min.js"
 ```
 
 ### Create a component
