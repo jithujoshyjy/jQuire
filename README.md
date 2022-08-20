@@ -8,6 +8,11 @@ jQuery UI Reciter
 ```
 npm install jquire
 ```
+you can also use a cdn if you like
+```html
+<!-- JQuery goes here if you're want to use it as well -->
+<script type="module" src="https://cdn.jsdelivr.net/gh/jithujoshyjy/jQuire/jquire.min.js"></script>
+```
 after installation 👇
 ```javascript
 import { $, _, _self, _parent, _parents } from "./node_modules/jquire/jquire.min.js"
