@@ -1,4 +1,9 @@
-import * as jquery from "./node_modules/jquery/dist/jquery.min.js"
+if(typeof window === "undefined" && window.document === "undefined")
+    throw new Error("Jquire cannot run outside of a browser environment.")
+
+let jquery = (...args) => {throw new ReferenceError("Jquery cannot be found.")}
+if(typeof window.$ !== "undefined")
+    jquery = window.$
 
 /**
  * @typedef {{ type: "html", name: string, body: DocumentFragment, data: object, parent: JQElement }} JQHTMLElement
