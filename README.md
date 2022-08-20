@@ -28,7 +28,8 @@ $.add({ HelloWorld }) // register this as a new component
 ### Rendering Content
 ```javascript
 $.render[
-    _.tag = document.body, // the tag in which to render contents; JQuery also works!! $("body").get(0)
+    _.tag = document.body, // the tag in which to render contents;
+    // JQuery also works!! $("body").get(0) i.e, if you have it already.
     $.div[
         _.Mark = 120, // attributes are case insensitive
         $.HelloWorld[
