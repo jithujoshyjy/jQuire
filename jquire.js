@@ -415,7 +415,7 @@ function createHTMLAttribute({ attrName, attrObj }, elm, defVal = "") {
  * @throws Will throw an error if the attribute is not a valid html attribute.
  */
 function createDataAttribute(attr, elm, defVal = null) {
-    const attrCamelCase = toCamelCase(attr)
+    const attrCamelCase = attr.replace(/[\-](.)/g, (_, x) => x.toUpperCase())
     if (elm.type == "html") {
         const isPrimitive = typeof ["string", "boolean", "number", "bigint"].includes(defVal)
         const isNullish = [undefined, null].includes(defVal)

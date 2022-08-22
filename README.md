@@ -36,13 +36,13 @@ $.render[
     _.tag = document.body, // the tag in which to render contents;
     // JQuery also works!! $("body").get(0) i.e, if you have it already.
     $.div[
-        _.Mark = 120, // attributes are case insensitive
+        _.Mark = 120,
         $.HelloWorld[
             _.world = "earth",
             $.div[
                 _.slot = "main",
-                _.onclick = evt => console.log(_parents(this).mark),
-                $.text["🎉"+_parents.mark] // this creates an HTML TextNode
+                _.onclick = evt => console.log(_parents(this).Mark),
+                $.text["🎉"+_parents.Mark] // this creates an HTML TextNode
             ]
         ]
     ],
@@ -84,7 +84,7 @@ $.div[
         $.span[
             _.Name = "John Doe",
             $.text["Hi" + _self.name], // same as this.name
-            _.onclick = evt => console.log(_self(this).name) // _self ond other data access proxies need a context when called inside of a function.
+            _.onclick = evt => console.log(_self(this).Name) // _self ond other data access proxies need a context when called inside of a function.
         ],
         $.br[_], // if an element has no attributes or children just put an underscore, otherwise it causes a JavaScript syntax error :(
         $.span[
