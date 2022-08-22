@@ -41,7 +41,7 @@ $.render[
             _.world = "earth",
             $.div[
                 _.slot = "main",
-                _.onclick = evt => console.log(_parents(this).Mark),
+                _.onclick = (evt, ctx) => console.log(_parents(ctx).Mark),
                 $.text["🎉"+_parents.Mark] // this creates an HTML TextNode
             ]
         ]
@@ -84,7 +84,7 @@ $.div[
         $.span[
             _.Name = "John Doe",
             $.text["Hi" + _self.name], // same as this.name
-            _.onclick = evt => console.log(_self(this).Name) // _self ond other data access proxies need a context when called inside of a function.
+            _.onclick = (evt, ctx) => console.log(_self(ctx).Name) // _self ond other data access proxies need a context when called inside of a function.
         ],
         $.br[_], // if an element has no attributes or children just put an underscore, otherwise it causes a JavaScript syntax error :(
         $.span[

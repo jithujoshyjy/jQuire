@@ -1,8 +1,8 @@
-if(typeof window === "undefined" && window.document === "undefined")
+if (typeof window === "undefined" && window.document === "undefined")
     throw new Error("Jquire cannot run outside of a browser environment.")
 
-let jquery = (...args) => {throw new ReferenceError("Jquery cannot be found.")}
-if(typeof window.$ !== "undefined")
+let jquery = (...args) => { throw new ReferenceError("Jquery cannot be found.") }
+if (typeof window.$ !== "undefined")
     jquery = window.$
 
 /**
@@ -73,7 +73,7 @@ const jquire = {
                 /**
                  * @type {() => JQPartialElement}
                  */
-                const newElmConstructor = arrowFnToRegularFn(partialElmConstructors[partialElmName]).bind(elm)
+                const newElmConstructor = partialElmConstructors[partialElmName]
 
                 if (typeof newElmConstructor != "function")
                     throw new TypeError(`InvalidComponentConstructor: Expected a function instead got ${typeof newElmConstructor}`)
@@ -89,12 +89,12 @@ const jquire = {
                 for (let slotable of slotables) {
                     const slotName = slotable.getAttribute("slot")
                     const slot = elm.body.querySelector(`slot[name="${slotName}"]`)
-                    if(slot == null)
+                    if (slot == null)
                         throw new ReferenceError(`UnknownSlot: there is no slot declared with the name ${slotName}`)
                     slotData[slotName] = [...(slotData[slotName] || [slot]), slotable.cloneNode(true)]
                     slotable.remove()
                 }
-                
+
                 for (let slotName in slotData) {
                     /**
                      * @type {[HTMLSlotElement, HTMLElement | Text]}
@@ -106,7 +106,7 @@ const jquire = {
                 }
 
                 const unnamedSlot = elm.body.querySelector(`slot:not([name])`)
-                if(unnamedSlot)
+                if (unnamedSlot)
                     childElement &&
                         unnamedSlot.parentElement.replaceChild(childElement.body, unnamedSlot)
                 else
@@ -194,6 +194,10 @@ const _self = new Proxy(function (ctx = this) {
 }, {
     get(target, prop, reciever) {
         return currentElement.data[prop]
+    },
+    set(target, prop, value) {
+        target[prop] = value
+        return true
     }
 })
 
@@ -422,11 +426,11 @@ function createDataAttribute(attr, elm, defVal = null) {
         if (isNullish || isPrimitive)
             elm.body.dataset[attrCamelCase] = defVal.toString()
         elm.data[attrCamelCase] = typeof defVal == "function" ?
-            arrowFnToRegularFn(defVal).bind(elm) : defVal
+            (...args) => defVal(...args, elm.data) : defVal
     }
     else if (["custom", "partial"].includes(elm.type)) {
         elm.data[attrCamelCase] = typeof defVal == "function" ?
-            arrowFnToRegularFn(defVal).bind(elm) : defVal
+            (...args) => defVal(...args, elm.data) : defVal
     }
     return elm.data
 }
@@ -443,7 +447,7 @@ function createEventHandler(attr, elm, callback) {
     if (typeof callback != "function")
         throw new TypeError(`Expeted a function as event handler callback but got '${typeof callback}' instead.`)
 
-    let _callback = arrowFnToRegularFn(callback).bind(elm)
+    let _callback = (...args) => callback(...args, elm.data)
     elm.body.addEventListener(event, _callback)
 }
 
@@ -526,6 +530,7 @@ function createDataAttrProxy(elm) {
             if (!prop in target)
                 throw new ReferenceError(`Data attribute '${prop}' not defined on the element '${elm.name}'`)
 
+            target[prop] = value
             { // same as createDataAttribute(attr, elm, defVal = null)
                 const attrCamelCase = toCamelCase(prop)
                 if (elm.type == "html") {
@@ -534,11 +539,11 @@ function createDataAttrProxy(elm) {
                     if (isNullish || isPrimitive)
                         elm.body.dataset[attrCamelCase] = value.toString()
                     target[attrCamelCase] = typeof value == "function" ?
-                        arrowFnToRegularFn(value).bind(elm) : value
+                        (...args) => value(...args, elm.data) : value
                 }
                 else if (["custom", "partial"].includes(elm.type)) {
                     target[attrCamelCase] = typeof value == "function" ?
-                        arrowFnToRegularFn(value).bind(elm) : value
+                        (...args) => value(...args, elm.data) : value
                 }
                 return elm.data
             }
