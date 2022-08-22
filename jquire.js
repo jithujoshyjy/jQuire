@@ -82,39 +82,35 @@ const jquire = {
                 currentElement = currentNode = elm
 
                 newElmConstructor()
-                const slots = elm.slots || []
-                for (let slot of slots) {
-                    const slotName = slot.body.getAttribute("name")
-                    if (slotName) {
-                        const slotNodes = []
-                        for (let child of childElement.body.childNodes) {
-                            if (child.getAttribute?.("slot") === slotName) {
-                                slotNodes.push(child.cloneNode(true))
-                                child.remove()
-                            }
-                        }
-                        if (slotNodes.length) {
-                            const fragment = document.createDocumentFragment()
-                            fragment.append(...slotNodes)
-                            slot.parent?.body.replaceChild(fragment, slot.body)
-                        }
-                    } else {
-                        const slotNodes = []
-                        for (let child of childElement.body.childNodes) {
-                            if (!child.getAttribute?.("slot")) {
-                                slotNodes.push(child.cloneNode(true))
-                                child.remove()
-                            }
-                        }
-                        if (slotNodes.length) {
-                            const fragment = document.createDocumentFragment()
-                            fragment.append(...slotNodes)
-                            slot.parent?.body.replaceChild(fragment, slot.body)
-                        }
-                    }
+
+                const slotables = childElement.body.querySelectorAll("[slot]")
+                const slotData = {}
+
+                for (let slotable of slotables) {
+                    const slotName = slotable.getAttribute("slot")
+                    const slot = elm.body.querySelector(`slot[name="${slotName}"]`)
+                    if(slot == null)
+                        throw new ReferenceError(`UnknownSlot: there is no slot declared with the name ${slotName}`)
+                    slotData[slotName] = [...(slotData[slotName] || [slot]), slotable.cloneNode(true)]
+                    slotable.remove()
+                }
+                
+                for (let slotName in slotData) {
+                    /**
+                     * @type {[HTMLSlotElement, HTMLElement | Text]}
+                     */
+                    const [slot, ...slotables] = slotData[slotName]
+                    const fragment = document.createDocumentFragment()
+                    fragment.append(...slotables)
+                    slot.parentElement.replaceChild(fragment, slot)
                 }
 
-                childElement && elm.body.appendChild(childElement.body)
+                const unnamedSlot = elm.body.querySelector(`slot:not([name])`)
+                if(unnamedSlot)
+                    childElement &&
+                        unnamedSlot.parentElement.replaceChild(childElement.body, unnamedSlot)
+                else
+                    childElement && elm.body.appendChild(childElement.body)
 
                 return elementStack.pop()
             }

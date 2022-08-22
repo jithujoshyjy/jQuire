@@ -1,17 +1,28 @@
 {
   "name": "jquire",
-  "version": "1.0.23",
+  "version": "1.0.242",
   "description": "",
   "main": "index.js",
   "type": "module",
   "scripts": {
+    "minify": "uglifyjs ./jquire.js -o ./jquire.min.js -m",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "jithu_joshy",
   "repository": {
     "url": "https://github.com/jithujoshyjy/jQuire"
   },
-  "keywords": ["html", "frontend", "ui", "view engine", "template", "vanilla", "jQuire"],
+  "keywords": [
+    "html",
+    "frontend",
+    "ui",
+    "view engine",
+    "template",
+    "vanilla",
+    "jQuire"
+  ],
   "license": "ISC",
-  "dependencies": {}
+  "devDependencies": {
+    "uglify-js": "^3.17.0"
+  }
 }
