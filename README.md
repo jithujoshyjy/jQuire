@@ -17,7 +17,7 @@ after installation 👇
 ```javascript
 import {
     $, _,
-    _self, _parent, _parents,
+    _self, _parent, _closest,
     _observe
 } from "./node_modules/jquire/jquire.min.js"
 ```
