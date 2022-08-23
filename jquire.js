@@ -179,24 +179,57 @@ const jquire = {
 
                 elementStack.pop()
                 target.data.tag.append(target.body)
+                Object.freeze(elm)
                 return target.body
             }
         })
     }
 }
 
+const isElmSpecialProp = (prop, elm) => {
+    if (prop == "$data")
+        return elm.data
+    if (prop == "$body")
+        return elm.body
+    if (prop == "$parent")
+        return elm.parent
+    if (prop == "$name")
+        return elm.name
+    else
+        throw new ReferenceError(`UnknownSpecialProperty: No special property by the name '${prop}' exists on the ${elm.name}`)
+}
+
+const _selfProxyTrap = elm => ({
+    get(target, prop, reciever) {
+        elm ??= currentElement
+        if (prop.startsWith("$"))
+            return isElmSpecialProp(prop, elm)
+        return elm.data[prop]
+    },
+    set(target, prop, value) {
+        elm ??= currentElement
+        elm.data[prop] = value
+        return true
+    }
+})
+
 /**
  * @description Returns a property on the current element
  * @type {ProxyConstructor}
  */
 const _self = new Proxy(function (ctx = this) {
-    return ctx.data
-}, {
+    return new Proxy(ctx, _selfProxyTrap(ctx))
+}, _selfProxyTrap())
+
+const _parentProxyTrap = elm => ({
     get(target, prop, reciever) {
-        return currentElement.data[prop]
+        elm ??= currentElement
+        return elm.parent?.data?.[prop]
     },
     set(target, prop, value) {
-        target[prop] = value
+        elm ??= currentElement
+        if (elm.parent?.data[prop] !== undefined)
+            elm.parent.data[prop] = value
         return true
     }
 })
@@ -206,10 +239,33 @@ const _self = new Proxy(function (ctx = this) {
  * @type {ProxyConstructor}
  */
 const _parent = new Proxy(function (ctx = this) {
-    return ctx.parent?.data ?? {}
-}, {
+    return new Proxy(ctx.parent?.data ?? {}, _parentProxyTrap(ctx))
+}, _parentProxyTrap())
+
+const _closestProxyTrap = elm => ({
     get(target, prop, reciever) {
-        return currentElement.parent?.data?.[prop]
+        /**
+         * @param {JQElement} elm 
+         * @param {string} prop 
+         * @returns 
+         */
+        elm ??= currentElement
+        const getProp = (elm, prop) => elm.data[prop] !== undefined ?
+            elm.data[prop] : (elm.parent !== null ? getProp(elm.parent, prop) : undefined)
+        return getProp(elm, prop)
+    },
+    set(target, prop, value) {
+        /**
+         * @param {JQElement} elm 
+         * @param {string} prop 
+         * @returns 
+         */
+        elm ??= currentElement
+        const getProp = (elm, prop) => elm.data[prop] !== undefined ?
+            elm.data : (elm.parent !== null ? getProp(elm.parent, prop) : undefined)
+        if (getProp(elm, prop)[prop] !== undefined)
+            getProp(elm, prop)[prop] = value
+        return true
     }
 })
 
@@ -217,33 +273,37 @@ const _parent = new Proxy(function (ctx = this) {
  * @description returns a property on any of the parent elements
  * @type {ProxyConstructor}
  */
-const _parents = new Proxy(function (ctx = this) {
-    const getCurrentElm = () => ctx
+const _closest = new Proxy(function (ctx = this) {
+    return new Proxy(ctx, _closestProxyTrap(ctx))
+}, _closestProxyTrap())
 
-    return new Proxy(getCurrentElm(), {
-        get(target, prop, reciever) {
-            /**
-             * @param {JQElement} elm 
-             * @param {string} prop 
-             * @returns 
-             */
-            const getProp = (elm, prop) => elm.data[prop] !== undefined ?
-                elm.data[prop] : (elm.parent !== null ? getProp(elm.parent, prop) : undefined)
-            return getProp(target, prop)
+/**
+ * @description observes for changes on an object; if any, runs the callback functions
+ * @param {object} object
+ * @return {[ProxyConstructor new<object>, Array<(changes: string[], latestChange: [string, any]) => void>]}
+ */
+const _observe = function (object, _base = []) {
+    for (const key in object) {
+        if (object[key] !== null && typeof object[key] === 'object')
+            object[key] = _observe(object[key], [..._base, key])
+    }
+
+    /**
+     * @type {Array<(changes: string[], latestChange: [string, any]) => void>}
+     */
+    const observers = new Array()
+
+    const proxyObject = new Proxy(object, {
+        set(target, prop, value) {
+            if (typeof value === 'object')
+                value = _observe(value, [..._base, prop])
+            observers.forEach(observer => observer([..._base, prop], [prop, target[prop] = value]))
+            return true
         }
     })
-}, {
-    get(target, prop, reciever) {
-        /**
-         * @param {JQElement} elm 
-         * @param {string} prop 
-         * @returns 
-         */
-        const getProp = (elm, prop) => elm.data[prop] !== undefined ?
-            elm.data[prop] : (elm.parent !== null ? getProp(elm.parent, prop) : undefined)
-        return getProp(currentElement, prop)
-    }
-})
+
+    return [proxyObject, observers]
+}
 
 /**
  * @type {QueryFunction}
@@ -318,9 +378,10 @@ function createJQHTMLElement(elmName) {
             currentElement = currentNode = parentElm ?? null
 
             if (parentElm && parentElm.type == "custom" && elmName == "slot")
-                parentElm.slots = [...(parentElm.slots || []), elm]
+                parentElm.slots.push(elm)
 
             elm.data = createDataAttrProxy(elm)
+            Object.freeze(elm)
             return elementStack.pop()
         }
     })
@@ -347,6 +408,7 @@ function createJQCustomElement(elmName) {
         name: elmName,
         body: new DocumentFragment(),
         data: {},
+        slots: [],
         parent: parentElm ?? null
     }
 
@@ -370,6 +432,7 @@ function createJQCustomElement(elmName) {
             currentElement = currentNode = parentElm ?? null
 
             newElement.data = createDataAttrProxy(newElement)
+            Object.freeze(newElement)
             return elementStack.pop()
         }
     })
@@ -426,11 +489,11 @@ function createDataAttribute(attr, elm, defVal = null) {
         if (isNullish || isPrimitive)
             elm.body.dataset[attrCamelCase] = defVal.toString()
         elm.data[attrCamelCase] = typeof defVal == "function" ?
-            (...args) => defVal(...args, elm.data) : defVal
+            (...args) => defVal(...args, elm) : defVal
     }
     else if (["custom", "partial"].includes(elm.type)) {
         elm.data[attrCamelCase] = typeof defVal == "function" ?
-            (...args) => defVal(...args, elm.data) : defVal
+            (...args) => defVal(...args, elm) : defVal
     }
     return elm.data
 }
@@ -447,7 +510,7 @@ function createEventHandler(attr, elm, callback) {
     if (typeof callback != "function")
         throw new TypeError(`Expeted a function as event handler callback but got '${typeof callback}' instead.`)
 
-    let _callback = (...args) => callback(...args, elm.data)
+    let _callback = (...args) => callback(...args, elm)
     elm.body.addEventListener(event, _callback)
 }
 
@@ -539,11 +602,11 @@ function createDataAttrProxy(elm) {
                     if (isNullish || isPrimitive)
                         elm.body.dataset[attrCamelCase] = value.toString()
                     target[attrCamelCase] = typeof value == "function" ?
-                        (...args) => value(...args, elm.data) : value
+                        (...args) => value(...args, elm) : value
                 }
                 else if (["custom", "partial"].includes(elm.type)) {
                     target[attrCamelCase] = typeof value == "function" ?
-                        (...args) => value(...args, elm.data) : value
+                        (...args) => value(...args, elm) : value
                 }
                 return elm.data
             }
@@ -586,4 +649,4 @@ function toCamelCase(str) {
     return _str
 }
 
-export { $, _, _self, _parent, _parents }
+export { $, _, _self, _parent, _closest, _observe }

@@ -15,7 +15,11 @@ you can also use a cdn if you like
 ```
 after installation 👇
 ```javascript
-import { $, _, _self, _parent, _parents } from "./node_modules/jquire/jquire.min.js"
+import {
+    $, _,
+    _self, _parent, _parents,
+    _observe
+} from "./node_modules/jquire/jquire.min.js"
 ```
 
 ### Create a component
@@ -64,7 +68,7 @@ $.render[
 ### HTML Attributes vs Data Attributes
 ```javascript
 _.type = "text" // regular html attributes are lowercase
-_.Type = "text" // this is the same as data-type="text" in html and is called a data attribute
+_.Type = "text" // this is the same as data--type="text" in html and is called a data attribute
 _.sayGreetings = "hi" // this is also a data attribute; in html markup it would be data-say-greetings
 ```
 > All the attributes inside of a component are treated as data attributes regardless of the case.
@@ -74,7 +78,7 @@ There are three types of data access proxy objects:
 
 1. _self - access a data attribute on the current element
 2. _parent - access a data attribute on the immediate parent element
-3. _parents - access a data attribute on any one of the parent elements, including itself
+3. _closest - access a data attribute on any one of the parent elements, including itself
 
 ```javascript
 $.div[
@@ -89,10 +93,28 @@ $.div[
         $.br[_], // if an element has no attributes or children just put an underscore, otherwise it causes a JavaScript syntax error :(
         $.span[
             $.text["Your parent is " + _parent.parentName], $.br[_]
-            $.text["Your grandparent is " + _parents.grandParentName]
+            $.text["Your grandparent is " + _closest.grandParentName]
         ]
     ]
 ]
+```
+
+### Reactive Data
+You can wrap an array or any mutable object in _observe function to react to changes to that object.
+```javascript
+const [arr, observer] = _observe([1, 2, 3, 4])
+
+$.button[
+    _.onclick = function() {
+        const lastArrItem = arr.slice(-1)
+        arr.push(lastArrItem+1)
+    }
+]
+
+observer.push(function(changes, latestChange) {
+    console.log(arr)
+})
+
 ```
 
 ### What about CSS??
