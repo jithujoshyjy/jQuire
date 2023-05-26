@@ -1,4 +1,4 @@
-![jQuireLogo](./assets/logo.png)
+![jQuireLogo](./assets/logo.png =250x250)
 # jQuire
 #### jQuery UI Reciter
 
