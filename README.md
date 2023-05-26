@@ -62,6 +62,17 @@ const app = div(
     HelloWorld()
     "Again ", HelloWorld()
 )
+
+// component with props and children
+const Foo = (...props) => {
+    const { childNodes, attributes } = getNodes(props)
+    return div(
+        "====START====",
+        ...attributes,
+        ...childNodes
+        "=====END====="
+    )
+}
 ```
 
 ### Rendering Content
