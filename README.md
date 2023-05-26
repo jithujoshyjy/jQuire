@@ -1,140 +1,208 @@
 # jQuire
-jQuery UI Reciter
+#### jQuery UI Reciter
 
-> This is not a serious project. It's just me fooling around with JavaScript.
-> Do not recommend using this for any kind of work.
+This project began as an experiment, stretching what's possible with JavaScript.
+After a great deal of trouble, refactoring and a lot of sleepless nights, I think I've come up with something that I can be proud of!<br/>
+I wouldn't advise it to be used in real applications but you're welcome to experiment with it and provide constructive criticism.
 
 ### Installation and Imports
-```
+
+```bash
 npm install jquire
 ```
+
 you can also use a cdn if you like
+
 ```html
 <!-- JQuery goes here if you're want to use it as well -->
 <script type="module" src="https://cdn.jsdelivr.net/gh/jithujoshyjy/jQuire/jquire.min.js"></script>
 ```
+
 after installation 👇
+
 ```javascript
 import {
-    $, _,
-    _self, _parent, _closest,
-    _observe
+    natives, nodes, showIf,
+	on, ref, pathSetter,
+	getNodes, animate, css
 } from "./node_modules/jquire/jquire.min.js"
 ```
 
+After you specify all the required imports you can either destructure each html element creator function from `natives` proxy object.
+
+```javascript
+	const {
+		div, input, button,
+		form, dialog, img,
+		main, nav, a, br, h1,
+		footer, template, span
+	} = natives
+```
+
+Or, you can populate all the valid html element creators into the `globalThis` object and make them available in the global scope.
+
+```javascript
+	natives.globalize() 
+```
+
 ### Create a component
+
 ```javascript
 // define your component
-const HelloWorld = () => [
-    _.world ??= "World", // attribute of your component works kind of like props in react
-    $.slot[_.name="main"],
-    $.text["Hello " + _self.world]
-]
+const HelloWorld = () => fragment(
+	h1("Hello, World!")
+)
 
-$.add({ HelloWorld }) // register this as a new component
+const app = div(
+	HelloWorld()
+	"Again ", HelloWorld()
+)
 ```
 
 ### Rendering Content
-```javascript
-$.render[
-    _.tag = document.body, // the tag in which to render contents;
-    // JQuery also works!! $("body").get(0) i.e, if you have it already.
-    $.div[
-        _.Mark = 120,
-        $.HelloWorld[
-            _.world = "earth",
-            $.div[
-                _.slot = "main",
-                _.onclick = (evt, ctx) => console.log(_parents(ctx).Mark),
-                $.text["🎉"+_parents.Mark] // this creates an HTML TextNode
-            ]
-        ]
-    ],
-    $.form[
-        _.name = "my-form",
-        _.onsubmit = evt => {
-            evt.preventDefault()
-            console.log("submitted")
-        },
-        $.input[_.type = "text"],
-        $.button[
-            _.type = "submit",
-            $.text["submit"]
-        ]
-    ]
-]
-```
-
-### HTML Attributes vs Data Attributes
-```javascript
-_.type = "text" // regular html attributes are lowercase
-_.Type = "text" // this is the same as data--type="text" in html and is called a data attribute
-_.sayGreetings = "hi" // this is also a data attribute; in html markup it would be data-say-greetings
-```
-> All the attributes inside of a component are treated as data attributes regardless of the case.
-
-### Data Accessors
-There are three types of data access proxy objects:
-
-1. _self - access a data attribute on the current element
-2. _parent - access a data attribute on the immediate parent element
-3. _closest - access a data attribute on any one of the parent elements, including itself
 
 ```javascript
-$.div[
-    _.grandParentName = "Janice Doe"
-    $.div[
-        _.parentName = "Jane Doe"
-        $.span[
-            _.Name = "John Doe",
-            $.text["Hi" + _self.name], // same as this.name
-            _.onclick = (evt, ctx) => console.log(_self(ctx).Name) // _self ond other data access proxies need a context when called inside of a function.
-        ],
-        $.br[_], // if an element has no attributes or children just put an underscore, otherwise it causes a JavaScript syntax error :(
-        $.span[
-            $.text["Your parent is " + _parent.parentName], $.br[_]
-            $.text["Your grandparent is " + _closest.grandParentName]
-        ]
-    ]
-]
+app.attachTo(document.body) // attaches `app` to document's body
 ```
 
-### Reactive Data
-You can wrap an array or any mutable object in _observe function to react to changes to that object.
+### Specifying Attributes
+
 ```javascript
-const [arr, observer] = _observe([1, 2, 3, 4])
-
-$.button[
-    _.onclick = function() {
-        const lastArrItem = arr.slice(-1)
-        arr.push(lastArrItem+1)
-    }
-]
-
-observer.push(function(changes, latestChange) {
-    console.log(arr)
-})
-
+input(
+	attr.type("number"), // set a single attribute
+	attr({ value: 0, max:  100 }), // set multiple attributes
+	attr.required() // single attributes without value will default to the name of the attribute
+)
 ```
 
-### What about CSS??
-Works just like normal css; no scoped styles yet :( but it's on the horizon!
+## Styling Elements
+
+All styles on block elements are scoped by default using ShadowRoot. You can even specify css rules in them.
+
+### CSS Properties
+
 ```javascript
-$.style[`
-    :root {
-        font-size: 16px;
-        font-family: Roboto;
-    }
-    body {
-        background-color: lightgrey;
-    }
-    header {
-      display: grid;
-      justify-items: center;
-      align-items: center;
-    }
-    h1 {
-      margin: 0;
-    }
-`]
+div(
+	css.height("50px"),
+	css({ backgroundColor: "lightblue" })
+)
 ```
+
+### Specifying styles for child elements
+
+```javascript
+div(
+	css("button.abc")({
+		backgroundColor: "violet",
+		borderRadius: "5px",
+		border: "none",
+		padding: "5px 15px",
+		fontVariant: "small-caps"
+	}),
+	button(
+		attr.class("abc"),
+		"click me!"
+	)
+)
+```
+
+### Pseudo Classes, Pseudo Elements and CSS Rules
+
+```javascript
+button(
+	"click me!",
+	css(":hover")({
+		backgroundColor: "teal"
+	}),
+	css("::before")({
+		content: "",
+		border: "1px solid fuchsia",
+		display: "inline-block",
+		width: "25px",
+		height: "25px"
+	}),
+	css("@keyframes", "press")({
+		"100%": {
+			transform: "scale(1.15)"
+		}
+	})
+)
+```
+
+### Animating Elements
+
+```javascript
+div(
+	animate({ height: "500px" })
+)
+```
+
+### Handling Events
+
+```javascript
+button(
+	"click me!",
+	on.click(_ => console.log("clicked!"))
+)
+```
+
+### Creating elements from an Iterable
+
+```javascript
+const fruits = ["apple", "orange", "banana"]
+const fruitEmojis = ['🍎', '🍊', '🍌']
+
+ul(
+	fruits.map((fruit, i) => `${fruit} - ${fruitEmojis[i]}`)
+)
+```
+
+### Reactive Data and Element Reference
+
+You can use the `ref` function to store reactive objects and reference to html elements.
+The `deref()` method of the JqReference object will give back the reference to the html elements.
+
+```javascript
+const person = {
+	name: "John",
+	age: 26,
+	profession: "Artist"
+}
+
+const personRef = ref({ person })
+div(
+	personRef,
+	({ person }) => `John is ${person.age} years old!` // will be refreshed for every state change
+	button(
+		"increment age",
+		on.click(_ => personRef.person.age++)
+	)
+)
+
+console.log(personRef.deref()) // HTMLDivElement
+```
+
+You can also use the `JqReference.refresh` function to batch together updates for more efficiency.
+It can especially be handy if you're push or popping elements from an array.
+
+```javascript
+button(
+	"increment age",
+	on.click(_ => personRef.refresh(() => person.age++))
+)
+```
+
+### Conditional Rendering
+
+You can choose to render or not to render certain elements based on a condition using `showIf` function.
+
+```javascript
+const age = 50
+
+div(
+	showIf(age > 200) && span("Invalid age: It cannot be greater than 200.")
+)
+```
+
+> More ideas on the horizon...<br/>
+> stay tuned for more
