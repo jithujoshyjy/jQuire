@@ -1,3 +1,4 @@
+![jQuireLogo](./assets/logo.png)
 # jQuire
 #### jQuery UI Reciter
 
