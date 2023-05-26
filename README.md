@@ -59,7 +59,7 @@ const HelloWorld = () => fragment(
 )
 
 const app = div(
-    HelloWorld()
+    HelloWorld(),
     "Again ", HelloWorld()
 )
 
@@ -69,7 +69,7 @@ const Foo = (...props) => {
     return div(
         "====START====",
         ...attributes,
-        ...childNodes
+        ...childNodes,
         "=====END====="
     )
 }
@@ -188,7 +188,7 @@ const person = {
 const personRef = ref({ person })
 div(
     personRef,
-    ({ person }) => `John is ${person.age} years old!` // will be refreshed for every state change
+    ({ person }) => `John is ${person.age} years old!`, // will be refreshed for every state change
     button(
         "increment age",
         on.click(_ => personRef.person.age++)
