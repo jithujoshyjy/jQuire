@@ -1,4 +1,4 @@
-<img src="./assets/logo.png" alt="jQuire Logo" width="200" hspace="400"/>
+<img src="./assets/logo.png" alt="jQuire Logo" width="200" hspace="200"/>
 
 # jQuire
 #### jQuery UI Reciter
