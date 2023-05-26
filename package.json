@@ -5,6 +5,10 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
+<<<<<<< HEAD
+=======
+	"dev": "tsc --watch --outDir ./dist",
+>>>>>>> fe732fc (initial commit)
     "minify": "uglifyjs ./jquire.js -o ./jquire.min.js -m",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -23,6 +27,10 @@
   ],
   "license": "ISC",
   "devDependencies": {
+<<<<<<< HEAD
+=======
+    "typescript": "^5.0.4",
+>>>>>>> fe732fc (initial commit)
     "uglify-js": "^3.17.0"
   }
 }

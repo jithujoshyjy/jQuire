@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Document</title>
+</head>
+
+<body>
+	<script type="module">
+		import {
+			natives, nodes, showIf,
+			on, ref, pathSetter,
+			getNodes, animate, css
+		} from "./dist/jquire.js"
+
+		const {
+			div, input, button,
+			form, dialog, img,
+			main, nav, a, br, hr,
+			footer, template, span
+		} = natives
+
+		const { attr, text, fragment } = nodes
+
+		const assets = pathSetter("../assets/")
+		const navLinks = [
+			{ name: "works", link: "#" },
+			{ name: "skills", link: "#" },
+			{ name: "hire me", link: "#" }
+		]
+
+		const divRef = ref({ navLinks })
+		const app = div(
+			animate({ height: "500px" }),
+			divRef,
+			css({ backgroundColor: "lightblue" }),
+			css("button.abc")({
+				backgroundColor: "violet",
+				borderRadius: "5px",
+				border: "none",
+				padding: "5px 15px",
+				fontVariant: "small-caps"
+			}),
+			({ navLinks }) => navLinks.map(x => x.name + " "),
+			fragment(
+				hr(),
+				button(
+					attr.class("abc"),
+					"click",
+					on.click(_ => {
+						divRef.refresh(({ navLinks }) =>
+							navLinks.push({ name: "abc", link: "#" }))
+					})
+				),
+				hr()
+			)
+		)
+
+		app.attachTo(document.body)
+	</script>
+</body>
+
+</html>
