@@ -42,6 +42,8 @@ const {
     main, nav, a, br, h1,
     footer, template, span
 } = natives
+
+const { attr, text, fragment } = nodes
 ```
 
 Or, you can populate all the valid html element creators into the `globalThis` object and make them available in the global scope.
