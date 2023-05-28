@@ -1444,6 +1444,7 @@ export const validHTMLElements = [
 	"legend",
 	"li",
 	"link",
+	"main",
 	"map",
 	"mark",
 	"math",

@@ -39,8 +39,9 @@ export const natives = new Proxy({}, {
 			return new JqElement(prop, childNodes, attributes, events, animations, references, inlineStyles, blockStyles, callbacks)
 		}
 
-		function globalize() {
-			validHTMLElements.forEach(element => (globalThis as any)[element] = (natives as any)[element])
+		function globalize(_globalThis?: object) {
+			validHTMLElements
+				.forEach(element => ((_globalThis ?? globalThis) as any)[element] = (natives as any)[element])
 		}
 	}
 })

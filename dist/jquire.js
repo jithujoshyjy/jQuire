@@ -21,8 +21,9 @@ export const natives = new Proxy({}, {
             const { childNodes, attributes, inlineStyles, blockStyles, animations, events, references, callbacks } = getNodes(nodes);
             return new JqElement(prop, childNodes, attributes, events, animations, references, inlineStyles, blockStyles, callbacks);
         };
-        function globalize() {
-            validHTMLElements.forEach(element => globalThis[element] = natives[element]);
+        function globalize(_globalThis) {
+            validHTMLElements
+                .forEach(element => (_globalThis ?? globalThis)[element] = natives[element]);
         }
     }
 });
