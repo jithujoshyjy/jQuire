@@ -1392,6 +1392,7 @@ function diff(node1: JqNode, node2: JqNode) {
 }
 
 export const validHTMLElements = [
+	"a",
 	"address",
 	"article",
 	"aside",
@@ -1464,6 +1465,7 @@ export const validHTMLElements = [
 	"q",
 	"ruby",
 	"s",
+	"section",
 	"strike",
 	"tt",
 	"u",

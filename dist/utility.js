@@ -1120,6 +1120,7 @@ function diff(node1, node2) {
     }
 }
 export const validHTMLElements = [
+    "a",
     "address",
     "article",
     "aside",
@@ -1192,6 +1193,7 @@ export const validHTMLElements = [
     "q",
     "ruby",
     "s",
+    "section",
     "strike",
     "tt",
     "u",
