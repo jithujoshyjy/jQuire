@@ -16,6 +16,7 @@
 body {
 	margin: 0px;
 	padding: 1rem 2rem;
+	padding-bottom: 0rem;
 	color: white;
 	line-height: 1.35rem;
 	background-color: var(--cinder);
@@ -55,8 +56,16 @@ body {
 	background-color: transparent;
 }
 
-:root ::-webkit-scrollbar {
-	display: none;
+:root::-webkit-scrollbar {
+	width: 0.75rem;
+	border-radius: 0.35rem;
+	background-color: var(--mirage-lite);
+}
+
+:root::-webkit-scrollbar-thumb {
+	background-color: var(--mirage);
+	border-radius: 0.35rem;
+	border: 0.1rem solid var(--mirage-lite);
 }
 
 noscript {

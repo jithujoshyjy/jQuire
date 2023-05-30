@@ -11,13 +11,15 @@ import xml from "../libs/highlight/es/languages/xml.min.js"
 
 import AlertBox from "../components/AlertBox.js"
 import CodeBox from "../components/CodeBox.js"
+import Link from "../components/Link.js"
+import Emphasize from "../components/Emphasize.js"
 
 highlight.registerLanguage("xml", xml)
 highlight.registerLanguage("bash", bash)
 highlight.registerLanguage("javascript", javascript)
 
 natives.globalize()
-const { attr, text, fragment } = nodes
+const { attr } = nodes
 
 const assets = pathSetter("../../assets/")
 
@@ -223,10 +225,6 @@ const WhatNWhySection = () => {
 		marginTop: "1rem",
 	}
 
-	const jQueryLinkStyle = {
-		color: "var(--greenish-fountain-blue)",
-	}
-
 	return section(
 		css(style),
 		css("h3.what-n-why-heading")(sectionHeadingStyle),
@@ -237,13 +235,8 @@ const WhatNWhySection = () => {
 		p(
 			css(paragraphStyle),
 			css.marginBottom("2rem"),
-			css("a.jquery-link")(jQueryLinkStyle),
 			`jQuire as you might catch from the name is heavily inspired by the JavaScript's good old library `,
-			a(
-				"jQuery",
-				attr.class("jquery-link"),
-				attr.href("https://jquery.com/")
-			),
+			Link("jQuery", attr.href("https://jquery.com/")),
 			` In its glory days, jQuery eased a lot of the pain points with DOM manipulation and cross-browser support. Where it lost was when it came to big or moderate projects getting increasingly difficult to maintain and debug due to the complexity of the code bubbling out of control.`
 		),
 		p(
@@ -308,14 +301,6 @@ const InstallationNImportsSection = () => {
 			...headingStyle
 		}
 
-		const emphasizedStyle = {
-			fontStyle: "normal",
-			backgroundColor: "var(--mirage-lite)",
-			padding: "0.1rem 0.45rem",
-			borderRadius: "0.2rem",
-			margin: "0rem 0.3rem"
-		}
-
 		const code1 = `import
 {
 	natives, nodes, showIf,
@@ -342,16 +327,14 @@ const { attr, text, fragment } = nodes`
 			),
 			CodeBox("javascript", code1, highlight),
 			p(
-				css("em.emphasized")(emphasizedStyle),
 				`After you specify all the required imports you can either destructure each html element creator function from`,
-				em(attr.class("emphasized"), "natives"),
+				Emphasize("natives"),
 				`proxy object.`
 			),
 			CodeBox("javascript", code2, highlight),
 			p(
-				css("em.emphasized")(emphasizedStyle),
 				`Or, you can populate all the valid html element creators into the`,
-				em(attr.class("emphasized"), "globalThis"),
+				Emphasize("globalThis"),
 				`object and make them available in the global scope.`
 			),
 			CodeBox("javascript", code3, highlight),
@@ -505,13 +488,367 @@ const SpecifyingAttributesSection = () => {
 	)
 }
 
+const StylingElementsSection = () => {
+	const style = {
+		...sectionStyle,
+		minHeight: "100vh",
+		boxSizing: "border-box",
+		paddingLeft: "3.5rem",
+		paddingRight: "3.5rem",
+	}
+
+	const stylingElementsStyle = {
+		...sectionHeadingStyle,
+		marginBottom: "1rem"
+	}
+
+	const headingStyle = {
+		marginTop: "3rem",
+	}
+
+	const CSSProperties = () => {
+		const style = {
+			...headingStyle,
+		}
+
+		const code1 = `div(
+    css.height("50px"),
+    css({ backgroundColor: "lightblue" })
+)`
+
+		return section(
+			h4(
+				css(style),
+				"CSS Properties",
+			),
+			CodeBox("javascript", code1, highlight)
+		)
+	}
+
+	const SpecifyingStylesForChildElements = () => {
+		const styles = {
+			...headingStyle
+		}
+
+		const code1 = `div(
+    css("button.abc")({
+        backgroundColor: "violet",
+        borderRadius: "5px",
+        border: "none",
+        padding: "5px 15px",
+        fontVariant: "small-caps"
+    }),
+    button(
+        attr.class("abc"),
+        "click me!"
+    )
+)`
+
+		return section(
+			h4(
+				css(styles),
+				"Specifying Styles for Child Elements"
+			),
+			CodeBox("javascript", code1, highlight)
+		)
+	}
+
+	const PseudoClassesPseudoElementsNCSSRules = () => {
+		const PseudoClassesPseudoElementsNCSSRulesHeadingStyle = {
+			...headingStyle
+		}
+
+		const emphasizedStyle = {
+			fontStyle: "normal",
+			backgroundColor: "var(--mirage-lite)",
+			padding: "0.1rem 0.45rem",
+			borderRadius: "0.2rem",
+			margin: "0rem 0.3rem"
+		}
+
+		const code1 = `button(
+    "click me!",
+    css(":hover")({
+        backgroundColor: "teal"
+    }),
+    css("::before")({
+        content: "",
+        border: "1px solid fuchsia",
+        display: "inline-block",
+        width: "25px",
+        height: "25px"
+    }),
+    css("@keyframes", "press")({
+        "100%": {
+            transform: "scale(1.15)"
+        }
+    })
+)`
+
+		return section(
+			h4(
+				css(PseudoClassesPseudoElementsNCSSRulesHeadingStyle),
+				"Pseudo Classes, Pseudo Elements and CSS Rules"
+			),
+			CodeBox("javascript", code1, highlight),
+		)
+	}
+
+	return section(
+		css(style),
+		css("h3.styling-elements-heading")(stylingElementsStyle),
+		h3(
+			attr.class("styling-elements-heading"),
+			"Styling Elements"
+		),
+		p(
+			`All styles on block elements are scoped by default using the `,
+			Link(
+				"Shadow DOM.",
+				attr.href("https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_shadow_DOM")
+			),
+			` You can even specify css rules in them.`
+		),
+		CSSProperties(),
+		SpecifyingStylesForChildElements(),
+		PseudoClassesPseudoElementsNCSSRules()
+	)
+}
+
+const AnimatingElementsSection = () => {
+	const style = {
+		...sectionStyle,
+		boxSizing: "border-box",
+		paddingLeft: "3.5rem",
+		paddingRight: "3.5rem",
+	}
+
+	const animatingElementsHeadingStyle = {
+		...sectionHeadingStyle,
+		marginBottom: "1rem"
+	}
+
+	const code1 = `div(
+    animate({ height: "500px" })
+)`
+
+	return section(
+		css(style),
+		css("h3.animating-elements-heading")(animatingElementsHeadingStyle),
+		h3(
+			attr.class("animating-elements-heading"),
+			"Animating Elements"
+		),
+		CodeBox("javascript", code1, highlight),
+	)
+}
+
+const HandlingEventsSection = () => {
+	const style = {
+		...sectionStyle,
+		boxSizing: "border-box",
+		paddingLeft: "3.5rem",
+		paddingRight: "3.5rem",
+	}
+
+	const handlingEventsHeadingStyle = {
+		...sectionHeadingStyle,
+		marginBottom: "1rem"
+	}
+
+	const code1 = `button(
+    "click me!",
+    on.click(_ => console.log("clicked!"))
+)`
+
+	return section(
+		css(style),
+		css("h3.handling-events-heading")(handlingEventsHeadingStyle),
+		h3(
+			attr.class("handling-events-heading"),
+			"Handling Events"
+		),
+		CodeBox("javascript", code1, highlight),
+	)
+}
+
+const CreatingElementsFromAnIterableSection = () => {
+	const style = {
+		...sectionStyle,
+		boxSizing: "border-box",
+		paddingLeft: "3.5rem",
+		paddingRight: "3.5rem",
+	}
+
+	const creatingElementsFromAnIterableHeadingStyle = {
+		...sectionHeadingStyle,
+		marginBottom: "1rem"
+	}
+
+	const code1 = `const fruits = ["apple", "orange", "banana"]
+const fruitEmojis = ['🍎', '🍊', '🍌']
+
+ul(
+    fruits.map((fruit, i) =>
+        \`\${fruit} - \${fruitEmojis[i]}\`)
+)`
+
+	return section(
+		css(style),
+		css("h3.creating-elements-from-an-iterable-heading")(creatingElementsFromAnIterableHeadingStyle),
+		h3(
+			attr.class("creating-elements-from-an-iterable-heading"),
+			"Creating elements from an Iterable"
+		),
+		CodeBox("javascript", code1, highlight),
+	)
+}
+
+const ReactiveDataNElementReferenceSection = () => {
+	const style = {
+		...sectionStyle,
+		minHeight: "100vh",
+		boxSizing: "border-box",
+		paddingLeft: "3.5rem",
+		paddingRight: "3.5rem",
+	}
+
+	const reactiveDataNElementReferenceHeadingStyle = {
+		...sectionHeadingStyle,
+		marginBottom: "1rem"
+	}
+
+	const code1 = `const person = {
+    name: "John",
+    age: 26,
+    profession: "Artist"
+}
+
+const personRef = ref({ person })
+div(
+    personRef,
+    ({ person }) => \`John is \${person.age} years old!\`,
+    // will be refreshed for every state change
+    button(
+        "increment age",
+        on.click(_ => personRef.person.age++)
+    )
+)
+
+console.log(personRef.deref()) // HTMLDivElement`
+
+	const code2 = `button(
+    "increment age",
+    on.click(_ => personRef.refresh(() => person.age++))
+)`
+
+	return section(
+		css(style),
+		css("h3.reactive-data-n-element-reference-heading")(reactiveDataNElementReferenceHeadingStyle),
+		h3(
+			attr.class("reactive-data-n-element-reference-heading"),
+			"Reactive Data and Element Reference"
+		),
+		p(
+			`You can use the`,
+			Emphasize("ref()"),
+			`function to store reactive objects and reference to html elements.`,
+			br(),
+			`The`, Emphasize("deref()"),
+			`method of the JqReference object will give back the reference to the html elements. `
+		),
+		CodeBox("javascript", code1, highlight),
+		p(
+			`You can also use the`,
+			Emphasize("JqReference.refresh()"),
+			`function to batch together updates for more efficiency. It can especially be handy if you're push or popping elements from an array.`
+		),
+		CodeBox("javascript", code2, highlight),
+	)
+}
+
+const ConditionalRenderingSection = () => {
+	const style = {
+		...sectionStyle,
+		minHeight: "80vh",
+		boxSizing: "border-box",
+		paddingLeft: "3.5rem",
+		paddingRight: "3.5rem",
+	}
+
+	const conditionalRenderingHeadingStyle = {
+		...sectionHeadingStyle,
+		marginBottom: "1rem"
+	}
+
+	const code1 = `const age = 50
+div(
+    showIf(age > 200) &&
+        span("Invalid age: It cannot be greater than 200.")
+)`
+
+	return section(
+		css(style),
+		css("h3.conditional-rendering-heading")(conditionalRenderingHeadingStyle),
+		h3(
+			attr.class("conditional-rendering-heading"),
+			"Conditional Rendering"
+		),
+		p(
+			`You can choose to render or not to render certain elements based on a condition using`,
+			Emphasize("showIf()"),
+			`function.`,
+		),
+		CodeBox("javascript", code1, highlight),
+	)
+}
+
+const Footer = () => {
+	const style = {
+		boxSizing: "border-box",
+		paddingLeft: "3.5rem",
+		paddingRight: "3.5rem",
+	}
+
+	const dividerLineStyle = {
+		borderWidth: "0.025rem",
+		borderColor: "var(--mirage-lite)",
+		backgroundColor: "var(--mirage-lite)"
+	}
+
+	const footerTextStyle = {
+		display: "block",
+		textAlign: "center",
+		margin: "2rem 0rem",
+		fontSize: "0.75rem",
+	}
+
+	return footer(
+		css(style),
+		css("hr.divider")(dividerLineStyle),
+		css("small.footer-text")(footerTextStyle),
+		hr(attr.class("divider")),
+		small(
+			attr.class("footer-text"),
+			`Made with 🧡 using jQuire`
+		)
+	)
+}
+
 const _main = main(
 	Header(),
 	WhatNWhySection(),
 	InstallationNImportsSection(),
 	ComponentsSection(),
 	RenderingContentSection(),
-	SpecifyingAttributesSection()
+	SpecifyingAttributesSection(),
+	StylingElementsSection(),
+	AnimatingElementsSection(),
+	HandlingEventsSection(),
+	CreatingElementsFromAnIterableSection(),
+	ReactiveDataNElementReferenceSection(),
+	ConditionalRenderingSection(),
+	Footer()
 )
 
 _main.attachTo(document.body)

@@ -1194,6 +1194,7 @@ export const validHTMLElements = [
     "ruby",
     "s",
     "section",
+    "small",
     "strike",
     "tt",
     "u",
