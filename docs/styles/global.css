@@ -11,6 +11,7 @@
 	--mirage-lite: #1E252E;
 	--cinder: #0D1117;
 	font-family: 'Inter', sans-serif;
+	scroll-behavior: smooth;
 }
 
 body {

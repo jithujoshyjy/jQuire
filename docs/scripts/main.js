@@ -34,12 +34,10 @@ const sectionHeadingStyle = {
 
 const JqIcon = () => {
 	const style = {
-		display: "flex",
-		alignItems: "baseline",
 		fontWeight: "600",
 	}
 
-	const jQDivStyle = {
+	const jQPartStyle = {
 		backgroundColor: "white",
 		width: "1.5rem",
 		height: "1.5rem",
@@ -52,21 +50,42 @@ const JqIcon = () => {
 		justifyContent: "flex-end",
 		color: "var(--cinder)",
 		borderRadius: "0.4rem",
-		marginRight: "0.1rem"
+		marginRight: "0.1rem",
+	}
+
+	const jQIconLinkStyle = {
+		color: "inherit",
+		textDecoration: "none",
+		display: "flex",
+		alignItems: "baseline",
+		transition: "transform 200ms"
+	}
+
+	const jQIconLinkActiveStyle = {
+		transform: "scale(0.9)"
 	}
 
 	return div(
 		css(style),
-		div(
-			css(jQDivStyle),
-			"jQ"
-		),
-		"uire"
+		css("a.jq-home-link")(jQIconLinkStyle),
+		css("a.jq-home-link:active")(jQIconLinkActiveStyle),
+		css("span.jq-part")(jQPartStyle),
+		a(
+			attr.aria_label("jQuire"),
+			attr.class("jq-home-link"),
+			attr.href("#"),
+			span(
+				attr.class("jq-part"),
+				"jQ"
+			),
+			"uire"
+		)
 	)
 }
 
 const MenuIcon = () => button(
 	attr.class("menu-btn"),
+	attr.aria_label("menu"),
 )
 
 const Navbar = () => {
@@ -87,14 +106,21 @@ const Navbar = () => {
 		padding: "0.1rem",
 		marginLeft: "auto",
 		border: "none",
+		cursor: "pointer",
 		backgroundSize: "contain",
 		backgroundColor: "transparent",
+		transition: "transform 200ms",
 		backgroundImage: `url('${assets("icon - menu_book.svg")}')`
+	}
+
+	const menuBtnActiveStyle = {
+		transform: "scale(0.9)"
 	}
 
 	return nav(
 		css(style),
 		css("button.menu-btn")(menuBtnStyle),
+		css("button.menu-btn:active")(menuBtnActiveStyle),
 		JqIcon(),
 		MenuIcon()
 	)
@@ -132,43 +158,53 @@ const Header = () => {
 		alignItems: "center"
 	}
 
-	const exploreBtnStyle = {
+	const exploreLinkStyle = {
 		fontVariant: "small-caps",
-		padding: "0.45rem 1rem",
+		padding: "0.2rem 1rem",
 		borderRadius: "0.25rem",
+		display: "inline-block",
 		border: "none",
 		color: "white",
-		fontSize: "0.65rem",
+		cursor: "pointer",
+		fontSize: "0.75rem",
 		fontWeight: "bold",
 		marginRight: "0.5rem",
+		textDecoration: "none",
+		transition: "transform 200ms",
 		backgroundImage: "linear-gradient(103.21deg, #D59D7D 0%, #BF570B 67.82%)"
 	}
 
-	const githubBtnStyle = {
+	const githubLinkStyle = {
 		width: "1.65rem",
 		height: "1.65rem",
 		border: "none",
+		display: "inline-block",
 		backgroundRepeat: "no-repeat",
 		backgroundSize: "contain",
 		backgroundColor: "transparent",
+		transition: "transform 200ms",
 		backgroundImage: `url('${assets("icon - github.svg")}')`
 	}
 
-	const btnHoverStyle = {
-		transform: "scale(0.98)"
+	const linkActiveStyle = {
+		transform: "scale(0.9)"
 	}
 
 	const ButtonGroup = () => div(
 		css(calloutBtnGroupStyle),
-		css("button.explore-btn")(exploreBtnStyle),
-		css("button.github-btn")(githubBtnStyle),
-		css("button.explore-btn:active")(btnHoverStyle),
-		css("button.github-btn:active")(btnHoverStyle),
-		button(
+		css("a.explore-btn")(exploreLinkStyle),
+		css("a.github-btn")(githubLinkStyle),
+		css("a.explore-btn:active")(linkActiveStyle),
+		css("a.github-btn:active")(linkActiveStyle),
+		a(
+			attr.href("#installation-n-imports-section"),
+			attr.aria_label("lets explore"),
 			attr.class("explore-btn"),
 			"lets explore"
 		),
-		button(
+		a(
+			attr.href("https://github.com/jithujoshyjy/jQuire"),
+			attr.aria_label("go to github"),
 			attr.class("github-btn")
 		)
 	)
@@ -343,8 +379,10 @@ const { attr, text, fragment } = nodes`
 
 	return section(
 		css(style),
+		attr.id("installation-n-imports-section"),
 		css("h3.installation-n-imports-heading")(installationHeadingStyle),
 		h3(
+			
 			attr.class("installation-n-imports-heading"),
 			"Installation and Imports"
 		),

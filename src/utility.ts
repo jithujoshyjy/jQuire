@@ -583,7 +583,7 @@ export class JqAttribute {
 	jqParent: JqElement | null = null
 
 	constructor(name: string, value: string) {
-		this.name = name
+		this.name = camelToKebab(name).replace(/_/g, '-')
 		this.value = value
 	}
 
@@ -1467,6 +1467,7 @@ export const validHTMLElements = [
 	"s",
 	"section",
 	"small",
+	"span",
 	"strike",
 	"tt",
 	"u",
