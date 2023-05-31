@@ -101,8 +101,8 @@ const Navbar = () => {
 	}
 
 	const menuBtnStyle = {
-		width: "1.5rem",
-		height: "1.5rem",
+		width: "1.6rem",
+		height: "1.6rem",
 		padding: "0.1rem",
 		marginLeft: "auto",
 		border: "none",
