@@ -144,7 +144,12 @@ button(
         "100%": {
             transform: "scale(1.15)"
         }
-    })
+    }),
+    css("@media screen and (max-width: 500px)")(
+        css(":host")({
+            borderColor: "cyan"
+        })
+    )
 )
 ```
 
