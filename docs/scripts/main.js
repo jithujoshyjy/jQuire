@@ -1,8 +1,14 @@
+/* import {
+	natives, nodes, showIf,
+	on, ref, pathSetter,
+	getNodes, animate, css
+} from "../libs/jquire/jquire.min.js" */
+
 import {
 	natives, nodes, showIf,
 	on, ref, pathSetter,
 	getNodes, animate, css
-} from "../libs/jquire/jquire.min.js"
+} from "../../dist/jquire.js"
 
 import highlight from "../libs/highlight/es/core.js"
 import javascript from "../libs/highlight/es/languages/javascript.min.js"
@@ -132,19 +138,21 @@ const Header = () => {
 	}
 
 	const calloutDivStyle = {
+		width: "100%",
 		height: "80vh",
 		backgroundRepeat: "no-repeat",
 		backgroundSize: "7rem 7rem",
 		backgroundPosition: "100% 100%",
-		display: "flex",
+		display: "grid",
+		gridTemplate: "1fr / 1fr 0.85fr",
 		alignItems: "center",
 		backgroundImage: `url('${assets("border-pattern-1-lg.svg")}')`
 	}
 
 	const calloutDivMaxWidth500pxStyle = {
-		":host": {
-			flexDirection: "row"
-		}
+		gridTemplate: "0.5fr 0.2fr / 1fr",
+		justifyContent: "center",
+		justifyItems: "center"
 	}
 
 	const jQuireLogoStyle = {
@@ -153,10 +161,19 @@ const Header = () => {
 		marginLeft: "7rem",
 	}
 
+	const jQuireLogoMaxWidth500pxStyle = {
+		marginLeft: "0rem !important",
+	}
+
 	const calloutInnerDivStyle = {
+		width: "100%",
 		display: "flex",
 		flexDirection: "column",
-		marginLeft: "10rem",
+	}
+
+	const calloutInnerDivMaxWidth500pxStyle = {
+		alignItems: "center",
+		marginLeft: "0rem",
 	}
 
 	const calloutBtnGroupStyle = {
@@ -220,7 +237,10 @@ const Header = () => {
 		Navbar(),
 		div(
 			css(calloutDivStyle),
-			css("@media", "screen and", "(max-width: 500px)")(calloutDivMaxWidth500pxStyle),
+			css("@media", "screen", "and", "(max-width: 500px)")(
+				css(":host")(calloutDivMaxWidth500pxStyle),
+				css("img.jquire-logo")(jQuireLogoMaxWidth500pxStyle),
+			),
 			css("img.jquire-logo")(jQuireLogoStyle),
 			img(
 				attr.class("jquire-logo"),
@@ -231,21 +251,22 @@ const Header = () => {
 			),
 			div(
 				css(calloutInnerDivStyle),
-				div(
-					css.display("inline-block"),
-					h1(
-						css.marginTop("0rem"),
-						css.marginBottom("0rem"),
-						"jQuery UI Reciter"
-					),
-					p(
-						css.width("60%"),
-						css.marginBottom("1rem"),
-						css.marginRight("0rem"),
-						"A library that embraces JavaScript and let's you build amazing things."
-					),
-					ButtonGroup()
-				)
+				css("@media", "screen", "and", "(max-width: 500px)")(
+					css(":host")(calloutInnerDivMaxWidth500pxStyle)
+				),
+				h1(
+					css.marginTop("0rem"),
+					css.marginBottom("0rem"),
+					"jQuery UI Reciter"
+				),
+				p(
+					css.width("60%"),
+					css.marginBottom("1rem"),
+					css.marginRight("0rem"),
+					"A library that embraces JavaScript and let's you build amazing things."
+				),
+				ButtonGroup()
+
 			)
 		)
 	)
@@ -389,7 +410,7 @@ const { attr, text, fragment } = nodes`
 		attr.id("installation-n-imports-section"),
 		css("h3.installation-n-imports-heading")(installationHeadingStyle),
 		h3(
-			
+
 			attr.class("installation-n-imports-heading"),
 			"Installation and Imports"
 		),
