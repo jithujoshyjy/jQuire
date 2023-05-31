@@ -21,7 +21,7 @@ highlight.registerLanguage("javascript", javascript)
 natives.globalize()
 const { attr } = nodes
 
-const assets = pathSetter("../../assets/")
+const assets = pathSetter("./assets/")
 
 const sectionStyle = {
 	marginBottom: "2.5rem"

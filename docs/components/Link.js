@@ -1,4 +1,4 @@
-import { natives, nodes } from "../../dist/jquire.min.js"
+import { natives, nodes } from "../libs/jquire/jquire.min.js"
 
 const { a } = natives
 const { attr } = nodes

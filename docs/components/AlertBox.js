@@ -1,9 +1,9 @@
-import { natives, nodes, css, pathSetter } from "../../dist/jquire.min.js"
+import { natives, nodes, css, pathSetter } from "../libs/jquire/jquire.min.js"
 
 const { div, img, h4, p } = natives
 const { attr, text, fragment } = nodes
 
-const assets = pathSetter("../../assets/")
+const assets = pathSetter("./assets/")
 
 export default (heading = '', content = '') => {
 	const style = {
