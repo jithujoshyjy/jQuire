@@ -1138,7 +1138,8 @@ export const camelToKebab = (str: string) =>
 	str.replace(/[A-Z]+(?![a-z])|[A-Z]/g, ($, ofs) => (ofs ? "-" : "") + $.toLowerCase())
 
 export function createPropertyListFromStyleObject(errorMessage: string, styleObject: { [x: string]: Primitive }) {
-	if (styleObject === null || typeof styleObject !== "object")
+	const isObject = (value: any) => value !== null && typeof value == "object"
+	if (!isObject(styleObject))
 		throw new Error(errorMessage)
 
 	const styleProperties: JqCSSProperty[] = Object.entries(styleObject)

@@ -2,7 +2,7 @@ import {
 	natives, nodes, showIf,
 	on, ref, pathSetter,
 	getNodes, animate, css
-} from "../../dist/jquire.min.js"
+} from "../libs/jquire/jquire.min.js"
 
 import highlight from "../libs/highlight/es/core.js"
 import javascript from "../libs/highlight/es/languages/javascript.min.js"
@@ -141,6 +141,12 @@ const Header = () => {
 		backgroundImage: `url('${assets("border-pattern-1-lg.svg")}')`
 	}
 
+	const calloutDivMaxWidth500pxStyle = {
+		":host": {
+			flexDirection: "row"
+		}
+	}
+
 	const jQuireLogoStyle = {
 		width: "11rem",
 		height: "11rem",
@@ -214,6 +220,7 @@ const Header = () => {
 		Navbar(),
 		div(
 			css(calloutDivStyle),
+			css("@media", "screen and", "(max-width: 500px)")(calloutDivMaxWidth500pxStyle),
 			css("img.jquire-logo")(jQuireLogoStyle),
 			img(
 				attr.class("jquire-logo"),
