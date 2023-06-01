@@ -38,79 +38,216 @@ const sectionHeadingStyle = {
 	marginTop: "1.5rem"
 }
 
-const JqIcon = () => {
-	const style = {
-		fontWeight: "600",
-	}
-
-	const jQPartStyle = {
-		backgroundColor: "white",
-		width: "1.5rem",
-		height: "1.5rem",
-		display: "flex",
-		fontSize: "1rem",
-		fontWeight: "900",
-		alignItems: "center",
-		boxSizing: "border-box",
-		paddingRight: "0.15rem",
-		justifyContent: "flex-end",
-		color: "var(--cinder)",
-		borderRadius: "0.4rem",
-		marginRight: "0.1rem",
-	}
-
-	const jQIconLinkStyle = {
-		color: "inherit",
-		textDecoration: "none",
-		display: "flex",
-		alignItems: "baseline",
-		transition: "transform 200ms"
-	}
-
-	const jQIconLinkActiveStyle = {
-		transform: "scale(0.9)"
-	}
-
-	return div(
-		css(style),
-		css("a.jq-home-link")(jQIconLinkStyle),
-		css("a.jq-home-link:active")(jQIconLinkActiveStyle),
-		css("span.jq-part")(jQPartStyle),
-		a(
-			attr.aria_label("jQuire"),
-			attr.class("jq-home-link"),
-			attr.href("#"),
-			span(
-				attr.class("jq-part"),
-				"jQ"
-			),
-			"uire"
-		)
-	)
-}
-
-const MenuIcon = () => button(
-	attr.class("menu-btn"),
-	attr.aria_label("menu"),
-)
-
 const Navbar = () => {
+	const JqIcon = () => {
+		const style = {
+			fontWeight: "600",
+		}
+
+		const jQPartStyle = {
+			backgroundColor: "white",
+			width: "1.5rem",
+			height: "1.5rem",
+			display: "flex",
+			fontSize: "1rem",
+			fontWeight: "900",
+			alignItems: "center",
+			boxSizing: "border-box",
+			paddingRight: "0.15rem",
+			justifyContent: "flex-end",
+			color: "var(--cinder)",
+			borderRadius: "0.4rem",
+			marginRight: "0.1rem",
+		}
+
+		const jQIconLinkStyle = {
+			color: "inherit",
+			textDecoration: "none",
+			display: "flex",
+			alignItems: "baseline",
+			transition: "transform 200ms"
+		}
+
+		const jQIconLinkActiveStyle = {
+			transform: "scale(0.9)"
+		}
+
+		return div(
+			css(style),
+			css("a.jq-home-link")(jQIconLinkStyle),
+			css("a.jq-home-link:active")(jQIconLinkActiveStyle),
+			css("span.jq-part")(jQPartStyle),
+			a(
+				attr.aria_label("jQuire"),
+				attr.class("jq-home-link"),
+				attr.href("#"),
+				span(
+					attr.class("jq-part"),
+					"jQ"
+				),
+				"uire"
+			)
+		)
+	}
+
+	const MenuIcon = (sidebarRef) => {
+		const handleMenuBtnClick = (evt) => {
+			evt.stopPropagation()
+			sidebarRef.clicked = !sidebarRef.clicked
+		}
+
+		return button(
+			attr.class("menu-btn"),
+			attr.aria_label("menu"),
+			on.click(handleMenuBtnClick)
+		)
+	}
+
+	const Sidebar = (sidebarRef) => {
+		const style = {
+			position: "absolute",
+			top: "3rem",
+			right: "-1rem",
+			width: "12.5rem",
+			height: "80vh",
+			zIndex: "10",
+			boxSizing: "border-box",
+			padding: "1rem",
+			borderRadius: "0.25rem",
+			border: "0.075rem solid var(--mirage-lite)",
+			backgroundColor: "var(--mirage)"
+		}
+
+		const searchFieldStyle = {
+			width: "100%",
+			backgroundColor: "var(--cinder)",
+			border: "none",
+			outline: "none",
+			color: "white",
+			fontSize: "0.6rem",
+			borderRadius: "0.15rem",
+			padding: "0.35rem 0.65rem",
+			border: "0.075rem solid var(--mirage-lite)"
+		}
+
+		const searchFieldFocusStyle = {
+			border: "0.05rem solid var(--greenish-fountain-blue)"
+		}
+
+		const sectionListStyle = {
+			height: "90%",
+			overflow: "auto",
+			listStyleType: "none",
+			padding: "0rem",
+			fontSize: "0.65rem",
+		}
+
+		const sectionListItemStyle = {
+			padding: "0.5rem 1rem",
+			borderRadius: "0.15rem"
+		}
+
+		const sectionListItemHoverStyle = {
+			backgroundColor: "var(--mirage-lite)"
+		}
+
+		const sectionListScrollbarStyle = {
+			height: "0.75rem",
+			borderRadius: "0.25rem",
+			backgroundColor: "var(--mirage-lite)",
+		}
+
+		const sectionListScrollbarThumbStyle = {
+			backgroundColor: "var(--mirage)",
+			borderRadius: "0.25rem",
+			border: "0.1rem solid var(--mirage-lite)"
+		}
+
+		const goToSectionLinkStyle = {
+			color: "inherit",
+			textDecoration: "none",
+		}
+
+		const goToSectionLinkHoverStyle = {
+			textDecoration: "underline"
+		}
+
+		const onUpdateCallback = () => {
+			sidebarRef.deref().style.setProperty("display", sidebarRef.clicked ? "initial" : "none")
+		}
+
+		const headings = [
+			{ id: "what-n-why-section", text: "What and Why?" },
+			{ id: "installation-n-imports-section", text: "Installation and Imports" },
+			{ id: "using-npm-section", text: "Using npm" },
+			{ id: "using-cdn-section", text: "Using cdn" },
+			{ id: "imports-after-installation-section", text: "Imports after installation" },
+			{ id: "components-section", text: "Components" },
+			{ id: "nesting-section", text: "Nesting" },
+			{ id: "component-attributes-n-children-section", text: "Component attributes and children" },
+			{ id: "rendering-content-section", text: "Rendering Content" },
+			{ id: "specifying-attributes-section", text: "Specifying Attributes" },
+			{ id: "styling-elements-section", text: "Styling Elements" },
+			{ id: "css-properties-section", text: "CSS Properties" },
+			{ id: "specifying-styles-for-child-elements-section", text: "Specifying Styles for Child Elements" },
+			{ id: "pseudo-classes-pseudo-elements-n-css-rules-section", text: "Pseudo Classes, Pseudo Elements and CSS Rules" },
+			{ id: "animating-elements-section", text: "Animating Elements" },
+			{ id: "handling-events-section", text: "Handling Events" },
+			{ id: "creating-elements-from-an-iterable-section", text: "Creating elements from an Iterable" },
+			{ id: "reactive-data-n-element-reference-section", text: "Reactive Data and Element Reference" },
+			{ id: "conditional-rendering-section", text: "Conditional Rendering" },
+		]
+
+		return aside(
+			sidebarRef,
+			css(style),
+			onUpdateCallback,
+			css("input.search-field")(searchFieldStyle),
+			css("input.search-field:focus")(searchFieldFocusStyle),
+			css("ul.section-list")(sectionListStyle),
+			css(`ul.section-list::-webkit-scrollbar`)(sectionListScrollbarStyle),
+			css(`ul.section-list::-webkit-scrollbar-thumb`)(sectionListScrollbarThumbStyle),
+			css("ul.section-list > li")(sectionListItemStyle),
+			css("ul.section-list > li:hover")(sectionListItemHoverStyle),
+			css("a.go-to-section-link")(goToSectionLinkStyle),
+			css("a.go-to-section-link:hover")(goToSectionLinkHoverStyle),
+			input(
+				attr.class("search-field"),
+				attr.type("search"),
+				attr.placeholder("Filter Headings")
+			),
+			ul(
+				attr.class("section-list"),
+				...headings.map(h =>
+					li(
+						a(
+							attr.class("go-to-section-link"),
+							attr.href('#' + h.id),
+							h.text
+						)
+					)
+				)
+			)
+		)
+	}
+
 	const style = {
 		backgroundColor: "var(--mirage)",
 		width: "100%",
+		zIndex: "10",
 		height: "3rem",
 		display: "flex",
 		padding: "0rem 1rem",
 		boxSizing: "border-box",
 		alignItems: "center",
-		borderRadius: "0.25rem"
+		borderRadius: "0.25rem",
+		border: "0.075rem solid var(--mirage-lite)",
 	}
 
 	const menuBtnStyle = {
 		width: "1.6rem",
 		height: "1.6rem",
 		padding: "0.1rem",
-		marginLeft: "auto",
 		border: "none",
 		cursor: "pointer",
 		backgroundSize: "contain",
@@ -123,12 +260,24 @@ const Navbar = () => {
 		transform: "scale(0.9)"
 	}
 
+	const menuContainerStyle = {
+		marginLeft: "auto",
+		position: "relative"
+	}
+
+	const clicked = false
+	const sidebarRef = ref({ clicked })
+
 	return nav(
 		css(style),
-		css("button.menu-btn")(menuBtnStyle),
-		css("button.menu-btn:active")(menuBtnActiveStyle),
 		JqIcon(),
-		MenuIcon()
+		div(
+			css(menuContainerStyle),
+			css("button.menu-btn")(menuBtnStyle),
+			css("button.menu-btn:active")(menuBtnActiveStyle),
+			MenuIcon(sidebarRef),
+			Sidebar(sidebarRef)
+		)
 	)
 }
 
@@ -140,6 +289,7 @@ const Header = () => {
 	const calloutDivStyle = {
 		width: "100%",
 		height: "80vh",
+		position: "relative",
 		backgroundRepeat: "no-repeat",
 		backgroundSize: "7rem 7rem",
 		backgroundPosition: "100% 100%",
@@ -266,7 +416,6 @@ const Header = () => {
 					"A library that embraces JavaScript and let's you build amazing things."
 				),
 				ButtonGroup()
-
 			)
 		)
 	)
@@ -292,6 +441,7 @@ const WhatNWhySection = () => {
 	return section(
 		css(style),
 		css("h3.what-n-why-heading")(sectionHeadingStyle),
+		attr.id("what-n-why-section"),
 		h3(
 			attr.class("what-n-why-heading"),
 			"What and Why?"
@@ -336,6 +486,7 @@ const InstallationNImportsSection = () => {
 		const _code = `npm install jquire`
 
 		return section(
+			attr.id("using-npm-section"),
 			h4(
 				css(usingNPMHeadingStyle),
 				"Using npm",
@@ -352,6 +503,7 @@ const InstallationNImportsSection = () => {
 		const _code = `<script type="module" src="https://cdn.jsdelivr.net/gh/jithujoshyjy/jQuire/jquire.min.js"></script>`
 
 		return section(
+			attr.id("using-cdn-section"),
 			h4(
 				css(usingCDNHeadingStyle),
 				"Using cdn"
@@ -385,6 +537,7 @@ const { attr, text, fragment } = nodes`
 		const code3 = `natives.globalize()`
 
 		return section(
+			attr.id("imports-after-installation-section"),
 			h4(
 				css(ImportsAfterInstallationHeadingStyle),
 				"Imports after installation"
@@ -452,6 +605,7 @@ const ComponentsSection = () => {
 )`
 
 		return section(
+			attr.id("nesting-section"),
 			h4(
 				css(style),
 				"Nesting",
@@ -476,6 +630,7 @@ const ComponentsSection = () => {
 }`
 
 		return section(
+			attr.id("component-attributes-n-children-section"),
 			h4(
 				css(style),
 				"Component attributes and children",
@@ -487,6 +642,7 @@ const ComponentsSection = () => {
 	return section(
 		css(style),
 		css("h3.components-heading")(componentsHeadingStyle),
+		attr.id("components-section"),
 		h3(
 			attr.class("components-heading"),
 			"Components"
@@ -516,6 +672,7 @@ const RenderingContentSection = () => {
 	return section(
 		css(style),
 		css("h3.rendering-content-heading")(renderingContentHeadingStyle),
+		attr.id("rendering-content-section"),
 		h3(
 			attr.class("rendering-content-heading"),
 			"Rendering Content"
@@ -546,6 +703,7 @@ const SpecifyingAttributesSection = () => {
 	return section(
 		css(style),
 		css("h3.specifying-attributes-heading")(specifyingAttributesHeadingStyle),
+		attr.id("specifying-attributes-section"),
 		h3(
 			attr.class("specifying-attributes-heading"),
 			"Specifying Attributes"
@@ -583,6 +741,7 @@ const StylingElementsSection = () => {
 )`
 
 		return section(
+			attr.id("css-properties-section"),
 			h4(
 				css(style),
 				"CSS Properties",
@@ -611,6 +770,7 @@ const StylingElementsSection = () => {
 )`
 
 		return section(
+			attr.id("specifying-styles-for-child-elements-section"),
 			h4(
 				css(styles),
 				"Specifying Styles for Child Elements"
@@ -652,6 +812,7 @@ const StylingElementsSection = () => {
 )`
 
 		return section(
+			attr.id("pseudo-classes-pseudo-elements-n-css-rules-section"),
 			h4(
 				css(PseudoClassesPseudoElementsNCSSRulesHeadingStyle),
 				"Pseudo Classes, Pseudo Elements and CSS Rules"
@@ -663,6 +824,7 @@ const StylingElementsSection = () => {
 	return section(
 		css(style),
 		css("h3.styling-elements-heading")(stylingElementsStyle),
+		attr.id("styling-elements-section"),
 		h3(
 			attr.class("styling-elements-heading"),
 			"Styling Elements"
@@ -701,6 +863,7 @@ const AnimatingElementsSection = () => {
 	return section(
 		css(style),
 		css("h3.animating-elements-heading")(animatingElementsHeadingStyle),
+		attr.id("animating-elements-section"),
 		h3(
 			attr.class("animating-elements-heading"),
 			"Animating Elements"
@@ -730,6 +893,7 @@ const HandlingEventsSection = () => {
 	return section(
 		css(style),
 		css("h3.handling-events-heading")(handlingEventsHeadingStyle),
+		attr.id("handling-events-section"),
 		h3(
 			attr.class("handling-events-heading"),
 			"Handling Events"
@@ -762,6 +926,7 @@ ul(
 	return section(
 		css(style),
 		css("h3.creating-elements-from-an-iterable-heading")(creatingElementsFromAnIterableHeadingStyle),
+		attr.id("creating-elements-from-an-iterable-section"),
 		h3(
 			attr.class("creating-elements-from-an-iterable-heading"),
 			"Creating elements from an Iterable"
@@ -811,6 +976,7 @@ console.log(personRef.deref()) // HTMLDivElement`
 	return section(
 		css(style),
 		css("h3.reactive-data-n-element-reference-heading")(reactiveDataNElementReferenceHeadingStyle),
+		attr.id("reactive-data-n-element-reference-section"),
 		h3(
 			attr.class("reactive-data-n-element-reference-heading"),
 			"Reactive Data and Element Reference"
@@ -856,6 +1022,7 @@ div(
 	return section(
 		css(style),
 		css("h3.conditional-rendering-heading")(conditionalRenderingHeadingStyle),
+		attr.id("conditional-rendering-section"),
 		h3(
 			attr.class("conditional-rendering-heading"),
 			"Conditional Rendering"

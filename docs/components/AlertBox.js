@@ -12,7 +12,8 @@ export default (heading = '', content = '') => {
 		borderLeft: "0.3rem solid var(--greenish-fountain-blue)",
 		padding: "0.85rem 1.75rem",
 		borderRadius: "0.2rem",
-		backgroundColor: "var(--mirage)"
+		backgroundColor: "var(--mirage)",
+		border: "0.075rem solid var(--mirage-lite)",
 	}
 
 	const alertHeadingStyle = {

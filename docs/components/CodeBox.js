@@ -14,7 +14,8 @@ export default (language = '', sourceCode = '', highlighter) => {
 		boxSizing: "border-box",
 		padding: "0rem 1.5rem",
 		overflow: "auto",
-		backgroundColor: "var(--mirage)"
+		backgroundColor: "var(--mirage)",
+		border: "0.075rem solid var(--mirage-lite)",
 	}
 
 	const codeStyle = {
