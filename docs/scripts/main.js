@@ -1,14 +1,14 @@
-/* import {
-	natives, nodes, showIf,
-	on, ref, pathSetter,
-	getNodes, animate, css
-} from "../libs/jquire/jquire.min.js" */
-
 import {
 	natives, nodes, showIf,
 	on, ref, pathSetter,
 	getNodes, animate, css
-} from "../../dist/jquire.js"
+} from "../libs/jquire/jquire.min.js"
+
+/* import {
+	natives, nodes, showIf,
+	on, ref, pathSetter,
+	getNodes, animate, css
+} from "../../dist/jquire.js" */
 
 import highlight from "../libs/highlight/es/core.js"
 import javascript from "../libs/highlight/es/languages/javascript.min.js"
