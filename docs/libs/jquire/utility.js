@@ -946,7 +946,8 @@ export function canHaveShadow(element) {
 }
 export const camelToKebab = (str) => str.replace(/[A-Z]+(?![a-z])|[A-Z]/g, ($, ofs) => (ofs ? "-" : "") + $.toLowerCase());
 export function createPropertyListFromStyleObject(errorMessage, styleObject) {
-    if (styleObject === null || typeof styleObject !== "object")
+    const isObject = (value) => value !== null && typeof value == "object";
+    if (!isObject(styleObject))
         throw new Error(errorMessage);
     const styleProperties = Object.entries(styleObject)
         .map(([key, value]) => new JqCSSProperty(key, value));
@@ -1143,6 +1144,7 @@ export const validHTMLElements = [
     "del",
     "details",
     "dfn",
+    "dialog",
     "div",
     "dl",
     "dt",
@@ -1201,5 +1203,41 @@ export const validHTMLElements = [
     "u",
     "var",
     "video",
-    "wbr"
+    "wbr",
+    "abbr",
+    "area",
+    "bdi",
+    "blockquote",
+    "body",
+    "iframe",
+    "menu",
+    "meta",
+    "picture",
+    "rb",
+    "rp",
+    "rt",
+    "rtc",
+    "samp",
+    "script",
+    "select",
+    "slot",
+    "source",
+    "strong",
+    "style",
+    "sub",
+    "summary",
+    "sup",
+    "table",
+    "tbody",
+    "td",
+    "template",
+    "textarea",
+    "tfoot",
+    "th",
+    "thead",
+    "time",
+    "title",
+    "tr",
+    "track",
+    "ul",
 ];
