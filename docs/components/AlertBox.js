@@ -9,11 +9,11 @@ const assets = pathSetter("./assets/")
 export default (heading = '', content = '') => {
 	const style = {
 		boxSizing: "border-box",
-		borderLeft: "0.3rem solid var(--greenish-fountain-blue)",
 		padding: "0.85rem 1.75rem",
 		borderRadius: "0.2rem",
 		backgroundColor: "var(--mirage)",
 		border: "0.075rem solid var(--mirage-lite)",
+		borderLeft: "0.3rem solid var(--greenish-fountain-blue)",
 	}
 
 	const alertHeadingStyle = {
