@@ -176,7 +176,7 @@ const Navbar = () => {
 			sidebarRef.deref().style.setProperty("display", sidebarRef.clicked ? "initial" : "none")
 		}
 
-		const headings = [
+		let headings = [
 			{ id: "what-n-why-section", text: "What and Why?" },
 			{ id: "installation-n-imports-section", text: "Installation and Imports" },
 			{ id: "using-npm-section", text: "Using npm" },
@@ -197,10 +197,15 @@ const Navbar = () => {
 			{ id: "reactive-data-n-element-reference-section", text: "Reactive Data and Element Reference" },
 			{ id: "conditional-rendering-section", text: "Conditional Rendering" },
 		]
+		
+		const hasHeadingListRefreshed = false
+		const headingRefreshRef = ref({ hasHeadingListRefreshed })
 
 		const originalHeadings = [...headings]
 		const handleInput = (evt) => {
-			headings
+			headings = originalHeadings.filter(x => x.text.toLowerCase().includes(evt.target.value.trim().toLowerCase()))
+			console.log(originalHeadings);
+			return headingRefreshRef.hasHeadingListRefreshed = true
 		}
 
 		return aside(
@@ -223,8 +228,9 @@ const Navbar = () => {
 				attr.placeholder("Filter Headings")
 			),
 			ul(
+				headingRefreshRef,
 				attr.class("section-list"),
-				headings.map(h =>
+				() => headings.map(h =>
 					li(
 						a(
 							attr.class("go-to-section-link"),

@@ -244,11 +244,11 @@ export class JqCallback {
                     const lastElemIdx = Number(diff[CREATED][diff[CREATED].length - 1]);
                     _node1.childNodes.splice(lastElemIdx, 0, childNode);
                     const node1LastChild = _node1.childNodes[_node1.childNodes.length - 1];
-                    const node1LastChildNextSibling = node1LastChild.htmlNode.nextSibling;
+                    const node1LastChildNextSibling = node1LastChild.htmlNode?.nextSibling;
                     childNode.jqParent = _node1;
                     if (childNode instanceof JqElement || childNode instanceof JqText) {
                         childNode.initial.createNode();
-                        (_node1.shadowRoot || _node1.htmlNode).insertBefore(childNode.htmlNode, node1LastChildNextSibling);
+                        (_node1.shadowRoot || _node1.htmlNode).insertBefore(childNode.htmlNode, node1LastChildNextSibling ?? null);
                     }
                 }
                 function createFragment(diff, props) {
