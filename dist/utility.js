@@ -511,6 +511,7 @@ class JqAttribute {
                 if (value === jqAttribute.value)
                     return this;
                 jqAttribute.value = value;
+                jqAttribute.attrNode ?? (jqAttribute.attrNode = document.createAttribute(jqAttribute.name));
                 jqAttribute.attrNode.value = value;
                 return this;
             }
