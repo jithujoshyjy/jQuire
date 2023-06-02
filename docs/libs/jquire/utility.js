@@ -32,6 +32,7 @@ const CREATED = Symbol("created");
 const UPDATED = Symbol("updated");
 const DELETED = Symbol("deleted");
 const UNCHANGED = Symbol("unchanged");
+const getJqNodeConstructors = () => [JqElement, JqAttribute, JqCSSProperty, JqCSSRule, JqAnimation, JqEvent, JqReference, JqFragment, JqText];
 export const throwError = (e) => { throw new Error(e); };
 export const JqNodeReference = Symbol("JqNodeReference");
 /**
@@ -118,6 +119,8 @@ export function convertToJqNode(value) {
         return convertToJqText(value);
     if (typeof value == "function")
         return new JqCallback(value);
+    if (getJqNodeConstructors().some(ctor => value instanceof ctor))
+        return value;
     return throwError(`JqError - Unexpected value found in place of a JqNode`);
 }
 const getPropertyValue = (object, props) => {

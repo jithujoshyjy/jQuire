@@ -198,6 +198,11 @@ const Navbar = () => {
 			{ id: "conditional-rendering-section", text: "Conditional Rendering" },
 		]
 
+		const originalHeadings = [...headings]
+		const handleInput = (evt) => {
+			headings
+		}
+
 		return aside(
 			sidebarRef,
 			css(style),
@@ -212,13 +217,14 @@ const Navbar = () => {
 			css("a.go-to-section-link")(goToSectionLinkStyle),
 			css("a.go-to-section-link:hover")(goToSectionLinkHoverStyle),
 			input(
+				on.input(handleInput),
 				attr.class("search-field"),
 				attr.type("search"),
 				attr.placeholder("Filter Headings")
 			),
 			ul(
 				attr.class("section-list"),
-				...headings.map(h =>
+				headings.map(h =>
 					li(
 						a(
 							attr.class("go-to-section-link"),
@@ -241,6 +247,8 @@ const Navbar = () => {
 		boxSizing: "border-box",
 		alignItems: "center",
 		borderRadius: "0.25rem",
+		position: "fixed",
+		width: "calc(100% - 3.5rem)",
 		border: "0.075rem solid var(--mirage-lite)",
 	}
 
@@ -293,9 +301,10 @@ const Header = () => {
 		backgroundRepeat: "no-repeat",
 		backgroundSize: "7rem 7rem",
 		backgroundPosition: "100% 100%",
-		display: "grid",
+		display: "inline-grid",
 		gridTemplate: "1fr / 1fr 0.85fr",
 		alignItems: "center",
+		marginTop: "3rem",
 		backgroundImage: `url('${assets("border-pattern-1-lg.svg")}')`
 	}
 

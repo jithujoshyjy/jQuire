@@ -25,6 +25,8 @@ const UPDATED = Symbol("updated")
 const DELETED = Symbol("deleted")
 const UNCHANGED = Symbol("unchanged")
 
+const getJqNodeConstructors = () => [JqElement, JqAttribute, JqCSSProperty, JqCSSRule, JqAnimation, JqEvent, JqReference, JqFragment, JqText]
+
 export const throwError = (e: string) => { throw new Error(e) }
 export const JqNodeReference = Symbol("JqNodeReference")
 /**
@@ -120,6 +122,9 @@ export function convertToJqNode(value: any): JqText | JqFragment | JqCallback {
 
 	if (typeof value == "function")
 		return new JqCallback(value)
+
+	if (getJqNodeConstructors().some(ctor => value instanceof ctor))
+		return value as JqText | JqFragment | JqCallback
 
 	return throwError(`JqError - Unexpected value found in place of a JqNode`)
 }
