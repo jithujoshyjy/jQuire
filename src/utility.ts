@@ -811,6 +811,7 @@ export class JqText {
 		},
 		setText(text: string) {
 			const jqText = this.context
+			jqText.htmlNode ??= document.createTextNode('')
 			jqText.htmlNode!.nodeValue = jqText.text = text
 		}
 	}
