@@ -124,7 +124,7 @@ const Navbar = () => {
 			backgroundColor: "var(--background-color-primary)",
 			border: "none",
 			outline: "none",
-			color: "white",
+			color: "var(--font-color)",
 			fontSize: "0.6rem",
 			borderRadius: "0.15rem",
 			padding: "0.35rem 0.65rem",

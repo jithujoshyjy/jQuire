@@ -78,13 +78,13 @@ body {
 :root::-webkit-scrollbar {
 	width: 0.85rem;
 	border-radius: 0.35rem;
-	background-color: var(--mirage-lite);
+	background-color: var(--background-color-tertiary);
 }
 
 :root::-webkit-scrollbar-thumb {
-	background-color: var(--mirage);
+	background-color: var(--background-color-secondary);
 	border-radius: 0.35rem;
-	border: 0.1rem solid var(--mirage-lite);
+	border: 0.1rem solid var(--background-color-tertiary);
 }
 
 noscript {
