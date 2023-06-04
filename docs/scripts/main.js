@@ -197,14 +197,14 @@ const Navbar = () => {
 			{ id: "reactive-data-n-element-reference-section", text: "Reactive Data and Element Reference" },
 			{ id: "conditional-rendering-section", text: "Conditional Rendering" },
 		]
-		
+
 		const hasHeadingListRefreshed = false
 		const headingRefreshRef = ref({ hasHeadingListRefreshed })
 
 		const originalHeadings = [...headings]
 		const handleInput = (evt) => {
-			headings = originalHeadings.filter(x => x.text.toLowerCase().includes(evt.target.value.trim().toLowerCase()))
-			console.log(originalHeadings);
+			headings = originalHeadings.filter(x =>
+				x.text.toLowerCase().includes(evt.target.value.trim().toLowerCase()))
 			return headingRefreshRef.hasHeadingListRefreshed = true
 		}
 
@@ -246,14 +246,12 @@ const Navbar = () => {
 	const style = {
 		backgroundColor: "var(--mirage)",
 		width: "100%",
-		zIndex: "10",
 		height: "3rem",
 		display: "flex",
 		padding: "0rem 1rem",
 		boxSizing: "border-box",
 		alignItems: "center",
 		borderRadius: "0.25rem",
-		position: "fixed",
 		width: "calc(100% - 3.5rem)",
 		border: "0.075rem solid var(--mirage-lite)",
 	}
@@ -297,7 +295,17 @@ const Navbar = () => {
 
 const Header = () => {
 	const style = {
-		marginBottom: "5rem"
+		marginBottom: "5rem",
+		position: "relative"
+	}
+
+	const navWrapperStyle = {
+		width: "100%",
+		paddingTop: "1rem",
+		backgroundColor: "var(--cinder)",
+		position: "fixed",
+		zIndex: "10",
+		top: "0rem"
 	}
 
 	const calloutDivStyle = {
@@ -399,7 +407,10 @@ const Header = () => {
 
 	return header(
 		css(style),
-		Navbar(),
+		div(
+			css(navWrapperStyle),
+			Navbar()
+		),
 		div(
 			css(calloutDivStyle),
 			css("@media", "screen", "and", "(max-width: 500px)")(
@@ -823,7 +834,17 @@ const StylingElementsSection = () => {
         "100%": {
             transform: "scale(1.15)"
         }
-    })
+    }),
+	css("@media screen and (max-width: 500px)")(
+		css(":host")({
+			backgroundColor: "tomato",
+			margin: "1rem"
+		}),
+		css("div.card")({
+			borderRadius: "0.25rem",
+			border: "1px solid #ECECEC"
+		})
+	)
 )`
 
 		return section(

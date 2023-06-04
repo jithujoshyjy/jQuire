@@ -12,6 +12,7 @@
 	--cinder: #0D1117;
 	font-family: 'Inter', sans-serif;
 	scroll-behavior: smooth;
+	accent-color: var(--greenish-fountain-blue);
 }
 
 body {
