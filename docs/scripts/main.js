@@ -115,7 +115,8 @@ const Navbar = () => {
 			padding: "1rem",
 			borderRadius: "0.25rem",
 			border: "0.075rem solid var(--mirage-lite)",
-			backgroundColor: "var(--mirage)"
+			backgroundColor: "var(--mirage)",
+			boxShadow: "var(--shadow-large)"
 		}
 
 		const searchFieldStyle = {
@@ -131,7 +132,7 @@ const Navbar = () => {
 		}
 
 		const searchFieldFocusStyle = {
-			border: "0.05rem solid var(--greenish-fountain-blue)"
+			borderColor: "var(--greenish-fountain-blue)"
 		}
 
 		const sectionListStyle = {
@@ -808,14 +809,6 @@ const StylingElementsSection = () => {
 	const PseudoClassesPseudoElementsNCSSRules = () => {
 		const PseudoClassesPseudoElementsNCSSRulesHeadingStyle = {
 			...headingStyle
-		}
-
-		const emphasizedStyle = {
-			fontStyle: "normal",
-			backgroundColor: "var(--mirage-lite)",
-			padding: "0.1rem 0.45rem",
-			borderRadius: "0.2rem",
-			margin: "0rem 0.3rem"
 		}
 
 		const code1 = `button(

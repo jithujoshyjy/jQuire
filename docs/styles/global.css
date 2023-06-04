@@ -10,6 +10,10 @@
 	--mirage: #161B22;
 	--mirage-lite: #1E252E;
 	--cinder: #0D1117;
+	--shadow-small: 0 0 transparent;
+    --shadow-medium: 0 3px 6px #010409;
+    --shadow-large: 0 8px 24px #010409;
+    --shadow-extra-large: 0 12px 48px #010409;
 	font-family: 'Inter', sans-serif;
 	scroll-behavior: smooth;
 	accent-color: var(--greenish-fountain-blue);
