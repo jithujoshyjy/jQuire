@@ -45,7 +45,7 @@ const Navbar = () => {
 		}
 
 		const jQPartStyle = {
-			backgroundColor: "white",
+			backgroundColor: "var(--font-color)",
 			width: "1.5rem",
 			height: "1.5rem",
 			display: "flex",
@@ -55,7 +55,7 @@ const Navbar = () => {
 			boxSizing: "border-box",
 			paddingRight: "0.15rem",
 			justifyContent: "flex-end",
-			color: "var(--cinder)",
+			color: "var(--background-color-primary)",
 			borderRadius: "0.4rem",
 			marginRight: "0.1rem",
 		}
@@ -114,21 +114,21 @@ const Navbar = () => {
 			boxSizing: "border-box",
 			padding: "1rem",
 			borderRadius: "0.25rem",
-			border: "0.075rem solid var(--mirage-lite)",
-			backgroundColor: "var(--mirage)",
+			border: "0.075rem solid var(--background-color-tertiary)",
+			backgroundColor: "var(--background-color-secondary)",
 			boxShadow: "var(--shadow-large)"
 		}
 
 		const searchFieldStyle = {
 			width: "100%",
-			backgroundColor: "var(--cinder)",
+			backgroundColor: "var(--background-color-primary)",
 			border: "none",
 			outline: "none",
 			color: "white",
 			fontSize: "0.6rem",
 			borderRadius: "0.15rem",
 			padding: "0.35rem 0.65rem",
-			border: "0.075rem solid var(--mirage-lite)"
+			border: "0.075rem solid var(--background-color-tertiary)"
 		}
 
 		const searchFieldFocusStyle = {
@@ -149,19 +149,19 @@ const Navbar = () => {
 		}
 
 		const sectionListItemHoverStyle = {
-			backgroundColor: "var(--mirage-lite)"
+			backgroundColor: "var(--background-color-tertiary)"
 		}
 
 		const sectionListScrollbarStyle = {
 			height: "0.75rem",
 			borderRadius: "0.25rem",
-			backgroundColor: "var(--mirage-lite)",
+			backgroundColor: "var(--background-color-tertiary)",
 		}
 
 		const sectionListScrollbarThumbStyle = {
-			backgroundColor: "var(--mirage)",
+			backgroundColor: "var(--background-color-secondary)",
 			borderRadius: "0.25rem",
-			border: "0.1rem solid var(--mirage-lite)"
+			border: "0.1rem solid var(--background-color-tertiary)"
 		}
 
 		const goToSectionLinkStyle = {
@@ -245,7 +245,7 @@ const Navbar = () => {
 	}
 
 	const style = {
-		backgroundColor: "var(--mirage)",
+		backgroundColor: "var(--background-color-secondary)",
 		width: "100%",
 		height: "3rem",
 		display: "flex",
@@ -254,7 +254,7 @@ const Navbar = () => {
 		alignItems: "center",
 		borderRadius: "0.25rem",
 		width: "calc(100% - 3.5rem)",
-		border: "0.075rem solid var(--mirage-lite)",
+		border: "0.075rem solid var(--background-color-tertiary)",
 	}
 
 	const menuBtnStyle = {
@@ -266,7 +266,7 @@ const Navbar = () => {
 		backgroundSize: "contain",
 		backgroundColor: "transparent",
 		transition: "transform 200ms",
-		backgroundImage: `url('${assets("icon - menu_book.svg")}')`
+		backgroundImage: `url('${assets("icon - menu_book-light.svg")}')`
 	}
 
 	const menuBtnActiveStyle = {
@@ -288,6 +288,11 @@ const Navbar = () => {
 			css(menuContainerStyle),
 			css("button.menu-btn")(menuBtnStyle),
 			css("button.menu-btn:active")(menuBtnActiveStyle),
+			css("@media (prefers-color-scheme: light)")(
+				css("button.menu-btn")({
+					backgroundImage: `url('${assets("icon - menu_book-dark.svg")}')`
+				})
+			),
 			MenuIcon(sidebarRef),
 			Sidebar(sidebarRef)
 		)
@@ -303,7 +308,7 @@ const Header = () => {
 	const navWrapperStyle = {
 		width: "100%",
 		paddingTop: "1rem",
-		backgroundColor: "var(--cinder)",
+		backgroundColor: "var(--background-color-primary)",
 		position: "fixed",
 		zIndex: "10",
 		top: "0rem"
@@ -380,7 +385,7 @@ const Header = () => {
 		backgroundSize: "contain",
 		backgroundColor: "transparent",
 		transition: "transform 200ms",
-		backgroundImage: `url('${assets("icon - github.svg")}')`
+		backgroundImage: `url('${assets("icon - github-light.svg")}')`
 	}
 
 	const linkActiveStyle = {
@@ -393,6 +398,11 @@ const Header = () => {
 		css("a.github-btn")(githubLinkStyle),
 		css("a.explore-btn:active")(linkActiveStyle),
 		css("a.github-btn:active")(linkActiveStyle),
+		css("@media (prefers-color-scheme: light)")(
+			css("a.github-btn")({
+				backgroundImage: `url('${assets("icon - github-dark.svg")}')`
+			})
+		),
 		a(
 			attr.href("#installation-n-imports-section"),
 			attr.aria_label("lets explore"),
@@ -1074,8 +1084,8 @@ const Footer = () => {
 
 	const dividerLineStyle = {
 		borderWidth: "0.025rem",
-		borderColor: "var(--mirage-lite)",
-		backgroundColor: "var(--mirage-lite)"
+		borderColor: "var(--background-color-tertiary)",
+		backgroundColor: "var(--background-color-tertiary)"
 	}
 
 	const footerTextStyle = {

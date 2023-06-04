@@ -11,8 +11,9 @@ export default (heading = '', content = '') => {
 		boxSizing: "border-box",
 		padding: "0.85rem 1.75rem",
 		borderRadius: "0.2rem",
-		backgroundColor: "var(--mirage)",
-		border: "0.075rem solid var(--mirage-lite)",
+		color: "var(--font-color)",
+		backgroundColor: "var(--background-color-secondary)",
+		border: "0.075rem solid var(--background-color-tertiary)",
 		borderLeft: "0.3rem solid var(--greenish-fountain-blue)",
 	}
 

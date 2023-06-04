@@ -1,5 +1,5 @@
-import { natives, nodes, css, pathSetter, ref } from "../libs/jquire/jquire.min.js"
-// import { natives, nodes, css, pathSetter, ref } from "../../dist/jquire.js"
+import { natives, nodes, css, ref } from "../libs/jquire/jquire.min.js"
+// import { natives, nodes, css, ref } from "../../dist/jquire.js"
 
 const { pre, code, link } = natives
 const { attr, fragment } = nodes
@@ -14,8 +14,9 @@ export default (language = '', sourceCode = '', highlighter) => {
 		boxSizing: "border-box",
 		padding: "0rem 1.5rem",
 		overflow: "auto",
-		backgroundColor: "var(--mirage)",
-		border: "0.075rem solid var(--mirage-lite)",
+		color: "var(--font-color)",
+		backgroundColor: "var(--background-color-secondary)",
+		border: "0.075rem solid var(--background-color-tertiary)",
 	}
 
 	const codeStyle = {
@@ -27,24 +28,27 @@ export default (language = '', sourceCode = '', highlighter) => {
 	const codeBoxScrollbarStyle = {
 		height: "0.75rem",
 		borderRadius: "0.25rem",
-		backgroundColor: "var(--mirage-lite)",
+		backgroundColor: "var(--background-color-tertiary)",
 	}
 
 	const codeBoxScrollbarThumbStyle = {
-		backgroundColor: "var(--mirage)",
+		backgroundColor: "var(--background-color-secondary)",
 		borderRadius: "0.25rem",
-		border: "0.1rem solid var(--mirage-lite)"
+		border: "0.1rem solid var(--background-color-tertiary)"
 	}
 
+	const codeThemeLinkRef = decideCodeTheme()
 	const codeBlock = ref()
+
 	return div(
 		css(style),
 		css(`code.language-${language}`)(codeStyle),
 		css(`:host::-webkit-scrollbar`)(codeBoxScrollbarStyle),
 		css(`:host::-webkit-scrollbar-thumb`)(codeBoxScrollbarThumbStyle),
 		link(
+			codeThemeLinkRef,
 			attr.rel("stylesheet"),
-			attr.href("./libs/highlight/styles/github-dark.min.css")
+			({ codeThemeLink }) => attr.href(codeThemeLink)
 		),
 		pre(
 			code(
@@ -55,4 +59,25 @@ export default (language = '', sourceCode = '', highlighter) => {
 			)
 		)
 	)
+
+	function decideCodeTheme() {
+		const codeThemes = {
+			dark: "./libs/highlight/styles/github-dark.min.css",
+			light: "./libs/highlight/styles/github.min.css",
+		}
+
+		if (!window.matchMedia) return ref({ codeThemeLink: codeThemes.dark })
+
+		const preferLightTheme = window.matchMedia("(prefers-color-scheme: light)").matches
+
+		const codeThemeLink = preferLightTheme ? codeThemes.light : codeThemes.dark
+		const codeThemeLinkRef = ref({ codeThemeLink })
+
+		window.matchMedia("(prefers-color-scheme: light)").addEventListener("change", event => {
+			const codeThemeLink = event.matches ? codeThemes.light : codeThemes.dark
+			codeThemeLinkRef.codeThemeLink = codeThemeLink
+		})
+
+		return codeThemeLinkRef
+	}
 }
