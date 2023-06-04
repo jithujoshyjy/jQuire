@@ -88,17 +88,17 @@ export function getNodes(nodes) {
             blockStyles.push(node);
         }
         else if (Array.isArray(node)) {
-            const _node = convertToJqNode(node);
+            const _node = convertToJqNode(node, null);
             _node.nodePosition = i;
             childNodes.push(_node);
         }
         else if (typeof node == "function") {
-            const _node = convertToJqNode(node);
+            const _node = convertToJqNode(node, null);
             _node.nodePosition = i;
             callbacks.push(_node);
         }
         else if (isPrimitive(node)) {
-            const _node = convertToJqNode(node);
+            const _node = convertToJqNode(node, null);
             _node.nodePosition = i;
             childNodes.push(_node);
         }
@@ -110,15 +110,33 @@ export function getNodes(nodes) {
         blockStyles, callbacks
     };
 }
-export function convertToJqNode(value) {
-    const convertToJqText = (value) => new JqText(value ?? '');
-    const convertToJqFragment = (value) => new JqFragment(value.map(x => convertToJqNode(x)));
+export function convertToJqNode(value, jqNode) {
+    const convertToJqText = (value) => {
+        const jqText = new JqText(value ?? '');
+        jqText.jqParent = jqNode;
+        return jqText;
+    };
+    const convertToJqCallback = (value) => {
+        const jqCallback = new JqCallback(value);
+        jqCallback.jqParent = jqNode;
+        return jqCallback;
+    };
+    const convertToJqFragment = (value) => {
+        const childNodes = value.map(x => convertToJqNode(x, null));
+        const jqFragment = new JqFragment(childNodes);
+        childNodes.forEach((childNode, i) => {
+            childNode.jqParent = jqFragment;
+            childNode.nodePosition = i;
+        });
+        jqFragment.jqParent = jqNode;
+        return jqFragment;
+    };
     if (Array.isArray(value))
         return convertToJqFragment(value);
     if (isPrimitive(value))
         return convertToJqText(value);
     if (typeof value == "function")
-        return new JqCallback(value);
+        return convertToJqCallback(value);
     if (getJqNodeConstructors().some(ctor => value instanceof ctor))
         return value;
     return throwError(`JqError - Unexpected value found in place of a JqNode`);
@@ -218,8 +236,10 @@ export class JqCallback {
                             node1.delete.deleteSelf();
                         }
                     }
+                    // if ([updatedChanges.length, createdChanges.length, deletedChanges.length].every(x => x == 0)) {
                     for (const childDiff of _diff.childDiffs)
                         reconcile(rootNode, _diff.node1, childDiff.node1, childDiff.node2);
+                    // }
                 }
                 function updateAttribute(diff, props) {
                     if (![diff.node1, diff.node2].every(node => node instanceof JqAttribute))
@@ -235,57 +255,41 @@ export class JqCallback {
                     const _node2 = diff.node2;
                     _node1.update.setText(_node2.text);
                 }
-                function createElement(diff, props) {
+                function createElement(diff, [firstProp, _childNode]) {
                     if (![diff.node1, diff.node2].every(node => node instanceof JqElement))
                         return this;
                     const _node1 = diff.node1;
                     const _node2 = diff.node2;
-                    const childNode = getPropertyValue(_node2, props);
-                    const lastElemIdx = Number(diff[CREATED][diff[CREATED].length - 1]);
-                    _node1.childNodes.splice(lastElemIdx, 0, childNode);
-                    const node1LastChild = _node1.childNodes[_node1.childNodes.length - 1];
-                    const node1LastChildNextSibling = node1LastChild.htmlNode?.nextSibling;
-                    childNode.jqParent = _node1;
-                    if (childNode instanceof JqElement || childNode instanceof JqText) {
-                        childNode.initial.createNode();
-                        (_node1.shadowRoot || _node1.htmlNode).insertBefore(childNode.htmlNode, node1LastChildNextSibling ?? null);
-                    }
+                    const childNode = _childNode;
+                    childNode.jqParent = _node1.jqParent;
+                    childNode.nodePosition = _node1.childNodes.length;
+                    _node1.childNodes.splice(_node1.childNodes.length, 0, childNode);
+                    childNode.attachTo(_node1);
+                    return this;
                 }
-                function createFragment(diff, props) {
+                function createFragment(diff, [firstProp, _childNode]) {
                     if (![diff.node1, diff.node2].every(node => node instanceof JqFragment))
                         return this;
                     const _node1 = diff.node1;
                     const _node2 = diff.node2;
-                    const jqElement = _node1.jqParent;
-                    const childNode = getPropertyValue(_node2, props);
-                    const insertionIdx = Number(props[props.length - 1]) - 1;
-                    const nodeAtInsIdx = _node1.childNodes[insertionIdx];
-                    const nodeAtInsIdxNextSibling = nodeAtInsIdx.htmlNode.nextSibling;
-                    _node1.childNodes.splice(insertionIdx + 1, 0, childNode);
-                    let jqElementAdjacentChildIdx = jqElement.childNodes
-                        .findIndex(childNode => Object.is(childNode, nodeAtInsIdx));
-                    jqElementAdjacentChildIdx = jqElementAdjacentChildIdx == -1
-                        ? jqElement.childNodes.length - 1
-                        : jqElementAdjacentChildIdx;
-                    jqElement.childNodes.splice(jqElementAdjacentChildIdx, 0, childNode);
-                    childNode.jqParent = _node1;
-                    if (childNode instanceof JqElement || childNode instanceof JqText) {
-                        childNode.initial.createNode();
-                        const mountPoint = jqElement.shadowRoot ?? jqElement.htmlNode;
-                        mountPoint.insertBefore(childNode.htmlNode, nodeAtInsIdxNextSibling);
-                    }
+                    const childNode = _childNode;
+                    childNode.jqParent = _node1.jqParent;
+                    childNode.nodePosition = _node1.childNodes.length;
+                    _node1.childNodes.splice(_node1.childNodes.length, 0, childNode);
+                    childNode.attachTo(_node1);
+                    return this;
                 }
-                function deleteJqFragmentChild(diff, props) {
+                function deleteJqFragmentChild(diff, [firstProp, _childNode]) {
                     const _node1 = diff.node1;
                     const _node2 = diff.node2;
-                    const toBeDelNode = getPropertyValue(_node1, props);
-                    toBeDelNode.delete.deleteSelf();
+                    const childNode = _childNode;
+                    childNode.delete.deleteSelf();
                 }
-                function deleteJqElementChild(diff, props) {
+                function deleteJqElementChild(diff, [firstProp, _childNode]) {
                     const _node1 = diff.node1;
                     const _node2 = diff.node2;
-                    const toBeDelNode = getPropertyValue(_node1, props);
-                    toBeDelNode.delete.deleteSelf();
+                    const childNode = _childNode;
+                    childNode.delete.deleteSelf();
                 }
             }
         };
@@ -294,8 +298,10 @@ export class JqCallback {
     invoke() {
         const returned = this.callback(this.refProxy);
         const node = Array.isArray(returned) || isPrimitive(returned)
-            ? convertToJqNode(returned)
+            ? convertToJqNode(returned, this.jqParent)
             : returned;
+        node.nodePosition = this.nodePosition;
+        node.jqParent = this.jqParent;
         return node;
     }
     attachTo(node) {
@@ -511,7 +517,6 @@ class JqAttribute {
                 if (value === jqAttribute.value)
                     return this;
                 jqAttribute.value = value;
-                jqAttribute.attrNode ?? (jqAttribute.attrNode = document.createAttribute(jqAttribute.name));
                 jqAttribute.attrNode.value = value;
                 return this;
             }
@@ -591,13 +596,19 @@ export class JqFragment {
     constructor(childNodes) {
         this.nodePosition = -1;
         this.jqParent = null;
+        this.htmlNode = null;
         this.childNodes = [];
         this.initial = {
             context: this,
+            createNode() {
+                const jqFragment = this.context;
+                jqFragment.htmlNode = document.createDocumentFragment().cloneNode();
+                return this;
+            },
             attachChildren() {
-                const jqElement = this.context;
-                for (const childNode of jqElement.childNodes) {
-                    childNode.attachTo(jqElement.jqParent);
+                const jqFragment = this.context;
+                for (const childNode of jqFragment.childNodes) {
+                    childNode.attachTo(jqFragment);
                 }
                 return this;
             }
@@ -605,14 +616,26 @@ export class JqFragment {
         this.update = {
             context: this,
             updateNode() {
-                this
-                    .updateChildren();
+                this.updateChildren();
                 return this;
             },
             updateChildren() {
-                const jqElement = this.context;
-                for (const childNode of jqElement.childNodes) {
+                const jqFragment = this.context;
+                for (const childNode of jqFragment.childNodes) {
                     childNode.update.updateNode();
+                }
+                return this;
+            },
+            attachChild(childNode) {
+                const jqFragment = this.context;
+                if (jqFragment.jqParent instanceof JqFragment) {
+                    jqFragment.jqParent.update.attachChild(childNode);
+                    return this;
+                }
+                if (jqFragment.jqParent instanceof JqElement) {
+                    const node = jqFragment.jqParent.shadowRoot ?? jqFragment.jqParent.htmlNode;
+                    node.appendChild(childNode.htmlNode);
+                    return this;
                 }
                 return this;
             }
@@ -623,6 +646,8 @@ export class JqFragment {
                 const jqFragment = this.context;
                 const jqParent = jqFragment.jqParent;
                 const delChildIdx = jqParent.childNodes.findIndex(childNode => Object.is(childNode, jqFragment));
+                if (delChildIdx == -1)
+                    throwError("JqInternalError - JqFragment not found in its jqParent.childNodes");
                 jqParent.childNodes.splice(delChildIdx, 1);
                 jqFragment.childNodes.forEach(childNode => childNode.delete.deleteSelf());
                 return this;
@@ -631,17 +656,31 @@ export class JqFragment {
         this.childNodes = childNodes;
     }
     attachTo(node) {
+        const attachNode = () => this.initial
+            .createNode()
+            .attachChildren();
         if (node instanceof HTMLElement) {
-            this.childNodes.forEach(childNode => childNode.attachTo(node));
+            attachNode();
+            node.appendChild(this.htmlNode);
         }
         else if (node instanceof JqElement) {
-            this.jqParent = node;
-            this.initial.attachChildren();
+            this.jqParent = node, attachNode();
+            (node.shadowRoot ?? node.htmlNode).appendChild(this.htmlNode);
+        }
+        else if (node instanceof JqFragment) {
+            this.jqParent = node, attachNode();
+            node.htmlNode.appendChild(this.htmlNode);
         }
         else {
             throw new Error(`JqError - Cannot attach JqFragment to a node not of instance JqElement or JqFragment or HTMLElement`);
         }
         return this;
+    }
+    getStateRefValue(prop) {
+        return this.jqParent?.getStateRefValue(prop);
+    }
+    setStateRefValue(prop, value) {
+        return this.jqParent?.setStateRefValue(prop, value);
     }
 }
 export class JqText {
@@ -665,7 +704,6 @@ export class JqText {
             },
             setText(text) {
                 const jqText = this.context;
-                jqText.htmlNode ?? (jqText.htmlNode = document.createTextNode(''));
                 jqText.htmlNode.nodeValue = jqText.text = text;
             }
         };
@@ -693,8 +731,7 @@ export class JqText {
         }
         else if (node instanceof JqFragment) {
             this.jqParent = node;
-            const parent = node.jqParent;
-            (parent.shadowRoot ?? parent.htmlNode).appendChild(this.htmlNode);
+            node.htmlNode.appendChild(this.htmlNode);
         }
         else {
             throw new Error(`JqError - Cannot attach JqText to a node not of instance JqElement or JqFragment or HTMLElement`);
@@ -876,8 +913,11 @@ export class JqElement {
                 const jqElement = this.context;
                 const jqParent = jqElement.jqParent;
                 const delChildIdx = jqParent.childNodes.findIndex(childNode => Object.is(childNode, jqElement));
+                if (delChildIdx == -1)
+                    throwError("JqInternalError - JqElement not found in its jqParent.childNodes");
                 jqParent.childNodes.splice(delChildIdx, 1);
                 jqElement.childNodes.forEach(childNode => childNode.delete.deleteSelf());
+                jqElement.htmlNode.remove();
                 return this;
             }
         };
@@ -908,6 +948,11 @@ export class JqElement {
         else if (node instanceof JqElement) {
             this.jqParent = node, attachNode();
             (node.shadowRoot ?? node.htmlNode).appendChild(this.htmlNode);
+        }
+        else if (node instanceof JqFragment) {
+            this.jqParent = node, attachNode();
+            node.htmlNode.appendChild(this.htmlNode);
+            node.update.attachChild(this);
         }
         else {
             throw new Error(`JqError - Cannot attach JqElement '${this.name}' to a node not of instance JqElement or JqFragment or HTMLElement`);
@@ -983,7 +1028,8 @@ export function adjustColor(col, amt) {
     return (usePound ? "#" : "") + (g | (b << 8) | (r << 16)).toString(16);
 }
 function diff(node1, node2) {
-    return compareJqNodes(node1, node2);
+    const nodeComparison = compareJqNodes(node1, node2);
+    return nodeComparison;
     function compareProps(affected1, affected2) {
         const diff = {
             type: Object.getPrototypeOf(affected1.object).constructor,
@@ -1046,9 +1092,9 @@ function diff(node1, node2) {
             const firstFragChild = firstFragChildren[i];
             const secondFragChild = secondFragChildren[i];
             if (firstFragChild === undefined)
-                _diff[CREATED].push(["childNodes", i + ""]);
+                _diff[CREATED].push(["childNodes", secondFragChild]);
             else if (secondFragChild === undefined)
-                _diff[DELETED].push(["childNodes", i + ""]);
+                _diff[DELETED].push(["childNodes", firstFragChild]);
             else
                 _diff.childDiffs.push(diff(firstFragChild, secondFragChild));
         }
@@ -1070,14 +1116,14 @@ function diff(node1, node2) {
             childDiffs: [],
         };
         for (let i = 0; i < Math.max(firstElemChildren.length, secondElemChildren.length); i++) {
-            const firstFragChild = firstElemChildren[i];
-            const secondFragChild = secondElemChildren[i];
-            if (firstFragChild === undefined)
+            const firstElemChild = firstElemChildren[i];
+            const secondElemChild = secondElemChildren[i];
+            if (firstElemChild === undefined)
                 _diff[CREATED].push(["childNodes", i + ""]);
-            else if (secondFragChild === undefined)
+            else if (secondElemChild === undefined)
                 _diff[DELETED].push(["childNodes", i + ""]);
             else
-                _diff.childDiffs.push(diff(firstFragChild, secondFragChild));
+                _diff.childDiffs.push(diff(firstElemChild, secondElemChild));
         }
         for (let i = 0; i < Math.max(firstElemAttributes.length, secondElemAttributes.length); i++) {
             const firstElemAttribute = firstElemAttributes[i];
@@ -1115,9 +1161,9 @@ function diff(node1, node2) {
         };
         const [isNode1, isNode2] = [isNullish(node1), isNullish(node2)];
         if (isNode1)
-            _diff[CREATED].push(["this"]);
+            _diff[CREATED].push(["self"]);
         if (isNode2)
-            _diff[DELETED].push(["this"]);
+            _diff[DELETED].push(["self"]);
         if (isNode1 || isNode2)
             return _diff;
         const indexOfNode1 = node1.jqParent.childNodes.findIndex(x => Object.is(node1, x));
