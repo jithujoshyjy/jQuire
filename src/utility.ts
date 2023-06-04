@@ -34,7 +34,7 @@ export const JqNodeReference = Symbol("JqNodeReference")
  * @param {unknown[]} nodes 
  * @returns {{readonly domNodes: [number, HTMLElement | Text | (HTMLElement | Text)[] | JqCallback][]; readonly attributes: [number, Attr][]; readonly events: [...][]; readonly references: [...][]; readonly animations: [...][];readonly styles: [...][];}}
  */
-export function getNodes(nodes: Array<JqElement | JqFragment | JqText | JqAttribute | JqEvent | JqReference | JqAnimation | JqCSSProperty | JqCSSRule | Primitive>) {
+export function getNodes(nodes: Array<JqNode | Primitive>) {
 	const childNodes: Array<JqElement | JqFragment | JqText> = []
 	const attributes: JqAttribute[] = []
 	const events: JqEvent[] = []
@@ -83,17 +83,17 @@ export function getNodes(nodes: Array<JqElement | JqFragment | JqText | JqAttrib
 			blockStyles.push(node)
 		}
 		else if (Array.isArray(node)) {
-			const _node = convertToJqNode(node) as JqFragment
+			const _node = convertToJqNode(node, null) as JqFragment
 			_node.nodePosition = i
 			childNodes.push(_node)
 		}
 		else if (typeof node == "function") {
-			const _node = convertToJqNode(node) as JqCallback
+			const _node = convertToJqNode(node, null) as JqCallback
 			_node.nodePosition = i
 			callbacks.push(_node)
 		}
 		else if (isPrimitive(node)) {
-			const _node = convertToJqNode(node) as JqText
+			const _node = convertToJqNode(node, null) as JqText
 			_node.nodePosition = i
 			childNodes.push(_node)
 		}
@@ -107,21 +107,38 @@ export function getNodes(nodes: Array<JqElement | JqFragment | JqText | JqAttrib
 	} as const
 }
 
-export function convertToJqNode(value: any): JqText | JqFragment | JqCallback {
-	const convertToJqText = (value: Primitive | Primitive[]) =>
-		new JqText(value as Primitive ?? '')
+export function convertToJqNode(value: any, jqNode: JqFragment | JqElement | null): JqText | JqFragment | JqCallback {
+	const convertToJqText = (value: Primitive | Primitive[]) => {
+		const jqText = new JqText(value as Primitive ?? '')
+		jqText.jqParent = jqNode
+		return jqText
+	}
 
-	const convertToJqFragment = (value: Primitive[]) =>
-		new JqFragment(value.map(x => convertToJqNode(x) as JqFragment | JqText))
+	const convertToJqCallback = (value: (...a: any[]) => any) => {
+		const jqCallback = new JqCallback(value)
+		jqCallback.jqParent = jqNode as any
+		return jqCallback
+	}
+
+	const convertToJqFragment = (value: Primitive[]) => {
+		const childNodes = value.map(x => convertToJqNode(x, null) as JqFragment | JqText)
+		const jqFragment = new JqFragment(childNodes)
+
+		childNodes.forEach((childNode, i) => {
+			childNode.jqParent = jqFragment
+			childNode.nodePosition = i
+		})
+
+		jqFragment.jqParent = jqNode as any
+		return jqFragment
+	}
 
 	if (Array.isArray(value))
 		return convertToJqFragment(value)
-
 	if (isPrimitive(value))
 		return convertToJqText(value)
-
 	if (typeof value == "function")
-		return new JqCallback(value)
+		return convertToJqCallback(value)
 
 	if (getJqNodeConstructors().some(ctor => value instanceof ctor))
 		return value as JqText | JqFragment | JqCallback
@@ -185,8 +202,11 @@ export class JqCallback {
 	invoke() {
 		const returned = this.callback(this.refProxy)
 		const node = Array.isArray(returned) || isPrimitive(returned)
-			? convertToJqNode(returned) as JqNode
+			? convertToJqNode(returned, this.jqParent) as JqNode
 			: returned as JqNode
+
+		node.nodePosition = this.nodePosition
+		node.jqParent = this.jqParent
 
 		return node
 	}
@@ -261,7 +281,6 @@ export class JqCallback {
 						if (firstProp == "childNodes")
 							createElement(_diff, [firstProp, ...nestedProps])
 					}
-
 				}
 
 				for (const [firstProp, ...nestedProps] of deletedChanges) {
@@ -276,11 +295,13 @@ export class JqCallback {
 					}
 				}
 
+				// if ([updatedChanges.length, createdChanges.length, deletedChanges.length].every(x => x == 0)) {
 				for (const childDiff of _diff.childDiffs)
 					reconcile(rootNode, _diff.node1, childDiff.node1, childDiff.node2)
+				// }
 			}
 
-			function updateAttribute(this: any, diff: Diff, props: string[]) {
+			function updateAttribute(this: any, diff: Diff, props: [string, ...Array<string | JqNode>]) {
 				if (![diff.node1, diff.node2].every(node => node instanceof JqAttribute))
 					return this
 				const _node1 = diff.node1 as JqAttribute
@@ -288,7 +309,7 @@ export class JqCallback {
 				return _node1.update.setAttribute(_node2.value)
 			}
 
-			function updateText(this: any, diff: Diff, props: string[]) {
+			function updateText(this: any, diff: Diff, props: [string, ...Array<string | JqNode>]) {
 				if (![diff.node1, diff.node2].every(node => node instanceof JqText))
 					return this
 				const _node1 = diff.node1 as JqText
@@ -296,74 +317,54 @@ export class JqCallback {
 				_node1.update.setText(_node2.text)
 			}
 
-			function createElement(this: any, diff: Diff, props: string[]) {
+			function createElement(this: any, diff: Diff, [firstProp, _childNode]: [string, ...Array<string | JqNode>]) {
 				if (![diff.node1, diff.node2].every(node => node instanceof JqElement))
 					return this
 
 				const _node1 = diff.node1 as JqElement
 				const _node2 = diff.node2 as JqElement
-				const childNode = getPropertyValue(_node2, props) as JqNode
+				const childNode = _childNode as JqElement | JqFragment | JqText
 
-				const lastElemIdx = Number(diff[CREATED][diff[CREATED].length - 1])
-				_node1.childNodes.splice(lastElemIdx, 0, childNode as any)
+				childNode.jqParent = _node1.jqParent
+				childNode.nodePosition = _node1.childNodes.length
 
-				const node1LastChild = _node1.childNodes[_node1.childNodes.length - 1] as JqText | JqElement
-				const node1LastChildNextSibling = node1LastChild.htmlNode?.nextSibling
+				_node1.childNodes.splice(_node1.childNodes.length, 0, childNode)
+				childNode.attachTo(_node1)
 
-				childNode.jqParent = _node1
-				if (childNode instanceof JqElement || childNode instanceof JqText) {
-					childNode.initial.createNode();
-					(_node1.shadowRoot || _node1.htmlNode)!.insertBefore(childNode.htmlNode!, node1LastChildNextSibling ?? null)
-				}
+				return this
 			}
 
-			function createFragment(this: any, diff: Diff, props: string[]) {
+			function createFragment(this: any, diff: Diff, [firstProp, _childNode]: [string, ...Array<string | JqNode>]) {
 				if (![diff.node1, diff.node2].every(node => node instanceof JqFragment))
 					return this
 
 				const _node1 = diff.node1 as JqFragment
 				const _node2 = diff.node2 as JqFragment
+				const childNode = _childNode as JqElement | JqFragment | JqText
 
-				const jqElement = _node1.jqParent!
-				const childNode = getPropertyValue(_node2, props) as JqNode
-				const insertionIdx = Number(props[props.length - 1]) - 1
+				childNode.jqParent = _node1.jqParent
+				childNode.nodePosition = _node1.childNodes.length
 
-				const nodeAtInsIdx = _node1.childNodes[insertionIdx] as JqText | JqElement
-				const nodeAtInsIdxNextSibling = nodeAtInsIdx.htmlNode!.nextSibling
+				_node1.childNodes.splice(_node1.childNodes.length, 0, childNode)
+				childNode.attachTo(_node1)
 
-				_node1.childNodes.splice(insertionIdx + 1, 0, childNode as any)
-
-				let jqElementAdjacentChildIdx = jqElement.childNodes
-					.findIndex(childNode => Object.is(childNode, nodeAtInsIdx))
-
-				jqElementAdjacentChildIdx = jqElementAdjacentChildIdx == -1
-					? jqElement.childNodes.length - 1
-					: jqElementAdjacentChildIdx
-
-				jqElement.childNodes.splice(jqElementAdjacentChildIdx, 0, childNode as any)
-
-				childNode.jqParent = _node1
-				if (childNode instanceof JqElement || childNode instanceof JqText) {
-					childNode.initial.createNode()
-					const mountPoint = jqElement.shadowRoot ?? jqElement.htmlNode
-					mountPoint!.insertBefore(childNode.htmlNode!, nodeAtInsIdxNextSibling)
-				}
+				return this
 			}
 
-			function deleteJqFragmentChild(this: any, diff: Diff, props: string[]) {
+			function deleteJqFragmentChild(this: any, diff: Diff, [firstProp, _childNode]: [string, ...Array<string | JqNode>]) {
 				const _node1 = diff.node1 as JqFragment
 				const _node2 = diff.node2 as JqFragment
 
-				const toBeDelNode = getPropertyValue(_node1, props) as JqFragment | JqElement | JqText
-				toBeDelNode.delete.deleteSelf()
+				const childNode = _childNode as JqElement | JqFragment | JqText
+				childNode.delete.deleteSelf()
 			}
 
-			function deleteJqElementChild(this: any, diff: Diff, props: string[]) {
+			function deleteJqElementChild(this: any, diff: Diff, [firstProp, _childNode]: [string, ...Array<string | JqNode>]) {
 				const _node1 = diff.node1 as JqElement
 				const _node2 = diff.node2 as JqElement
 
-				const toBeDelNode = getPropertyValue(_node1, props) as JqFragment | JqElement | JqText
-				toBeDelNode.delete.deleteSelf()
+				const childNode = _childNode as JqElement | JqFragment | JqText
+				childNode.delete.deleteSelf()
 			}
 		}
 	}
@@ -660,8 +661,7 @@ export class JqAttribute {
 			if (value === jqAttribute.value) return this
 
 			jqAttribute.value = value
-			jqAttribute.attrNode ??= document.createAttribute(jqAttribute.name)
-			jqAttribute.attrNode.value = value
+			jqAttribute.attrNode!.value = value
 			return this
 		}
 	}
@@ -703,20 +703,30 @@ export class JqAttribute {
 
 export class JqFragment {
 	nodePosition = -1
-	jqParent: JqElement | null = null
+	jqParent: JqElement | JqFragment | null = null
+	htmlNode: Node | null = null
 	childNodes: Array<JqElement | JqFragment | JqText> = []
 
 	constructor(childNodes: Array<JqElement | JqFragment | JqText>) {
 		this.childNodes = childNodes
 	}
 
-	attachTo(node: Node | JqElement) {
+	attachTo(node: Node | JqElement | JqFragment) {
+		const attachNode = () => this.initial
+			.createNode()
+			.attachChildren()
+
 		if (node instanceof HTMLElement) {
-			this.childNodes.forEach(childNode => childNode.attachTo(node))
+			attachNode()
+			node.appendChild(this.htmlNode!)
 		}
 		else if (node instanceof JqElement) {
-			this.jqParent = node
-			this.initial.attachChildren()
+			this.jqParent = node, attachNode();
+			(node.shadowRoot ?? node.htmlNode!).appendChild(this.htmlNode!)
+		}
+		else if (node instanceof JqFragment) {
+			this.jqParent = node, attachNode()
+			node.htmlNode!.appendChild(this.htmlNode!)
 		}
 		else {
 			throw new Error(`JqError - Cannot attach JqFragment to a node not of instance JqElement or JqFragment or HTMLElement`)
@@ -724,12 +734,25 @@ export class JqFragment {
 		return this
 	}
 
+	getStateRefValue(prop: string | symbol): any {
+		return this.jqParent?.getStateRefValue(prop)
+	}
+
+	setStateRefValue(prop: string | symbol, value: unknown): any {
+		return this.jqParent?.setStateRefValue(prop, value)
+	}
+
 	initial = {
 		context: this,
+		createNode() {
+			const jqFragment = this.context
+			jqFragment.htmlNode = document.createDocumentFragment().cloneNode()
+			return this
+		},
 		attachChildren() {
-			const jqElement = this.context
-			for (const childNode of jqElement.childNodes) {
-				childNode.attachTo(jqElement.jqParent!)
+			const jqFragment = this.context
+			for (const childNode of jqFragment.childNodes) {
+				childNode.attachTo(jqFragment)
 			}
 			return this
 		}
@@ -738,15 +761,30 @@ export class JqFragment {
 	update = {
 		context: this,
 		updateNode() {
-			this
-				.updateChildren()
+			this.updateChildren()
 			return this
 		},
 		updateChildren() {
-			const jqElement = this.context
-			for (const childNode of jqElement.childNodes) {
+			const jqFragment = this.context
+			for (const childNode of jqFragment.childNodes) {
 				childNode.update.updateNode()
 			}
+			return this
+		},
+		attachChild(childNode: JqElement | JqFragment | JqText) {
+			const jqFragment = this.context
+
+			if (jqFragment.jqParent instanceof JqFragment) {
+				jqFragment.jqParent.update.attachChild(childNode)
+				return this
+			}
+
+			if (jqFragment.jqParent instanceof JqElement) {
+				const node = jqFragment.jqParent.shadowRoot ?? jqFragment.jqParent.htmlNode!
+				node.appendChild(childNode.htmlNode!)
+				return this
+			}
+
 			return this
 		}
 	}
@@ -758,9 +796,12 @@ export class JqFragment {
 			const jqParent = jqFragment.jqParent!
 
 			const delChildIdx = jqParent.childNodes.findIndex(childNode => Object.is(childNode, jqFragment))
+			if (delChildIdx == -1)
+				throwError("JqInternalError - JqFragment not found in its jqParent.childNodes")
 
 			jqParent.childNodes.splice(delChildIdx, 1)
 			jqFragment.childNodes.forEach(childNode => childNode.delete.deleteSelf())
+
 			return this
 		}
 	}
@@ -776,7 +817,7 @@ export class JqText {
 		this.text = primitives.map(primitive => String(primitive ?? '')).join('')
 	}
 
-	attachTo(node: Node | JqElement) {
+	attachTo(node: Node | JqElement | JqFragment) {
 		this.initial.createNode()
 		if (node instanceof HTMLElement) {
 			node.appendChild(this.htmlNode!)
@@ -787,8 +828,7 @@ export class JqText {
 		}
 		else if (node instanceof JqFragment) {
 			this.jqParent = node
-			const parent = node.jqParent!;
-			(parent.shadowRoot ?? parent.htmlNode!).appendChild(this.htmlNode!)
+			node.htmlNode!.appendChild(this.htmlNode!)
 		}
 		else {
 			throw new Error(`JqError - Cannot attach JqText to a node not of instance JqElement or JqFragment or HTMLElement`)
@@ -812,7 +852,6 @@ export class JqText {
 		},
 		setText(text: string) {
 			const jqText = this.context
-			jqText.htmlNode ??= document.createTextNode('')
 			jqText.htmlNode!.nodeValue = jqText.text = text
 		}
 	}
@@ -854,7 +893,7 @@ export class JqList<U extends JqNode, T extends { new(...x: any[]): U }> {
 
 export class JqElement {
 	name: string
-	jqParent: JqElement | null = null
+	jqParent: JqElement | JqFragment | null = null
 	shadowRoot: ShadowRoot | null = null
 	htmlNode: HTMLElement | null = null
 	childNodes: Array<JqElement | JqFragment | JqText> = []
@@ -881,7 +920,7 @@ export class JqElement {
 		this.scopedStyleSheet = scopedStyleSheet
 	}
 
-	attachTo(node: Node | JqElement) {
+	attachTo(node: Node | JqElement | JqFragment) {
 		const attachNode = () => this.initial
 			.createNode()
 			.attachReferences()
@@ -898,6 +937,11 @@ export class JqElement {
 		else if (node instanceof JqElement) {
 			this.jqParent = node, attachNode();
 			(node.shadowRoot ?? node.htmlNode!).appendChild(this.htmlNode!)
+		}
+		else if (node instanceof JqFragment) {
+			this.jqParent = node, attachNode()
+			node.htmlNode!.appendChild(this.htmlNode!)
+			node.update.attachChild(this)
 		}
 		else {
 			throw new Error(`JqError - Cannot attach JqElement '${this.name}' to a node not of instance JqElement or JqFragment or HTMLElement`)
@@ -1086,8 +1130,12 @@ export class JqElement {
 
 			const delChildIdx = jqParent.childNodes.findIndex(childNode => Object.is(childNode, jqElement))
 
+			if (delChildIdx == -1)
+				throwError("JqInternalError - JqElement not found in its jqParent.childNodes")
+
 			jqParent.childNodes.splice(delChildIdx, 1)
 			jqElement.childNodes.forEach(childNode => childNode.delete.deleteSelf())
+			jqElement.htmlNode!.remove()
 			return this
 		}
 	}
@@ -1155,7 +1203,7 @@ export function createPropertyListFromStyleObject(errorMessage: string, styleObj
 	return new JqList(JqCSSProperty, styleProperties)
 }
 
-export type JqNode = JqElement | JqAttribute | JqCSSProperty | JqCSSRule | JqAnimation | JqEvent | JqReference | JqFragment | JqText
+export type JqNode = JqElement | JqAttribute | JqCSSProperty | JqCSSRule | JqAnimation | JqEvent | JqReference | JqFragment | JqText | JqCallback
 
 type HexDigit = '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | 'a' | 'b' | 'c' | 'd' | 'e' | 'f' | 'A' | 'B' | 'C' | 'D' | 'E' | 'F'
 
@@ -1204,16 +1252,16 @@ type Diff = {
 	type: new (...a: any) => JqNode,
 	node1: JqNode,
 	node2: JqNode,
-	[UPDATED]: string[][],
-	[DELETED]: string[][],
-	[CREATED]: string[][],
-	[UNCHANGED]: string[][],
+	[UPDATED]: [string, ...Array<string | JqNode>][],
+	[DELETED]: [string, ...Array<string | JqNode>][],
+	[CREATED]: [string, ...Array<string | JqNode>][],
+	[UNCHANGED]: [string, ...Array<string | JqNode>][],
 	childDiffs: Diff[]
 }
 
 function diff(node1: JqNode, node2: JqNode) {
-
-	return compareJqNodes(node1, node2)
+	const nodeComparison = compareJqNodes(node1, node2)
+	return nodeComparison
 
 	type CompareProps = { object: JqNode, props: string[][] }
 
@@ -1232,22 +1280,22 @@ function diff(node1: JqNode, node2: JqNode) {
 		const deletedProps = affected1.props.filter(prop =>
 			isNullish(getPropertyValue(affected2.object, prop)))
 
-		diff[DELETED] = deletedProps
+		diff[DELETED] = deletedProps as any
 
 		const createdProps = affected2.props.filter(prop =>
 			isNullish(getPropertyValue(affected1.object, prop)))
 
-		diff[CREATED] = createdProps
+		diff[CREATED] = createdProps as any
 
 		const updatedProps = affected1.props.filter(prop =>
 			getPropertyValue(affected2.object, prop) !== getPropertyValue(affected1.object, prop))
 
-		diff[UPDATED] = updatedProps
+		diff[UPDATED] = updatedProps as any
 
 		const unchangedProps = affected1.props.filter(prop =>
 			getPropertyValue(affected2.object, prop) === getPropertyValue(affected1.object, prop))
 
-		diff[UNCHANGED] = unchangedProps
+		diff[UNCHANGED] = unchangedProps as any
 
 		return diff
 	}
@@ -1302,9 +1350,9 @@ function diff(node1: JqNode, node2: JqNode) {
 			const secondFragChild = secondFragChildren[i]
 
 			if (firstFragChild === undefined)
-				_diff[CREATED].push(["childNodes", i + ""])
+				_diff[CREATED].push(["childNodes", secondFragChild])
 			else if (secondFragChild === undefined)
-				_diff[DELETED].push(["childNodes", i + ""])
+				_diff[DELETED].push(["childNodes", firstFragChild])
 			else
 				_diff.childDiffs.push(diff(firstFragChild, secondFragChild))
 		}
@@ -1331,15 +1379,15 @@ function diff(node1: JqNode, node2: JqNode) {
 		}
 
 		for (let i = 0; i < Math.max(firstElemChildren.length, secondElemChildren.length); i++) {
-			const firstFragChild = firstElemChildren[i]
-			const secondFragChild = secondElemChildren[i]
+			const firstElemChild = firstElemChildren[i]
+			const secondElemChild = secondElemChildren[i]
 
-			if (firstFragChild === undefined)
+			if (firstElemChild === undefined)
 				_diff[CREATED].push(["childNodes", i + ""])
-			else if (secondFragChild === undefined)
+			else if (secondElemChild === undefined)
 				_diff[DELETED].push(["childNodes", i + ""])
 			else
-				_diff.childDiffs.push(diff(firstFragChild, secondFragChild))
+				_diff.childDiffs.push(diff(firstElemChild, secondElemChild))
 		}
 
 		for (let i = 0; i < Math.max(firstElemAttributes.length, secondElemAttributes.length); i++) {
@@ -1385,9 +1433,9 @@ function diff(node1: JqNode, node2: JqNode) {
 		const [isNode1, isNode2] = [isNullish(node1), isNullish(node2)]
 
 		if (isNode1)
-			_diff[CREATED].push(["this"])
+			_diff[CREATED].push(["self"])
 		if (isNode2)
-			_diff[DELETED].push(["this"])
+			_diff[DELETED].push(["self"])
 
 		if (isNode1 || isNode2)
 			return _diff

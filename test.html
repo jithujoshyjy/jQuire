@@ -19,43 +19,42 @@
 		const {
 			div, input, button,
 			form, dialog, img,
-			main, nav, a, br, hr,
+			main, nav, a, br, hr, ul, li,
 			footer, template, span
 		} = natives
 
 		const { attr, text, fragment } = nodes
 
 		const assets = pathSetter("../assets/")
-		const navLinks = [
+		let navLinks = [
 			{ name: "works", link: "#" },
 			{ name: "skills", link: "#" },
-			{ name: "hire me", link: "#" }
+			{ name: "hire me", link: "#" },
+			{ name: "contact me", link: "#" },
+			{ name: "support", link: "#" },
+			{ name: "contributions", link: "#" },
+			{ name: "education", link: "#" },
 		]
 
-		const divRef = ref({ navLinks })
+		const navLinksRef = ref({ navLinks })
+
+		const originalNavLinks = [...navLinks]
+		const handleInput = (evt) => {
+			navLinksRef.navLinks = originalNavLinks.filter(x =>
+				x.name.toLowerCase().includes(evt.target.value.trim().toLowerCase()))
+		}
+
 		const app = div(
-			animate({ height: "500px" }),
-			divRef,
-			css({ backgroundColor: "lightblue" }),
-			css("button.abc")({
-				backgroundColor: "violet",
-				borderRadius: "5px",
-				border: "none",
-				padding: "5px 15px",
-				fontVariant: "small-caps"
-			}),
-			({ navLinks }) => navLinks.map(x => x.name + " "),
-			fragment(
-				hr(),
-				button(
-					attr.class("abc"),
-					"click",
-					on.click(_ => {
-						divRef.refresh(({ navLinks }) =>
-							navLinks.push({ name: "abc", link: "#" }))
-					})
-				),
-				hr()
+			input(
+				on.input(handleInput),
+			),
+			ul(
+				navLinksRef,
+				({ navLinks }) => navLinks.map(x =>
+					li(
+						x.name
+					)
+				)
 			)
 		)
 
