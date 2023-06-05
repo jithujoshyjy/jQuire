@@ -450,7 +450,7 @@ const Header = () => {
 					css.width("60%"),
 					css.marginBottom("1rem"),
 					css.marginRight("0rem"),
-					"A library that embraces JavaScript and let's you build amazing things."
+					"A library that embraces JavaScript and lets you build amazing things."
 				),
 				ButtonGroup()
 			)
