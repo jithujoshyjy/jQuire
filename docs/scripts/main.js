@@ -2,12 +2,12 @@ import {
 	natives, nodes, showIf,
 	on, ref, pathSetter,
 	getNodes, animate, css
-} from "https://cdn.jsdelivr.net/gh/jquire/build/jquery.min.js"
+} from "https://cdn.jsdelivr.net/npm/jquire@latest/build/jquire.min.js"
 
-import highlight from "https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.8.0/build/es/core.min.js"
-import javascript from "https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.8.0/build/languages/javascript.min.js"
-import bash from "https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.8.0/build/languages/bash.min.js"
-import xml from "https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.8.0/build/languages/xml.min.js"
+import highlight from "https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@latest/build/es/highlight.min.js"
+import javascript from "https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@latest/build/es/languages/javascript.min.js"
+import bash from "https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@latest/build/es/languages/bash.min.js"
+import xml from "https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@latest/build/es/languages/xml.min.js"
 
 import AlertBox from "../components/AlertBox.js"
 import CodeBox from "../components/CodeBox.js"
@@ -598,7 +598,6 @@ const { attr, text, fragment } = nodes`
 			attr.class("installation-n-imports-heading"),
 			"Installation and Imports"
 		),
-		AlertBox("Important", `The cdn and npm repository haven't been updated after the overhaul of the library.`),
 		UsingNPM(),
 		UsingCDN(),
 		ImportsAfterInstallation()

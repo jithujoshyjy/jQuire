@@ -8,9 +8,6 @@ After a great deal of trouble, refactoring and a lot of sleepless nights, I thin
 I wouldn't advise it to be used in real applications but you're welcome to experiment with it and provide constructive criticism.<br/>
 [website](https://jithujoshyjy.github.io/jQuire/)
 
-> **❗Important**
-> The cdn and npm repository haven't been updated after the overhaul of the library.
-
 ### Installation and Imports
 
 ```bash
