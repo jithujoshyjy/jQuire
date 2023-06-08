@@ -3,6 +3,8 @@
 # jQuire
 #### jQuery UI Reciter
 
+[![](https://data.jsdelivr.com/v1/package/npm/jquire/badge)](https://www.jsdelivr.com/package/npm/jquire)
+
 This project began as an experiment, stretching what's possible with JavaScript.
 After a great deal of trouble, refactoring and a lot of sleepless nights, I think I've come up with something that I can be proud of!<br/>
 I wouldn't advise it to be used in real applications but you're welcome to experiment with it and provide constructive criticism.<br/>
