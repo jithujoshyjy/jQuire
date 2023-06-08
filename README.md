@@ -18,7 +18,7 @@ you can also use a cdn if you like
 
 ```html
 <!-- JQuery goes here if you're want to use it as well -->
-<script type="module" src="https://cdn.jsdelivr.net/gh/jithujoshyjy/jQuire/jquire.min.js"></script>
+<script type="module" src="https://cdn.jsdelivr.net/npm/jquire@latest/dist/jquire.min.js"></script>
 ```
 
 after installation 👇
@@ -28,7 +28,7 @@ import {
     natives, nodes, showIf,
     on, ref, pathSetter,
     getNodes, animate, css
-} from "./node_modules/jquire/jquire.min.js"
+} from "./node_modules/jquire/dist/jquire.min.js"
 ```
 
 After you specify all the required imports you can either destructure each html element creator function from `natives` proxy object.

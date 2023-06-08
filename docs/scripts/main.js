@@ -2,7 +2,7 @@ import {
 	natives, nodes, showIf,
 	on, ref, pathSetter,
 	getNodes, animate, css
-} from "https://cdn.jsdelivr.net/npm/jquire@latest/build/jquire.min.js"
+} from "https://cdn.jsdelivr.net/npm/jquire@latest/dist/jquire.min.js"
 
 import highlight from "https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@latest/build/es/highlight.min.js"
 import javascript from "https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@latest/build/es/languages/javascript.min.js"
