@@ -5,8 +5,8 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-	"dev": "tsc --watch --outDir ./dist",
-    "minify": "uglifyjs ./dist/jquire.js -o ./dist/jquire.min.js -m",
+    "build": "rollup -c",
+    "dev": "tsc --watch --outDir ./dist",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "jithu_joshy",
@@ -24,7 +24,8 @@
   ],
   "license": "ISC",
   "devDependencies": {
-    "typescript": "^5.0.4",
-    "uglify-js": "^3.17.0"
+    "@rollup/plugin-terser": "^0.4.3",
+    "rollup": "^3.24.0",
+    "typescript": "^5.0.4"
   }
 }
