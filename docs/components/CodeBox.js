@@ -60,8 +60,8 @@ export default (language = '', sourceCode = '', highlighter) => {
 
 	function decideCodeTheme() {
 		const codeThemes = {
-			dark: "./libs/highlight/styles/github-dark.min.css",
-			light: "./libs/highlight/styles/github.min.css",
+			dark: "https://cdn.jsdelivr.net/npm/highlight.js@latest/styles/github-dark.css",
+			light: "https://cdn.jsdelivr.net/npm/highlight.js@latest/styles/github.css",
 		}
 
 		if (!window.matchMedia) return ref({ codeThemeLink: codeThemes.dark })
