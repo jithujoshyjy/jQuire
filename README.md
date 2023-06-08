@@ -3,7 +3,7 @@
 # jQuire
 #### jQuery UI Reciter
 
-[![](https://data.jsdelivr.com/v1/package/npm/jquire/badge)](https://www.jsdelivr.com/package/npm/jquire)
+[![](https://data.jsdelivr.com/v1/package/npm/jquire/badge)](https://www.jsdelivr.com/package/npm/jquire) [![](https://img.shields.io/reddit/user-karma/combined/Plus-Weakness-2624?style=social)](https://www.reddit.com/user/Plus-Weakness-2624/)
 
 This project began as an experiment, stretching what's possible with JavaScript.
 After a great deal of trouble, refactoring and a lot of sleepless nights, I think I've come up with something that I can be proud of!<br/>
