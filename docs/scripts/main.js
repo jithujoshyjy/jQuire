@@ -2,7 +2,7 @@ import {
 	natives, nodes, showIf,
 	on, ref, pathSetter,
 	getNodes, animate, css
-} from "https://raw.github.com/jithujoshyjy/jQuire/main/build/bundle.min.js"
+} from "https://cdn.jsdelivr.net/gh/jquire/build/jquery.min.js"
 
 import highlight from "../libs/highlight/es/core.js"
 import javascript from "../libs/highlight/es/languages/javascript.min.js"
