@@ -31,8 +31,14 @@ export const throwError = (e: string) => { throw new Error(e) }
 export const JqNodeReference = Symbol("JqNodeReference")
 /**
  * 
- * @param {unknown[]} nodes 
- * @returns {{readonly domNodes: [number, HTMLElement | Text | (HTMLElement | Text)[] | JqCallback][]; readonly attributes: [number, Attr][]; readonly events: [...][]; readonly references: [...][]; readonly animations: [...][];readonly styles: [...][];}}
+ * @param {Array<JqNode | Primitive>} nodes 
+ * @returns {{
+ *		childNodes: Array<JqElement | JqFragment | JqText>,
+ *		attributes: JqAttribute[],
+ *		events: JqEvent[], references: JqReference[],
+ *		animations: JqAnimation[], inlineStyles: JqCSSProperty[],
+ *		blockStyles: JqCSSRule[], callbacks: JqCallback[]
+ * }}
  */
 export function getNodes(nodes: Array<JqNode | Primitive>) {
 	const childNodes: Array<JqElement | JqFragment | JqText> = []
@@ -156,6 +162,10 @@ const getPropertyValue = (object: object, props: string[]):
 	return result
 }
 
+/**
+ * @param {string} text
+ * @returns {string}
+ */
 export function escapeHTMLEntities(text: string) {
 	const entityRegex1 = /(&#x[0-9A-F]{2,6};)/gi
 	const entityRegex2 = /(&[a-z0-9]+;)/gi
@@ -373,10 +383,10 @@ export class JqCallback {
 export class JqEvent {
 	nodePosition = -1
 	event: string
-	handler: (...a: unknown[]) => unknown = (_) => { }
+	handler: (event?: Event, ...a: unknown[]) => unknown = (_) => { }
 	jqParent: JqElement | null = null
 
-	constructor(event: string, handler: (...a: unknown[]) => unknown) {
+	constructor(event: string, handler: (event?: Event, ...a: unknown[]) => unknown) {
 		this.event = event
 		this.handler = handler
 	}
@@ -621,13 +631,13 @@ export class JqAttribute {
 		return this
 	}
 
-	static objectToJqAttributes(attrObject: { [x: string]: Primitive }) {
+	static objectToJqAttributes(attrObj: { [x: string]: Primitive }) {
 		const errorMessage = `JqError - Invalid argument passed to attr(...)`
 
-		if (attrObject === null || typeof attrObject !== "object")
+		if (attrObj === null || typeof attrObj !== "object")
 			throw new Error(errorMessage)
 
-		const attrList = Object.entries(attrObject)
+		const attrList = Object.entries(attrObj)
 			.map(([key, value]) => {
 				const _name = camelToKebab(key).replace(/_/g, '-')
 				const _value = String(value)
@@ -891,6 +901,14 @@ export class JqList<U extends JqNode, T extends { new(...x: any[]): U }> {
 	}
 }
 
+type JqElementParameters = {
+	childNodes: Array<JqElement | JqFragment | JqText>,
+	attributes: JqAttribute[], events: JqEvent[],
+	animations: JqAnimation[], references: JqReference[],
+	inlineStyles: Array<JqCSSProperty>, blockStyles: Array<JqCSSRule>,
+	callbacks: JqCallback[]
+}
+
 export class JqElement {
 	name: string
 	jqParent: JqElement | JqFragment | null = null
@@ -907,17 +925,9 @@ export class JqElement {
 	scopedStyleSheet: HTMLStyleElement | null = null
 	nodePosition = -1
 
-	constructor(name: string, childNodes: Array<JqElement | JqFragment | JqText>, attributes: JqAttribute[], events: JqEvent[], animations: JqAnimation[], references: JqReference[], inlineStyles: Array<JqCSSProperty>, blockStyles: Array<JqCSSRule>, callbacks: JqCallback[], scopedStyleSheet: HTMLStyleElement | null = null) {
+	constructor(name: string, props: JqElementParameters) {
 		this.name = name
-		this.childNodes = childNodes
-		this.attributes = attributes
-		this.events = events
-		this.animations = animations
-		this.references = references
-		this.inlineStyles = inlineStyles
-		this.blockStyles = blockStyles
-		this.callbacks = callbacks
-		this.scopedStyleSheet = scopedStyleSheet
+		Object.assign(this, props)
 	}
 
 	attachTo(node: Node | JqElement | JqFragment) {

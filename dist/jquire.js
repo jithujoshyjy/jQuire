@@ -1,15 +1,26 @@
-import { JqEvent, getNodes, escapeHTMLEntities, stringify, isNullish, JqAnimation, isPrimitive, JqReference, JqElement, JqCSSProperty, JqFragment, JqText, JqCSSRule, JqAttribute, StateReference, JqNodeReference, validHTMLElements } from "./utility.js";
+import { JqEvent, getNodes, escapeHTMLEntities, stringify, JqAnimation, isPrimitive, JqReference, JqElement, JqCSSProperty, JqFragment, JqText, JqCSSRule, JqAttribute, StateReference, JqNodeReference, validHTMLElements } from "./utility.js";
 const scopedStyleSheets = new WeakMap();
 /**
+ * @typedef {import("./utility.js").JqElement} JqElement
+ * @typedef {import("./utility.js").JqAttribute} JqAttribute
+ * @typedef {import("./utility.js").JqCSSProperty} JqCSSProperty
+ * @typedef {import("./utility.js").JqCSSRule} JqCSSRule
+ * @typedef {import("./utility.js").JqReference} JqReference
+ * @typedef {import("./utility.js").JqFragment} JqFragment
  * @typedef {import("./utility.js").JqAnimation} JqAnimation
  * @typedef {import("./utility.js").JqCallback} JqCallback
- * @typedef {import("./utility.js").JqCSS} JqCSS
  * @typedef {import("./utility.js").JqEvent} JqEvent
- * @typedef {import("./utility.js").JqRef} JqRef
+ * @typedef {import("./utility.js").JqText} JqText
+ * @typedef {import("./utility.js").JqList} JqList
  * @typedef {null | undefined | number | string | symbol | bigint} Primitive
+ * @typedef {JqElement | JqAttribute | JqCSSProperty | JqCSSRule | JqAnimation | JqEvent | JqReference | JqFragment | JqText | JqCallback} JqNode
+ * @typedef {{
+ *		globalize: (_globalThis?: object) => void,
+ *		[name: string]: (...nodes: Array<JqNode>) => JqElement
+ *	}} Natives
  */
 /**
- * @type {{[native: string]: (...a: JqAnimation | JqCallback | JqCSS | JqEvent | JqReference | Primitive | Array<HTMLElement>) => HTMLElement}}
+ * @type {Natives}
  */
 export const natives = new Proxy({}, {
     get(target, prop) {
@@ -17,22 +28,22 @@ export const natives = new Proxy({}, {
             return target[prop];
         if (prop == "globalize")
             return globalize;
-        return (...nodes) => {
-            const { childNodes, attributes, inlineStyles, blockStyles, animations, events, references, callbacks } = getNodes(nodes);
-            return new JqElement(prop, childNodes, attributes, events, animations, references, inlineStyles, blockStyles, callbacks);
-        };
-        function globalize(_globalThis) {
-            validHTMLElements
-                .forEach(element => (_globalThis ?? globalThis)[element] = natives[element]);
-        }
+        return (...nodes) => new JqElement(prop, getNodes(nodes));
     }
 });
+function globalize(_globalThis) {
+    validHTMLElements
+        .forEach(element => (_globalThis ?? globalThis)[element] = natives[element]);
+}
 /**
- * @type {(strs: string[] | string, ...values: unknown[]) => Text}
+ * @type {(text: Primitive) => JqText}
  */
 const text = new Proxy(_text, {});
 /**
- * @type {(strs: string[], ...values: unknown[]) => Attr}
+ * @type {
+ * ((attrObj: { [x: string]: Primitive }) => JqList<JqAttribute, typeof JqAttribute>) & {
+ *		[x: string]: JqAttribute
+ * }}
  */
 const attr = new Proxy(_attr, {
     get(target, prop) {
@@ -42,7 +53,10 @@ const attr = new Proxy(_attr, {
     }
 });
 /**
- * @type {{[x: string]: (e?: Event) => JqEvent}}
+ * @type {
+ * ((event?: Event, ...a: unknown[]) => JqEvent) & {
+ * 		[eventName: string]: (handler: (event?: Event, ...a: unknown[]) => unknown) => JqEvent
+ * }}
  */
 export const on = new Proxy({}, {
     get(target, prop) {
@@ -52,7 +66,10 @@ export const on = new Proxy({}, {
     }
 });
 /**
- * @type {(a0: string | {[x: string]: Primitive}, ...a1: string[]) => JqCSS}
+ * @type {
+ * ((styleObj: { [x: string]: Primitive }) => JqCSSRule) & {
+*		[x: string]: JqCSSProperty
+* }}
  */
 export const css = new Proxy(_css, {
     get(target, prop) {
@@ -68,24 +85,9 @@ function createAttribute(name, value) {
     const _value = isPrimitive(value) ? String(value) : stringify(value);
     return new JqAttribute(name, _value);
 }
-function _attr(strs, ...values) {
-    if (!Array.isArray(strs)) {
-        const attrList = JqAttribute.objectToJqAttributes(strs);
-        return attrList;
-    }
-    const attrRegex = /^(?<attrName>\p{L}[\d\p{L}]*)(?:\s*(?<eq>=)(?:\s*(?<attrValue>.*)))?\s*$/u;
-    const attrMatch = strs.join("").trim().match(attrRegex);
-    if (attrMatch == null || values.length > 1) {
-        throw new Error(`JqError - Invalid attribute syntax`);
-    }
-    const { attrName, eq, attrValue: _attrValue } = attrMatch.groups;
-    const bothPresent = _attrValue !== '' && !isNullish(_attrValue) && !isNullish(values[0]);
-    const neitherPresent = eq && (_attrValue === '' || isNullish(_attrValue)) && isNullish(values[0]);
-    if (!attrName || bothPresent || neitherPresent) {
-        throw new Error(`JqError - Invalid attribute syntax`);
-    }
-    const attrValue = (_attrValue === '' ? null : _attrValue) ?? values[0] ?? attrName;
-    return createAttribute(attrName, attrValue);
+function _attr(attrObj) {
+    const attrList = JqAttribute.objectToJqAttributes(attrObj);
+    return attrList;
 }
 function createTextNode(value) {
     const text = isPrimitive(value) ? String(value) : stringify(value);
@@ -100,8 +102,8 @@ function _text(strs, ...values) {
     return createTextNode(_strs);
 }
 /**
- * @param {Array<Text | HTMLElement>} childNodes
- * @returns {Array<Text | HTMLElement>}
+ * @param {Array<Primitive | JqElement | JqText | JqFragment>} childNodes
+ * @returns {JqFragment}
  */
 function fragment(..._childNodes) {
     const { childNodes } = getNodes(_childNodes);
@@ -125,7 +127,7 @@ function _css(...args) {
     };
 }
 /**
- *
+ * @param {{ [x: string | symbol]: unknown } | undefined} state
  * @returns {JqReference}
  */
 export function ref(state) {

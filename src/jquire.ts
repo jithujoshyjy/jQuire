@@ -9,76 +9,87 @@ import {
 const scopedStyleSheets: WeakMap<HTMLElement, HTMLStyleElement> = new WeakMap()
 
 /**
+ * @typedef {import("./utility.js").JqElement} JqElement
+ * @typedef {import("./utility.js").JqAttribute} JqAttribute
+ * @typedef {import("./utility.js").JqCSSProperty} JqCSSProperty
+ * @typedef {import("./utility.js").JqCSSRule} JqCSSRule
+ * @typedef {import("./utility.js").JqReference} JqReference
+ * @typedef {import("./utility.js").JqFragment} JqFragment
  * @typedef {import("./utility.js").JqAnimation} JqAnimation
  * @typedef {import("./utility.js").JqCallback} JqCallback
- * @typedef {import("./utility.js").JqCSS} JqCSS
  * @typedef {import("./utility.js").JqEvent} JqEvent
- * @typedef {import("./utility.js").JqRef} JqRef
+ * @typedef {import("./utility.js").JqText} JqText
+ * @typedef {import("./utility.js").JqList} JqList
  * @typedef {null | undefined | number | string | symbol | bigint} Primitive
+ * @typedef {JqElement | JqAttribute | JqCSSProperty | JqCSSRule | JqAnimation | JqEvent | JqReference | JqFragment | JqText | JqCallback} JqNode
+ * @typedef {{
+ *		globalize: (_globalThis?: object) => void,
+ *		[name: string]: (...nodes: Array<JqNode>) => JqElement
+ *	}} Natives
  */
 
 /**
- * @type {{[native: string]: (...a: JqAnimation | JqCallback | JqCSS | JqEvent | JqReference | Primitive | Array<HTMLElement>) => HTMLElement}}
+ * @type {Natives}
  */
-export const natives = new Proxy({}, {
+export const natives = new Proxy({} as { [k: string | symbol]: any }, {
 	get(target, prop: string | symbol) {
 		if (typeof prop == "symbol")
-			return target[prop as keyof {}]
+			return target[prop]
 
 		if (prop == "globalize")
 			return globalize
 
-		return (...nodes: JqNode[]) => {
-			const {
-				childNodes, attributes,
-				inlineStyles, blockStyles,
-				animations, events, references,
-				callbacks
-			} = getNodes(nodes)
-
-			return new JqElement(prop, childNodes, attributes, events, animations, references, inlineStyles, blockStyles, callbacks)
-		}
-
-		function globalize(_globalThis?: object) {
-			validHTMLElements
-				.forEach(element => ((_globalThis ?? globalThis) as any)[element] = (natives as any)[element])
-		}
+		return (...nodes: JqNode[]) => new JqElement(prop, getNodes(nodes))
 	}
 })
 
+function globalize(_globalThis?: object) {
+	validHTMLElements
+		.forEach(element => ((_globalThis ?? globalThis) as any)[element] = (natives as any)[element])
+}
+
 /**
- * @type {(strs: string[] | string, ...values: unknown[]) => Text}
+ * @type {(text: Primitive) => JqText}
  */
 const text = new Proxy(_text, {})
 
 /**
- * @type {(strs: string[], ...values: unknown[]) => Attr}
+ * @type {
+ * ((attrObj: { [x: string]: Primitive }) => JqList<JqAttribute, typeof JqAttribute>) & {
+ *		[x: string]: JqAttribute
+ * }}
  */
 const attr = new Proxy(_attr, {
 	get(target, prop: string | symbol) {
 		if (typeof prop == "symbol")
 			return target[prop as keyof {}]
 
-		return (value: unknown) =>
-			createAttribute(prop, value)
+		return (value: unknown) => createAttribute(prop, value)
 	}
 })
 
 /**
- * @type {{[x: string]: (e?: Event) => JqEvent}}
+ * @type {
+ * ((event?: Event, ...a: unknown[]) => JqEvent) & {
+ * 		[eventName: string]: (handler: (event?: Event, ...a: unknown[]) => unknown) => JqEvent
+ * }}
  */
-export const on = new Proxy({}, {
+export const on = new Proxy({} as
+	{ [eventName: string | symbol]: (handler: (event?: Event, ...a: unknown[]) => unknown) => JqEvent }, {
 	get(target, prop: string | symbol) {
 		if (typeof prop == "symbol")
-			return target[prop as keyof {}]
+			return target[prop]
 
-		return (handler: (...a: unknown[]) => unknown) =>
+		return (handler: (event?: Event, ...a: unknown[]) => unknown) =>
 			new JqEvent(prop, handler)
 	}
 })
 
 /**
- * @type {(a0: string | {[x: string]: Primitive}, ...a1: string[]) => JqCSS}
+ * @type {
+ * ((styleObj: { [x: string]: Primitive }) => JqCSSRule) & {
+*		[x: string]: JqCSSProperty
+* }}
  */
 export const css = new Proxy(_css, {
 	get(target, prop: string | symbol) {
@@ -97,31 +108,9 @@ function createAttribute(name: string, value: unknown) {
 	return new JqAttribute(name, _value)
 }
 
-function _attr(strs: string[] | { [x: string]: Primitive }, ...values: unknown[]) {
-	if (!Array.isArray(strs)) {
-		const attrList = JqAttribute.objectToJqAttributes(strs)
-		return attrList
-	}
-
-	const attrRegex = /^(?<attrName>\p{L}[\d\p{L}]*)(?:\s*(?<eq>=)(?:\s*(?<attrValue>.*)))?\s*$/u
-	const attrMatch = strs.join("").trim().match(attrRegex)
-
-	if (attrMatch == null || values.length > 1) {
-		throw new Error(`JqError - Invalid attribute syntax`)
-	}
-
-	type MatchGroup = { attrName: string | undefined, eq: string | undefined, attrValue: string | undefined }
-	const { attrName, eq, attrValue: _attrValue } = attrMatch.groups as MatchGroup
-
-	const bothPresent = _attrValue !== '' && !isNullish(_attrValue) && !isNullish(values[0])
-	const neitherPresent = eq && (_attrValue === '' || isNullish(_attrValue)) && isNullish(values[0])
-
-	if (!attrName || bothPresent || neitherPresent) {
-		throw new Error(`JqError - Invalid attribute syntax`)
-	}
-
-	const attrValue = (_attrValue === '' ? null : _attrValue) ?? values[0] ?? attrName
-	return createAttribute(attrName, attrValue)
+function _attr(attrObj: { [x: string]: Primitive }) {
+	const attrList = JqAttribute.objectToJqAttributes(attrObj)
+	return attrList
 }
 
 function createTextNode(value: unknown) {
@@ -142,8 +131,8 @@ function _text(strs: string[] | string, ...values: unknown[]) {
 }
 
 /**
- * @param {Array<Text | HTMLElement>} childNodes 
- * @returns {Array<Text | HTMLElement>}
+ * @param {Array<Primitive | JqElement | JqText | JqFragment>} childNodes 
+ * @returns {JqFragment}
  */
 function fragment(..._childNodes: Array<JqElement | JqFragment | JqText>) {
 	const { childNodes } = getNodes(_childNodes)
@@ -173,7 +162,7 @@ function _css(...args: [string | { [x: string]: Primitive }, ...string[]]) {
 }
 
 /**
- * 
+ * @param {{ [x: string | symbol]: unknown } | undefined} state
  * @returns {JqReference}
  */
 export function ref(state?: { [x: string | symbol]: unknown }) {
