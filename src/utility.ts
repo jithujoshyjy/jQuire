@@ -901,12 +901,12 @@ export class JqList<U extends JqNode, T extends { new(...x: any[]): U }> {
 	}
 }
 
-type JqElementParameters = {
+export type JqElementParameters = {
 	childNodes: Array<JqElement | JqFragment | JqText>,
 	attributes: JqAttribute[], events: JqEvent[],
 	animations: JqAnimation[], references: JqReference[],
 	inlineStyles: Array<JqCSSProperty>, blockStyles: Array<JqCSSRule>,
-	callbacks: JqCallback[]
+	callbacks: JqCallback[], htmlNode?: HTMLElement
 }
 
 export class JqElement {
@@ -932,7 +932,7 @@ export class JqElement {
 
 	attachTo(node: Node | JqElement | JqFragment) {
 		const attachNode = () => this.initial
-			.createNode()
+			.createNode(isNullish(this.htmlNode))
 			.attachReferences()
 			.attachStyles()
 			.attachAttributes()
@@ -979,9 +979,10 @@ export class JqElement {
 
 	initial = {
 		context: this,
-		createNode() {
+		createNode(recreate = true) {
 			const jqElement = this.context
-			jqElement.htmlNode = document.createElement(jqElement.name)
+			if (recreate)
+				jqElement.htmlNode = document.createElement(jqElement.name)
 			return this
 		},
 		attachAttributes() {
@@ -1148,6 +1149,10 @@ export class JqElement {
 			jqElement.htmlNode!.remove()
 			return this
 		}
+	}
+
+	static custom = (context: HTMLElement, name: string, nodes: JqElementParameters) => {
+		return new JqElement(name, { ...nodes, htmlNode: context })
 	}
 }
 

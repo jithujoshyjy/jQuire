@@ -1,5 +1,10 @@
+var __setFunctionName = (this && this.__setFunctionName) || function (f, name, prefix) {
+    if (typeof name === "symbol") name = name.description ? "[".concat(name.description, "]") : "";
+    return Object.defineProperty(f, "name", { configurable: true, value: prefix ? "".concat(prefix, " ", name) : name });
+};
 import { JqEvent, getNodes, escapeHTMLEntities, stringify, JqAnimation, isPrimitive, JqReference, JqElement, JqCSSProperty, JqFragment, JqText, JqCSSRule, JqAttribute, StateReference, JqNodeReference, validHTMLElements } from "./utility.js";
 const scopedStyleSheets = new WeakMap();
+const CustomElements = Symbol("CustomElements");
 /**
  * @typedef {import("./utility.js").JqElement} JqElement
  * @typedef {import("./utility.js").JqAttribute} JqAttribute
@@ -18,6 +23,10 @@ const scopedStyleSheets = new WeakMap();
  *		globalize: (_globalThis?: object) => void,
  *		[name: string]: (...nodes: Array<JqNode>) => JqElement
  *	}} Natives
+ * @typedef {
+ *	((name: string, parent?: typeof HTMLElement) => (...nodes: JqNode[]) => JqElement) &
+ *	{[CustomElements]: string[]}
+ * } Customs
  */
 /**
  * @type {Natives}
@@ -78,6 +87,37 @@ export const css = new Proxy(_css, {
         return (value) => {
             const jqCSSProperty = new JqCSSProperty(prop, value);
             return jqCSSProperty;
+        };
+    }
+});
+const _custom = Object.assign(((name, parent = HTMLElement) => {
+    var _a, _b;
+    if (customElements.get(name))
+        throw new Error(`JqError - custom element '${name}' was already defined`);
+    _custom[CustomElements].push(name);
+    const _JqElement = Symbol("_JqElement");
+    const node = (_b = class extends parent {
+            constructor(name, nodes) {
+                super();
+                node[_JqElement] = JqElement.custom(this, name, getNodes(nodes));
+            }
+        },
+        _a = _JqElement,
+        __setFunctionName(_b, "node"),
+        _b[_a] = null,
+        _b);
+    customElements.define(name, node);
+    return (...nodes) => (new node(name, nodes), node[_JqElement]);
+}), { [CustomElements]: [] });
+/**
+ * @type {Customs} custom
+*/
+export const custom = new Proxy(_custom, {
+    get(target, prop) {
+        if (typeof prop == "symbol")
+            return target[prop];
+        return (name, parent = HTMLElement) => {
+            return target(name, parent);
         };
     }
 });

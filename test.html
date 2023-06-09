@@ -13,7 +13,7 @@
 		import {
 			natives, nodes, showIf,
 			on, ref, pathSetter,
-			getNodes, animate, css
+			getNodes, animate, css, custom
 		} from "./dist/jquire.js"
 
 		const {
@@ -44,7 +44,12 @@
 				x.name.toLowerCase().includes(evt.target.value.trim().toLowerCase()))
 		}
 
+		const HelloWorld = () => custom("hello-world")(
+			"Hello World!"
+		)
+
 		const app = div(
+			HelloWorld(),
 			input(
 				on.input(handleInput),
 			),

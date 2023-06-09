@@ -3,10 +3,11 @@ import {
 	stringify, isNullish, JqAnimation, type Primitive,
 	isPrimitive, JqReference, JqElement, JqNode,
 	JqCSSProperty, JqFragment, JqText, JqCSSRule,
-	JqAttribute, StateReference, JqNodeReference, validHTMLElements
+	JqAttribute, StateReference, JqNodeReference, validHTMLElements, JqElementParameters
 } from "./utility.js"
 
 const scopedStyleSheets: WeakMap<HTMLElement, HTMLStyleElement> = new WeakMap()
+const CustomElements = Symbol("CustomElements")
 
 /**
  * @typedef {import("./utility.js").JqElement} JqElement
@@ -26,6 +27,10 @@ const scopedStyleSheets: WeakMap<HTMLElement, HTMLStyleElement> = new WeakMap()
  *		globalize: (_globalThis?: object) => void,
  *		[name: string]: (...nodes: Array<JqNode>) => JqElement
  *	}} Natives
+ * @typedef {
+ *	((name: string, parent?: typeof HTMLElement) => (...nodes: JqNode[]) => JqElement) &
+ *	{[CustomElements]: string[]}
+ * } Customs
  */
 
 /**
@@ -99,6 +104,39 @@ export const css = new Proxy(_css, {
 		return (value: Primitive) => {
 			const jqCSSProperty = new JqCSSProperty(prop, value)
 			return jqCSSProperty
+		}
+	}
+})
+
+const _custom = Object.assign(((name: string, parent: typeof HTMLElement = HTMLElement) => {
+	if (customElements.get(name))
+		throw new Error(`JqError - custom element '${name}' was already defined`);
+
+	_custom[CustomElements].push(name)
+	const _JqElement = Symbol("_JqElement")
+
+	const node = class extends parent {
+		static [_JqElement]: JqElement | null = null
+		constructor(name: string, nodes: JqNode[]) {
+			super()
+			node[_JqElement] = JqElement.custom(this, name, getNodes(nodes))!
+		}
+	}
+
+	customElements.define(name, node)
+	return (...nodes: JqNode[]) => (new node(name, nodes), node[_JqElement]!)
+}), { [CustomElements]: [] as string[] })
+
+/**
+ * @type {Customs} custom
+*/
+export const custom = new Proxy(_custom, {
+	get(target, prop: string | symbol) {
+		if (typeof prop == "symbol")
+			return target[prop as keyof typeof _custom]
+
+		return (name: string, parent: typeof HTMLElement = HTMLElement) => {
+			return target(name, parent)
 		}
 	}
 })

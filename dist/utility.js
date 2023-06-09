@@ -764,7 +764,7 @@ export class JqList {
         return this.nodes.pop();
     }
 }
-export class JqElement {
+class JqElement {
     constructor(name, props) {
         this.jqParent = null;
         this.shadowRoot = null;
@@ -781,9 +781,10 @@ export class JqElement {
         this.nodePosition = -1;
         this.initial = {
             context: this,
-            createNode() {
+            createNode(recreate = true) {
                 const jqElement = this.context;
-                jqElement.htmlNode = document.createElement(jqElement.name);
+                if (recreate)
+                    jqElement.htmlNode = document.createElement(jqElement.name);
                 return this;
             },
             attachAttributes() {
@@ -936,7 +937,7 @@ export class JqElement {
     }
     attachTo(node) {
         const attachNode = () => this.initial
-            .createNode()
+            .createNode(isNullish(this.htmlNode))
             .attachReferences()
             .attachStyles()
             .attachAttributes()
@@ -976,6 +977,10 @@ export class JqElement {
         return _value;
     }
 }
+JqElement.custom = (context, name, nodes) => {
+    return new JqElement(name, { ...nodes, htmlNode: context });
+};
+export { JqElement };
 /**
  *
  * @param {boolean} condition
