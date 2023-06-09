@@ -2,7 +2,7 @@ var __setFunctionName = (this && this.__setFunctionName) || function (f, name, p
     if (typeof name === "symbol") name = name.description ? "[".concat(name.description, "]") : "";
     return Object.defineProperty(f, "name", { configurable: true, value: prefix ? "".concat(prefix, " ", name) : name });
 };
-import { JqEvent, getNodes, escapeHTMLEntities, stringify, JqAnimation, isPrimitive, JqReference, JqElement, JqCSSProperty, JqFragment, JqText, JqCSSRule, JqAttribute, StateReference, JqNodeReference, validHTMLElements } from "./utility.js";
+import { JqEvent, getNodes, escapeHTMLEntities, stringify, JqAnimation, isPrimitive, JqReference, JqElement, JqCSSProperty, JqFragment, JqText, JqCSSRule, JqAttribute, StateReference, JqNodeReference, validHTMLElements, camelToKebab } from "./utility.js";
 const scopedStyleSheets = new WeakMap();
 const CustomElements = Symbol("CustomElements");
 /**
@@ -116,9 +116,7 @@ export const custom = new Proxy(_custom, {
     get(target, prop) {
         if (typeof prop == "symbol")
             return target[prop];
-        return (name, parent = HTMLElement) => {
-            return target(name, parent);
-        };
+        return target(camelToKebab(prop));
     }
 });
 function createAttribute(name, value) {

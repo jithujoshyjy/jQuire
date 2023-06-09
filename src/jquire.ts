@@ -3,7 +3,7 @@ import {
 	stringify, isNullish, JqAnimation, type Primitive,
 	isPrimitive, JqReference, JqElement, JqNode,
 	JqCSSProperty, JqFragment, JqText, JqCSSRule,
-	JqAttribute, StateReference, JqNodeReference, validHTMLElements, JqElementParameters
+	JqAttribute, StateReference, JqNodeReference, validHTMLElements, JqElementParameters, camelToKebab
 } from "./utility.js"
 
 const scopedStyleSheets: WeakMap<HTMLElement, HTMLStyleElement> = new WeakMap()
@@ -135,9 +135,7 @@ export const custom = new Proxy(_custom, {
 		if (typeof prop == "symbol")
 			return target[prop as keyof typeof _custom]
 
-		return (name: string, parent: typeof HTMLElement = HTMLElement) => {
-			return target(name, parent)
-		}
+		return target(camelToKebab(prop))
 	}
 })
 

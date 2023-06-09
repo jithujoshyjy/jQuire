@@ -23,6 +23,8 @@
 			footer, template, span
 		} = natives
 
+		const { HelloWorld } = custom
+
 		const { attr, text, fragment } = nodes
 
 		const assets = pathSetter("../assets/")
@@ -44,12 +46,8 @@
 				x.name.toLowerCase().includes(evt.target.value.trim().toLowerCase()))
 		}
 
-		const HelloWorld = () => custom("hello-world")(
-			"Hello World!"
-		)
-
 		const app = div(
-			HelloWorld(),
+			HelloWorld("Hello World!"),
 			input(
 				on.input(handleInput),
 			),
