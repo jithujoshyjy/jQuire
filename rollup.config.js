@@ -4,7 +4,8 @@ export default {
     input: "./dist/jquire.js",
     output: {
         file: "./dist/jquire.min.js",
-        format: "es"
+        format: "es",
+		sourcemap: true
     },
 	context: "this",
 	plugins: [terser()]
