@@ -62,6 +62,35 @@
 		)
 
 		app.attachTo(document.body)
+		const MyButton = (label = '', theme = "normal") => {
+			const primary = theme == "normal"
+				? "lightgrey"
+				: "danger"
+					? "palevioletred"
+					: "info"
+						? "cornflowerblue"
+						: "coral" // warning
+			
+			const accent = theme == normal
+				? "darkgrey"
+				: "danger"
+					? "red"
+					: "info"
+						? "royalblue"
+						: "orangered" // warning
+			
+			const style = {
+				padding: "3px 5px",
+				border: `1px solid ${accent}`,
+				backgroundColor: primary,
+				borderRadius: "5px"
+			}
+
+			return custom("my-btn", HTMLButtonElement)(
+				css(style),
+				label
+			)
+		}
 	</script>
 </body>
 

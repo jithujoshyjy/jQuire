@@ -227,5 +227,48 @@ div(
 )
 ```
 
+### Custom Elements
+jQuire supports HTML5 Custom Elements out of the box.You can use them like any other component and they are brought into scope using the `custom()` function.
+
+```javascript
+const MyButton = (label = '', theme = "normal") => {
+	const primary = theme == "normal"
+		? "lightgrey"
+		: "danger"
+			? "palevioletred"
+			: "info"
+				? "cornflowerblue"
+				: "coral" // warning
+	
+	const accent = theme == normal
+		? "darkgrey"
+		: "danger"
+			? "red"
+			: "info"
+				? "royalblue"
+				: "orangered" // warning
+	
+	const style = {
+		padding: "3px 5px",
+		border: `1px solid ${accent}`,
+		backgroundColor: primary,
+		borderRadius: "5px"
+	}
+
+	// custom(tagName: a string in kebab-case, _extends: an optional HTMLElement)
+	return custom("my-btn", HTMLButtonElement)(
+		css(style),
+		label
+	)
+}
+```
+
+You can also create custom elements by specifying them as properties of `custom()` function.
+
+```javascript
+const { HelloWorld } = custom
+HelloWorld("hello world!")
+```
+
 > More ideas on the horizon...<br/>
 > stay tuned for more

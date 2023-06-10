@@ -191,6 +191,7 @@ const Navbar = () => {
 			{ id: "creating-elements-from-an-iterable-section", text: "Creating elements from an Iterable" },
 			{ id: "reactive-data-n-element-reference-section", text: "Reactive Data and Element Reference" },
 			{ id: "conditional-rendering-section", text: "Conditional Rendering" },
+			{ id: "custom-elements-section", text: "Custom Elements" },
 		]
 
 		const hasHeadingListRefreshed = false
@@ -455,7 +456,7 @@ const Header = () => {
 const WhatNWhySection = () => {
 	const style = {
 		...sectionStyle,
-		height: "100vh",
+		minHeight: "100vmin",
 		boxSizing: "border-box",
 		paddingLeft: "3.5rem",
 		paddingRight: "3.5rem",
@@ -494,7 +495,6 @@ const WhatNWhySection = () => {
 const InstallationNImportsSection = () => {
 	const style = {
 		...sectionStyle,
-		minHeight: "100vh",
 		boxSizing: "border-box",
 		paddingLeft: "3.5rem",
 		paddingRight: "3.5rem",
@@ -502,24 +502,15 @@ const InstallationNImportsSection = () => {
 
 	const installationHeadingStyle = {
 		...sectionHeadingStyle,
-		marginBottom: "3rem"
-	}
-
-	const headingStyle = {
-		marginTop: "3rem",
 	}
 
 	const UsingNPM = () => {
-		const usingNPMHeadingStyle = {
-			...headingStyle
-		}
 
 		const _code = `npm install jquire`
 
 		return section(
 			attr.id("using-npm-section"),
 			h4(
-				css(usingNPMHeadingStyle),
 				"Using npm",
 			),
 			CodeBox("bash", _code, highlight)
@@ -527,16 +518,12 @@ const InstallationNImportsSection = () => {
 	}
 
 	const UsingCDN = () => {
-		const usingCDNHeadingStyle = {
-			...headingStyle
-		}
 
 		const _code = `<script type="module" src="https://cdn.jsdelivr.net/gh/jithujoshyjy/jQuire/jquire.min.js"></script>`
 
 		return section(
 			attr.id("using-cdn-section"),
 			h4(
-				css(usingCDNHeadingStyle),
 				"Using cdn"
 			),
 			CodeBox("xml", _code, highlight)
@@ -544,9 +531,6 @@ const InstallationNImportsSection = () => {
 	}
 
 	const ImportsAfterInstallation = () => {
-		const ImportsAfterInstallationHeadingStyle = {
-			...headingStyle
-		}
 
 		const code1 = `import
 {
@@ -570,7 +554,6 @@ const { attr, text, fragment } = nodes`
 		return section(
 			attr.id("imports-after-installation-section"),
 			h4(
-				css(ImportsAfterInstallationHeadingStyle),
 				"Imports after installation"
 			),
 			CodeBox("javascript", code1, highlight),
@@ -607,7 +590,6 @@ const { attr, text, fragment } = nodes`
 const ComponentsSection = () => {
 	const style = {
 		...sectionStyle,
-		minHeight: "100vh",
 		boxSizing: "border-box",
 		paddingLeft: "3.5rem",
 		paddingRight: "3.5rem",
@@ -745,7 +727,6 @@ const SpecifyingAttributesSection = () => {
 const StylingElementsSection = () => {
 	const style = {
 		...sectionStyle,
-		minHeight: "100vh",
 		boxSizing: "border-box",
 		paddingLeft: "3.5rem",
 		paddingRight: "3.5rem",
@@ -970,7 +951,6 @@ ul(
 const ReactiveDataNElementReferenceSection = () => {
 	const style = {
 		...sectionStyle,
-		minHeight: "100vh",
 		boxSizing: "border-box",
 		paddingLeft: "3.5rem",
 		paddingRight: "3.5rem",
@@ -1034,7 +1014,6 @@ console.log(personRef.deref()) // HTMLDivElement`
 const ConditionalRenderingSection = () => {
 	const style = {
 		...sectionStyle,
-		minHeight: "80vh",
 		boxSizing: "border-box",
 		paddingLeft: "3.5rem",
 		paddingRight: "3.5rem",
@@ -1065,6 +1044,76 @@ div(
 			`function.`,
 		),
 		CodeBox("javascript", code1, highlight),
+	)
+}
+
+const CustomElementsSection = () => {
+	const style = {
+		...sectionStyle,
+		boxSizing: "border-box",
+		paddingLeft: "3.5rem",
+		paddingRight: "3.5rem",
+	}
+
+	const customElementsHeading = {
+		...sectionHeadingStyle,
+		marginBottom: "1rem"
+	}
+
+	const code1 = `const MyButton = (label = '', theme = "normal") => {
+	const primary = theme == "normal"
+		? "lightgrey"
+		: "danger"
+			? "palevioletred"
+			: "info"
+				? "cornflowerblue"
+				: "coral" // warning
+	
+	const accent = theme == normal
+		? "darkgrey"
+		: "danger"
+			? "red"
+			: "info"
+				? "royalblue"
+				: "orangered" // warning
+	
+	const style = {
+		padding: "3px 5px",
+		border: \`1px solid \${accent}\`,
+		backgroundColor: primary,
+		borderRadius: "5px"
+	}
+
+	// custom(tagName: a string in kebab-case, _extends: an optional HTMLElement)
+	return custom("my-btn", HTMLButtonElement)(
+		css(style),
+		label
+	)
+}`
+
+	const code2 = `const { HelloWorld } = custom
+HelloWorld("hello world!")
+`
+
+	return section(
+		css(style),
+		css("h3.custom-elements-heading")(customElementsHeading),
+		attr.id("custom-elements-section"),
+		h3(
+			attr.class("custom-elements-heading"),
+			"Custom Elements"
+		),
+		p(
+			`jQuire supports `, Link(attr.href("https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_custom_elements"), "HTML5 Custom Elements"), ` out of the box.`,
+			`You can use them like any other component and they are brought into scope using the `,
+			Emphasize("custom()"), ` function.`
+		),
+		CodeBox("javascript", code1, highlight),
+		p(
+			"You can also create custom elements by specifying them as properties of ",
+			Emphasize("custom()"), " function."
+		),
+		CodeBox("javascript", code2, highlight),
 	)
 }
 
@@ -1113,6 +1162,7 @@ const _main = main(
 	CreatingElementsFromAnIterableSection(),
 	ReactiveDataNElementReferenceSection(),
 	ConditionalRenderingSection(),
+	CustomElementsSection(),
 	Footer()
 )
 
