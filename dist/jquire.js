@@ -6,6 +6,7 @@ import { JqEvent, getNodes, escapeHTMLEntities, stringify, JqAnimation, isPrimit
 const scopedStyleSheets = new WeakMap();
 const CustomElements = Symbol("CustomElements");
 /**
+ * @preserve
  * @typedef {import("./utility.js").JqElement} JqElement
  * @typedef {import("./utility.js").JqAttribute} JqAttribute
  * @typedef {import("./utility.js").JqCSSProperty} JqCSSProperty
@@ -29,6 +30,7 @@ const CustomElements = Symbol("CustomElements");
  * } Customs
  */
 /**
+ * @preserve
  * @type {Natives}
  */
 export const natives = new Proxy({}, {
@@ -45,10 +47,12 @@ function globalize(_globalThis) {
         .forEach(element => (_globalThis ?? globalThis)[element] = natives[element]);
 }
 /**
+ * @preserve
  * @type {(text: Primitive) => JqText}
  */
 const text = new Proxy(_text, {});
 /**
+ * @preserve
  * @type {
  * ((attrObj: { [x: string]: Primitive }) => JqList<JqAttribute, typeof JqAttribute>) & {
  *		[x: string]: JqAttribute
@@ -62,6 +66,7 @@ const attr = new Proxy(_attr, {
     }
 });
 /**
+ * @preserve
  * @type {
  * ((event?: Event, ...a: unknown[]) => JqEvent) & {
  * 		[eventName: string]: (handler: (event?: Event, ...a: unknown[]) => unknown) => JqEvent
@@ -75,6 +80,7 @@ export const on = new Proxy({}, {
     }
 });
 /**
+ * @preserve
  * @type {
  * ((styleObj: { [x: string]: Primitive }) => JqCSSRule) & {
 *		[x: string]: JqCSSProperty
@@ -110,6 +116,7 @@ const _custom = Object.assign(((name, parent = HTMLElement) => {
     return (...nodes) => (new node(name, nodes), node[_JqElement]);
 }), { [CustomElements]: [] });
 /**
+ * @preserve
  * @type {Customs} custom
 */
 export const custom = new Proxy(_custom, {
@@ -140,6 +147,7 @@ function _text(strs, ...values) {
     return createTextNode(_strs);
 }
 /**
+ * @preserve
  * @param {Array<Primitive | JqElement | JqText | JqFragment>} childNodes
  * @returns {JqFragment}
  */
@@ -148,6 +156,7 @@ function fragment(..._childNodes) {
     return new JqFragment(childNodes);
 }
 /**
+ * @preserve
  * @type {(styles: AnimationStyles, ...options: [speed?: number | "fast" | "slow" | undefined, easing?: string | undefined, callback?: ((..._: unknown[]) => unknown) | undefined] | [option: AnimationOptions])) => JqAnimation}
  */
 export function animate(...parameters) {
@@ -165,6 +174,7 @@ function _css(...args) {
     };
 }
 /**
+ * @preserve
  * @param {{ [x: string | symbol]: unknown } | undefined} state
  * @returns {JqReference}
  */

@@ -10,6 +10,7 @@ const scopedStyleSheets: WeakMap<HTMLElement, HTMLStyleElement> = new WeakMap()
 const CustomElements = Symbol("CustomElements")
 
 /**
+ * @preserve
  * @typedef {import("./utility.js").JqElement} JqElement
  * @typedef {import("./utility.js").JqAttribute} JqAttribute
  * @typedef {import("./utility.js").JqCSSProperty} JqCSSProperty
@@ -34,6 +35,7 @@ const CustomElements = Symbol("CustomElements")
  */
 
 /**
+ * @preserve
  * @type {Natives}
  */
 export const natives = new Proxy({} as { [k: string | symbol]: any }, {
@@ -54,11 +56,13 @@ function globalize(_globalThis?: object) {
 }
 
 /**
+ * @preserve
  * @type {(text: Primitive) => JqText}
  */
 const text = new Proxy(_text, {})
 
 /**
+ * @preserve
  * @type {
  * ((attrObj: { [x: string]: Primitive }) => JqList<JqAttribute, typeof JqAttribute>) & {
  *		[x: string]: JqAttribute
@@ -74,6 +78,7 @@ const attr = new Proxy(_attr, {
 })
 
 /**
+ * @preserve
  * @type {
  * ((event?: Event, ...a: unknown[]) => JqEvent) & {
  * 		[eventName: string]: (handler: (event?: Event, ...a: unknown[]) => unknown) => JqEvent
@@ -91,6 +96,7 @@ export const on = new Proxy({} as
 })
 
 /**
+ * @preserve
  * @type {
  * ((styleObj: { [x: string]: Primitive }) => JqCSSRule) & {
 *		[x: string]: JqCSSProperty
@@ -128,6 +134,7 @@ const _custom = Object.assign(((name: string, parent: typeof HTMLElement = HTMLE
 }), { [CustomElements]: [] as string[] })
 
 /**
+ * @preserve
  * @type {Customs} custom
 */
 export const custom = new Proxy(_custom, {
@@ -167,6 +174,7 @@ function _text(strs: string[] | string, ...values: unknown[]) {
 }
 
 /**
+ * @preserve
  * @param {Array<Primitive | JqElement | JqText | JqFragment>} childNodes 
  * @returns {JqFragment}
  */
@@ -176,6 +184,7 @@ function fragment(..._childNodes: Array<JqElement | JqFragment | JqText>) {
 }
 
 /**
+ * @preserve
  * @type {(styles: AnimationStyles, ...options: [speed?: number | "fast" | "slow" | undefined, easing?: string | undefined, callback?: ((..._: unknown[]) => unknown) | undefined] | [option: AnimationOptions])) => JqAnimation}
  */
 export function animate(...parameters: Parameters<AnimateFn>): JqAnimation {
@@ -198,6 +207,7 @@ function _css(...args: [string | { [x: string]: Primitive }, ...string[]]) {
 }
 
 /**
+ * @preserve
  * @param {{ [x: string | symbol]: unknown } | undefined} state
  * @returns {JqReference}
  */
