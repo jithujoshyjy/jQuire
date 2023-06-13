@@ -237,6 +237,10 @@ export class JqCallback {
 		return this
 	}
 
+	toString(indent = 0): string {
+		return this.returned?.toString(indent) ?? ''
+	}
+
 	update = {
 		context: this,
 		updateCallback() {
@@ -726,7 +730,10 @@ export class JqFragment {
 			.createNode()
 			.attachChildren()
 
-		if (node instanceof HTMLElement) {
+		if (node === null) {
+			attachNode()
+		}
+		else if (node instanceof HTMLElement) {
 			attachNode()
 			node.appendChild(this.htmlNode!)
 		}
@@ -741,7 +748,8 @@ export class JqFragment {
 		else {
 			throw new Error(`JqError - Cannot attach JqFragment to a node not of instance JqElement or JqFragment or HTMLElement`)
 		}
-		return this
+
+		return this.toString()
 	}
 
 	getStateRefValue(prop: string | symbol): any {
@@ -750,6 +758,10 @@ export class JqFragment {
 
 	setStateRefValue(prop: string | symbol, value: unknown): any {
 		return this.jqParent?.setStateRefValue(prop, value)
+	}
+
+	toString(indent = 0): string {
+		return this.childNodes.map(x => x.toString(indent)).join('\n' + '\t'.repeat(indent))
 	}
 
 	initial = {
@@ -829,8 +841,12 @@ export class JqText {
 
 	attachTo(node: Node | JqElement | JqFragment) {
 		this.initial.createNode()
-		if (node instanceof HTMLElement) {
+		if(node === null) {
+			
+		}
+		else if (node instanceof HTMLElement) {
 			node.appendChild(this.htmlNode!)
+			return this.toString()
 		}
 		else if (node instanceof JqElement) {
 			this.jqParent = node;
@@ -843,7 +859,12 @@ export class JqText {
 		else {
 			throw new Error(`JqError - Cannot attach JqText to a node not of instance JqElement or JqFragment or HTMLElement`)
 		}
-		return this
+
+		return this.toString()
+	}
+
+	toString(indent = 0) {
+		return this.htmlNode!.nodeValue ?? ''
 	}
 
 	initial = {
@@ -940,7 +961,10 @@ export class JqElement {
 			.attachEventListeners()
 			.attachAnimations()
 
-		if (node instanceof HTMLElement) {
+		if(node === null) {
+			attachNode()
+		}
+		else if (node instanceof HTMLElement) {
 			attachNode()
 			node.appendChild(this.htmlNode!)
 		}
@@ -957,7 +981,7 @@ export class JqElement {
 			throw new Error(`JqError - Cannot attach JqElement '${this.name}' to a node not of instance JqElement or JqFragment or HTMLElement`)
 		}
 
-		return this
+		return this.toString()
 	}
 
 	getStateRefValue(prop: string | symbol): any {
@@ -975,6 +999,33 @@ export class JqElement {
 
 		const _value = this.jqParent?.setStateRefValue(prop, value)
 		return _value
+	}
+
+	toString(indent = 0): string {
+		const emptyTags = [
+			"area", "base", "br",
+			"col", "embed", "hr",
+			"img", "input", "link",
+			"meta", "param", "source",
+			"track", "wbr"
+		]
+
+		const hasElmStartIndent = (length: number) => length > 0 ? '\n' + '\t'.repeat(indent + 1) : ''
+		const hasElmEndIndent = (length: number) => length > 0 ? '\n' + '\t'.repeat(indent) : ''
+		const emptyTagSelfClosure = emptyTags.includes(this.name) ? '/' : ''
+
+		const childMarkup = this.childNodes.map(x => x.toString(indent + 1)).join('\n' + '\t'.repeat(indent + 1))
+		const selfAttrs = this.attributes.map(x => `${x.name} = "${stringify(x.value)}"`).join(" ")
+		const selfCallbacks = this.callbacks.map(x => x.toString(indent + 1)).join('\n' + '\t'.repeat(indent))
+
+		const selfMarkupHead = `<${this.name}${selfAttrs.length ? ' ' : ''}${selfAttrs}${emptyTagSelfClosure}>`
+		const selfMarkupTail = `${hasElmStartIndent(childMarkup.length || selfCallbacks.length) +
+			childMarkup +
+			(selfCallbacks.length ? hasElmStartIndent(childMarkup.length) + selfCallbacks : '') +
+			hasElmEndIndent(childMarkup.length || selfCallbacks.length)}</${this.name}>`
+		const selfMarkup = `${selfMarkupHead}${!emptyTagSelfClosure ? selfMarkupTail : ''}`
+
+		return selfMarkup
 	}
 
 	initial = {

@@ -329,6 +329,9 @@ export class JqCallback {
         }
         return this;
     }
+    toString(indent = 0) {
+        return this.returned?.toString(indent) ?? '';
+    }
 }
 export class JqEvent {
     constructor(event, handler) {
@@ -669,7 +672,10 @@ export class JqFragment {
         const attachNode = () => this.initial
             .createNode()
             .attachChildren();
-        if (node instanceof HTMLElement) {
+        if (node === null) {
+            attachNode();
+        }
+        else if (node instanceof HTMLElement) {
             attachNode();
             node.appendChild(this.htmlNode);
         }
@@ -684,13 +690,16 @@ export class JqFragment {
         else {
             throw new Error(`JqError - Cannot attach JqFragment to a node not of instance JqElement or JqFragment or HTMLElement`);
         }
-        return this;
+        return this.toString();
     }
     getStateRefValue(prop) {
         return this.jqParent?.getStateRefValue(prop);
     }
     setStateRefValue(prop, value) {
         return this.jqParent?.setStateRefValue(prop, value);
+    }
+    toString(indent = 0) {
+        return this.childNodes.map(x => x.toString(indent)).join('\n' + '\t'.repeat(indent));
     }
 }
 export class JqText {
@@ -732,8 +741,11 @@ export class JqText {
     }
     attachTo(node) {
         this.initial.createNode();
-        if (node instanceof HTMLElement) {
+        if (node === null) {
+        }
+        else if (node instanceof HTMLElement) {
             node.appendChild(this.htmlNode);
+            return this.toString();
         }
         else if (node instanceof JqElement) {
             this.jqParent = node;
@@ -746,7 +758,10 @@ export class JqText {
         else {
             throw new Error(`JqError - Cannot attach JqText to a node not of instance JqElement or JqFragment or HTMLElement`);
         }
-        return this;
+        return this.toString();
+    }
+    toString(indent = 0) {
+        return this.htmlNode.nodeValue ?? '';
     }
 }
 export class JqList {
@@ -944,7 +959,10 @@ class JqElement {
             .attachChildren()
             .attachEventListeners()
             .attachAnimations();
-        if (node instanceof HTMLElement) {
+        if (node === null) {
+            attachNode();
+        }
+        else if (node instanceof HTMLElement) {
             attachNode();
             node.appendChild(this.htmlNode);
         }
@@ -960,7 +978,7 @@ class JqElement {
         else {
             throw new Error(`JqError - Cannot attach JqElement '${this.name}' to a node not of instance JqElement or JqFragment or HTMLElement`);
         }
-        return this;
+        return this.toString();
     }
     getStateRefValue(prop) {
         const reference = this.references?.find(reference => prop in reference[StateReference]);
@@ -975,6 +993,28 @@ class JqElement {
         }
         const _value = this.jqParent?.setStateRefValue(prop, value);
         return _value;
+    }
+    toString(indent = 0) {
+        const emptyTags = [
+            "area", "base", "br",
+            "col", "embed", "hr",
+            "img", "input", "link",
+            "meta", "param", "source",
+            "track", "wbr"
+        ];
+        const hasElmStartIndent = (length) => length > 0 ? '\n' + '\t'.repeat(indent + 1) : '';
+        const hasElmEndIndent = (length) => length > 0 ? '\n' + '\t'.repeat(indent) : '';
+        const emptyTagSelfClosure = emptyTags.includes(this.name) ? '/' : '';
+        const childMarkup = this.childNodes.map(x => x.toString(indent + 1)).join('\n' + '\t'.repeat(indent + 1));
+        const selfAttrs = this.attributes.map(x => `${x.name} = "${stringify(x.value)}"`).join(" ");
+        const selfCallbacks = this.callbacks.map(x => x.toString(indent + 1)).join('\n' + '\t'.repeat(indent));
+        const selfMarkupHead = `<${this.name}${selfAttrs.length ? ' ' : ''}${selfAttrs}${emptyTagSelfClosure}>`;
+        const selfMarkupTail = `${hasElmStartIndent(childMarkup.length || selfCallbacks.length) +
+            childMarkup +
+            (selfCallbacks.length ? hasElmStartIndent(childMarkup.length) + selfCallbacks : '') +
+            hasElmEndIndent(childMarkup.length || selfCallbacks.length)}</${this.name}>`;
+        const selfMarkup = `${selfMarkupHead}${!emptyTagSelfClosure ? selfMarkupTail : ''}`;
+        return selfMarkup;
     }
 }
 JqElement.custom = (context, name, nodes) => {
