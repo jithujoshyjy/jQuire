@@ -171,8 +171,8 @@ export function escapeHTMLEntities(text) {
 export function stringify(value) {
     return isPrimitive(value) ? String(value ?? '') : JSON.stringify(value);
 }
-export function isNullish(value) {
-    return value === null || value === undefined;
+export function isNullish(...values) {
+    return values.every(x => x === null || x === undefined);
 }
 export class JqCallback {
     constructor(callback) {
@@ -196,7 +196,7 @@ export class JqCallback {
                 if (jqCallback.returned === null)
                     return this;
                 const oldNode = jqCallback.returned;
-                const newNode = jqCallback.invoke();
+                const newNode = jqCallback.returned = jqCallback.invoke();
                 const rootNode = oldNode, parentNode = oldNode;
                 reconcile(rootNode, parentNode, oldNode, newNode);
                 return this;
@@ -216,9 +216,8 @@ export class JqCallback {
                             if (firstProp == "value")
                                 updateAttribute(_diff, [firstProp, ...nestedProps]);
                         }
-                        else if (isJqFragment(node1, node2)) {
-                        }
-                        else if (isJqElement(node1, node2)) {
+                        else if (!isNullish(node1) && !isNullish(node2)) {
+                            updateElement(_diff, [firstProp, ...nestedProps]);
                         }
                     }
                     for (const [firstProp, ...nestedProps] of createdChanges) {
@@ -246,10 +245,8 @@ export class JqCallback {
                             node1.delete.deleteSelf();
                         }
                     }
-                    // if ([updatedChanges.length, createdChanges.length, deletedChanges.length].every(x => x == 0)) {
                     for (const childDiff of _diff.childDiffs)
                         reconcile(rootNode, _diff.node1, childDiff.node1, childDiff.node2);
-                    // }
                 }
                 function updateAttribute(diff, props) {
                     if (![diff.node1, diff.node2].every(node => node instanceof JqAttribute))
@@ -264,6 +261,13 @@ export class JqCallback {
                     const _node1 = diff.node1;
                     const _node2 = diff.node2;
                     _node1.update.setText(_node2.text);
+                }
+                function updateElement(diff, props) {
+                    const _node1 = diff.node1;
+                    const _node2 = diff.node2;
+                    const _node1Parent = diff.node1.jqParent;
+                    _node2 instanceof JqText ? _node2.initial.createNode() : _node2.attachTo(null);
+                    _node1Parent.update.replaceChild(_node1, _node2);
                 }
                 function createElement(diff, [firstProp, _childNode]) {
                     if (![diff.node1, diff.node2].every(node => node instanceof JqElement))
@@ -323,6 +327,10 @@ export class JqCallback {
             this.jqParent = node;
             this.returned = this.invoke();
             this.returned.attachTo(node);
+            let retNodeInsertPos = node.childNodes
+                .findIndex(childNode => this.nodePosition == childNode.nodePosition);
+            retNodeInsertPos = retNodeInsertPos == -1 ? (node.childNodes.length || 1) - 1 : retNodeInsertPos;
+            node.childNodes.splice(retNodeInsertPos, 0, this.returned);
         }
         else {
             throw new Error(`JqError - Cannot attach JqCallback to a node not of instance JqElement or JqText or JqFragment or HTMLElement`);
@@ -651,6 +659,17 @@ export class JqFragment {
                     return this;
                 }
                 return this;
+            },
+            replaceChild(oldChildNode, newChildNode) {
+                const jqFragment = this.context;
+                const delChildIdx = jqFragment.childNodes.findIndex(childNode => Object.is(childNode, oldChildNode));
+                if (delChildIdx == -1)
+                    throwError("JqInternalError - childNode not found in jqFragment.childNodes");
+                jqFragment.childNodes.splice(delChildIdx, 1, newChildNode);
+                if (!(oldChildNode instanceof JqText))
+                    oldChildNode.childNodes.forEach(childNode => childNode.delete.deleteSelf());
+                oldChildNode.jqParent.htmlNode.replaceChild(newChildNode.htmlNode, oldChildNode.htmlNode);
+                return this;
             }
         };
         this.delete = {
@@ -740,10 +759,11 @@ export class JqText {
         this.text = primitives.map(primitive => String(primitive ?? '')).join('');
     }
     attachTo(node) {
-        this.initial.createNode();
         if (node === null) {
+            return this.toString();
         }
-        else if (node instanceof HTMLElement) {
+        this.initial.createNode();
+        if (node instanceof HTMLElement) {
             node.appendChild(this.htmlNode);
             return this.toString();
         }
@@ -922,6 +942,17 @@ class JqElement {
                 for (const callback of jqElement.callbacks) {
                     callback.update.updateCallback();
                 }
+                return this;
+            },
+            replaceChild(oldChildNode, newChildNode) {
+                const jqElement = this.context;
+                const delChildIdx = jqElement.childNodes.findIndex(childNode => Object.is(childNode, oldChildNode));
+                if (delChildIdx == -1)
+                    throwError("JqInternalError - childNode not found in jqElement.childNodes");
+                jqElement.childNodes.splice(delChildIdx, 1, newChildNode);
+                if (!(oldChildNode instanceof JqText))
+                    oldChildNode.childNodes.forEach(childNode => childNode.delete.deleteSelf());
+                oldChildNode.jqParent.htmlNode.replaceChild(newChildNode.htmlNode, oldChildNode.htmlNode);
                 return this;
             }
         };
@@ -1214,7 +1245,7 @@ function diff(node1, node2) {
         if (isNode1 || isNode2)
             return _diff;
         const indexOfNode1 = node1.jqParent.childNodes.findIndex(x => Object.is(node1, x));
-        _diff[UPDATED].push(["childNodes", indexOfNode1 + '']);
+        _diff[UPDATED].push(["childNodes", node2]);
         return _diff;
     }
 }

@@ -46,10 +46,23 @@
 				x.name.toLowerCase().includes(evt.target.value.trim().toLowerCase()))
 		}
 
+		const btnRef = ref({ clicked: false })
+		const handleClick = evt => {
+			btnRef.clicked = !btnRef.clicked
+		}
+
 		const app = div(
 			HelloWorld("Hello World!"),
 			input(
 				on.input(handleInput),
+			),
+			button(
+				on.click(handleClick),
+				"click me!"
+			),
+			div(
+				btnRef,
+				() => showIf(btnRef.clicked) && span("visible"),
 			),
 			ul(
 				navLinksRef,
@@ -62,35 +75,6 @@
 		)
 
 		app.attachTo(document.body)
-		const MyButton = (label = '', theme = "normal") => {
-			const primary = theme == "normal"
-				? "lightgrey"
-				: "danger"
-					? "palevioletred"
-					: "info"
-						? "cornflowerblue"
-						: "coral" // warning
-			
-			const accent = theme == normal
-				? "darkgrey"
-				: "danger"
-					? "red"
-					: "info"
-						? "royalblue"
-						: "orangered" // warning
-			
-			const style = {
-				padding: "3px 5px",
-				border: `1px solid ${accent}`,
-				backgroundColor: primary,
-				borderRadius: "5px"
-			}
-
-			return custom("my-btn", HTMLButtonElement)(
-				css(style),
-				label
-			)
-		}
 	</script>
 </body>
 
