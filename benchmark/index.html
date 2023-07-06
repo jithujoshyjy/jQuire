@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<head>
+	<meta charset="utf-8" />
+	<title>jQuire - jQuery Ui Reciter</title>
+	<link href="/css/currentStyle.css" rel="stylesheet" />
+	<script type="module" src='src/index.js'></script>
+	<style>
+		:root {
+			font-family: sans-serif;
+		}
+		body {
+			padding: 2em;
+		}
+		.btn-group {
+			width: 400px;
+			display: grid;
+			gap: 8px;
+			grid-template-columns: 1fr 1fr;
+		}
+		button {
+			color: hsla(208, 100%, 97%, 1);
+			min-width: 200px;
+			padding: 10px 10px;
+			border: none;
+			cursor: pointer;
+			border-radius: 5px;
+			box-sizing: border-box;
+			background-color: hsla(210, 100%, 56%, 1);
+		}
+		button:hover {
+			color: hsla(208, 100%, 94%, 1);
+			background-color: hsla(210, 100%, 56%, 0.85);
+		}
+		button:active {
+			background-color: hsla(210, 100%, 50%, 1);
+		}
+		.selected {
+			background-color: hsla(210, 100%, 56%, 0.25);
+		}
+		table {
+			border-collapse: separate;
+			border-spacing: 0 1em;
+			margin-top: 10px;
+		}
+		td {
+			cursor: pointer;
+			padding: 4px;
+		}
+	</style>
+</head>
+<body></body>
