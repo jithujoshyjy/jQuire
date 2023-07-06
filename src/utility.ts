@@ -281,7 +281,7 @@ export class JqCallback {
 					}
 					else if (!isNullish(node1) && !isNullish(node2)) {
 						updateElement(_diff, [firstProp, ...nestedProps])
-						jqCallback.returned = newNode
+						jqCallback.returned = node2
 					}
 				}
 
