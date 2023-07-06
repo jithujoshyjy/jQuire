@@ -1,0 +1,28 @@
+{
+  "name": "jquire",
+  "version": "1.2.1",
+  "description": "jQuire - jQuery Ui Reciter",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "build-dev": "echo 0",
+    "build-prod": "echo 0"
+  },
+  "author": "jithu_joshy",
+  "repository": {
+	"type": "git",
+    "url": "https://github.com/jithujoshyjy/jQuire"
+  },
+  "keywords": [
+    "html",
+    "frontend",
+    "ui",
+    "view engine",
+    "template",
+    "vanilla",
+    "jQuire",
+	"jQuery"
+  ],
+  "license": "ISC",
+  "homepage": "https://jithujoshyjy.github.io/jQuire/"
+}
