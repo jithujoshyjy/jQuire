@@ -196,7 +196,7 @@ export class JqCallback {
                 if (jqCallback.returned === null)
                     return this;
                 const oldNode = jqCallback.returned;
-                const newNode = jqCallback.returned = jqCallback.invoke();
+                const newNode = jqCallback.invoke();
                 const rootNode = oldNode, parentNode = oldNode;
                 reconcile(rootNode, parentNode, oldNode, newNode);
                 return this;
@@ -218,6 +218,7 @@ export class JqCallback {
                         }
                         else if (!isNullish(node1) && !isNullish(node2)) {
                             updateElement(_diff, [firstProp, ...nestedProps]);
+                            jqCallback.returned = newNode;
                         }
                     }
                     for (const [firstProp, ...nestedProps] of createdChanges) {
