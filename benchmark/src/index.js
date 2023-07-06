@@ -1,4 +1,4 @@
-import { natives, nodes, css, showIf, ref, on } from "./jquire.min.js"
+import { natives, nodes, css, showIf, ref, on } from "https://cdn.jsdelivr.net/gh/jithujoshyjy/jquire@latest/dist/jquire.min.js"
 
 natives.globalize()
 const { attr } = nodes
