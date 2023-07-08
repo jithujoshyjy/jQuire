@@ -4,9 +4,9 @@
   "description": "",
   "main": "./dist/jquire.js",
   "type": "module",
+  "types": "./types/index.d.ts",
   "scripts": {
-    "build": "rollup -c",
-    "dev": "tsc --watch --outDir ./dist",
+    "dev": "tsc -w && rollup -c",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "jithu_joshy",
