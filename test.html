@@ -14,7 +14,7 @@
 			natives, nodes, showIf,
 			on, ref, pathSetter,
 			getNodes, animate, css, custom
-		} from "./dist/jquire.js"
+		} from "./src/jquire.min.js"
 
 		const {
 			div, input, button,
@@ -73,6 +73,20 @@
 				)
 			)
 		)
+
+		/* 
+		const data = ['a', 'b', 'c', 'd']
+		const dataRef = ref({ data })
+		div(
+			({ data } = refs(dataRef)) => null,
+			(condition = when(x == y)) => null,
+			(event = on("click")) => null,
+			([item, idx] = each(data)) => null,
+			(event = mount()) => null,
+			(event = unmount()) => null,
+			(event = update()) => null,
+		)
+		*/
 
 		app.attachTo(document.body)
 	</script>

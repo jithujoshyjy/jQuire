@@ -1,11 +1,11 @@
 import terser from '@rollup/plugin-terser'
 
 export default {
-	input: "./dist/jquire.js",
+	input: "./src/jquire.js",
 	output: {
-		file: "./dist/jquire.min.js",
+		file: "./src/jquire.min.js",
 		format: "es",
-		sourcemap: true
+		sourcemap: true,
 	},
 	context: "this",
 	plugins: [

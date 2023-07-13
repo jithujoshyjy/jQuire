@@ -6,7 +6,7 @@
   "type": "module",
   "types": "./types/index.d.ts",
   "scripts": {
-    "dev": "tsc -w && rollup -c",
+    "dev": "rollup -c",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "jithu_joshy",
@@ -25,7 +25,6 @@
   "license": "ISC",
   "devDependencies": {
     "@rollup/plugin-terser": "^0.4.3",
-    "rollup": "^3.24.0",
-    "typescript": "^5.0.4"
+    "rollup": "^3.24.0"
   }
 }
