@@ -1,9 +1,9 @@
 import {
 	JqEvent, getNodes, escapeHTMLEntities,
 	stringify, JqAnimation, JqCallback,
-	isPrimitive, JqReference, JqElement,
+	isPrimitive, JqState, JqElement,
 	JqCSSProperty, JqFragment, JqText, JqCSSRule, JqList,
-	JqAttribute, StateReference, JqNodeReference, validHTMLElements, camelToKebab
+	JqAttribute, StateReference, JqNodeReference, validHTMLElements, camelToKebab, ElementReference
 } from "./utility.js"
 
 /**
@@ -13,27 +13,9 @@ const scopedStyleSheets = new WeakMap()
 const CustomElements = Symbol("CustomElements")
 
 /**
- * @typedef {null | undefined | number | string | symbol | bigint} Primitive
- * 
- * @typedef {JqElement | JqAttribute | JqCSSProperty | JqCSSRule | JqAnimation | JqEvent | JqReference | JqFragment | JqText | JqCallback} JqNode
- * 
- * @typedef {{ [name: string]: (...nodes: Array<JqNode>) => JqElement }} NativeConstructor
- * 
- * @typedef {{ globalize: (_globalThis?: {}) => void }} Globalizer
- * 
- * @typedef {NativeConstructor & Globalizer} Natives
- * 
- * @typedef {(name: string, parent?: typeof HTMLElement) => (...nodes: JqNode[]) => JqElement} CustomConstructor
- * 
- * @typedef {{[CustomElements]: string[]}} Customizer
- * 
- * @typedef {CustomConstructor & Customizer} Customs
- */
-
-/**
  * @type {Natives}
  */
-export const natives = new Proxy(/** @type {Natives & {[k: string | symbol]: any}} */ ({}), {
+export const natives = new Proxy(/** @type {Natives & {[k: string | symbol]: any}} */({}), {
 	/**
 	 * @param {string | symbol} prop
 	 * @returns {unknown | typeof globalize | ((...nodes: JqNode[]) => JqElement)}
@@ -45,7 +27,7 @@ export const natives = new Proxy(/** @type {Natives & {[k: string | symbol]: any
 		if (prop == "globalize")
 			return globalize
 
-		return (...nodes) => new JqElement(prop, getNodes(nodes))
+		return (/** @type {import("./utility.js").JqNode[]} */...nodes) => new JqElement(prop, getNodes(nodes))
 	}
 })
 
@@ -54,6 +36,7 @@ export const natives = new Proxy(/** @type {Natives & {[k: string | symbol]: any
  */
 function globalize(_globalThis) {
 	validHTMLElements
+		// @ts-ignore
 		.forEach(element => (_globalThis ?? globalThis)[element] = natives[element])
 }
 
@@ -62,80 +45,57 @@ function globalize(_globalThis) {
  */
 const text = new Proxy(_text, {})
 
-/**
- * @type {
- * ((attrObj: { [x: string]: Primitive }) => JqList<JqAttribute, typeof JqAttribute>) & {
- *		[x: string]: JqAttribute
- * }}
- */
-const attr = new Proxy(_attr, {
+const attr = /**@type {AttrFn & AttrProps}*/ (new Proxy(_attr, {
 	/**
 	 * @param {string | symbol} prop 
 	 * @returns {(value: unknown) => JqAttribute}
 	 */
 	get(target, prop) {
 		if (typeof prop == "symbol")
-			return target[prop]
+			return target[/**@type {keyof typeof target}*/ (prop)]
 
 		return (value) => createAttribute(prop, value)
 	}
-})
+}))
 
-/**
- * @type {{ [eventName: string | symbol]: (handler: (event?: Event, ...a: unknown[]) => unknown) => JqEvent }}
- */
-const onObject = {}
-
-/**
- * @type {
- * ((event?: Event, ...a: unknown[]) => JqEvent) & {
- * 		[eventName: string]: (handler: (event?: Event, ...a: unknown[]) => unknown) => JqEvent
- * }}
- */
-export const on = new Proxy(onObject, {
+export const on = /**@type {OnFn & OnProps}*/ (new Proxy({}, {
 	/**
 	 * @param {string | symbol} prop 
 	 * @returns {(handler: (event?: Event, ...a: unknown[]) => unknown) => JqEvent}
 	 */
 	get(target, prop) {
 		if (typeof prop == "symbol")
-			return target[prop]
+			return target[/**@type {keyof typeof target}*/ (prop)]
 
 		return (handler) =>
 			new JqEvent(prop, handler)
 	}
-})
+}))
 
-/**
- * @type {
- * ((styleObj: { [x: string]: Primitive }) => JqCSSRule) & {
-*		[x: string]: JqCSSProperty
-* }}
- */
-export const css = new Proxy(_css, {
+export const css = /**@type {CSSFn & CSSProps}*/ (new Proxy(_css, {
 	/**
 	 * @param {string | symbol} prop 
-	 * @returns {(value: Primitive) => JqCSSProperty}
+	 * @returns {(value: import("./utility.js").Primitive) => JqCSSProperty}
 	 */
 	get(target, prop) {
 		if (typeof prop == "symbol")
-			return target[prop]
+			return target[/**@type {keyof typeof target}*/ (prop)]
 
 		return (value) => {
 			const jqCSSProperty = new JqCSSProperty(prop, value)
 			return jqCSSProperty
 		}
 	}
-})
+}))
 
 /**
  * @param {string} name 
  * @param {typeof HTMLElement} parent
- * @returns {(...nodes: JqNode[]) => JqElement}
+ * @returns {(...nodes: import("./utility.js").JqNode[]) => JqElement}
  */
 const customizer = (name, parent = HTMLElement) => {
 	if (customElements.get(name))
-		throw new Error(`JqError - custom element '${name}' was already defined`);
+		throw new TypeError(`JqError - custom element '${name}' was already defined`);
 
 	_custom[CustomElements].push(name)
 	const _JqElement = Symbol("_JqElement")
@@ -147,7 +107,7 @@ const customizer = (name, parent = HTMLElement) => {
 		static [_JqElement] = null
 		/**
 		 * @param {string} name 
-		 * @param {JqNode[]} nodes 
+		 * @param {import("./utility.js").JqNode[]} nodes 
 		 */
 		constructor(name, nodes) {
 			super()
@@ -156,7 +116,7 @@ const customizer = (name, parent = HTMLElement) => {
 	}
 
 	customElements.define(name, node)
-	return (...nodes) => /**@type {JqElement}*/ (new node(name, nodes), node[_JqElement])
+	return (...nodes) => /**@type {JqElement}*/(new node(name, nodes), node[_JqElement])
 }
 
 const _custom = Object.assign(customizer, { [CustomElements]: /** @type {string[]} */ ([]) })
@@ -170,7 +130,7 @@ export const custom = new Proxy(_custom, {
 	 */
 	get(target, prop) {
 		if (typeof prop == "symbol")
-			return target[prop]
+			return target[/**@type {keyof typeof target}*/ (prop)]
 
 		return target(camelToKebab(prop))
 	}
@@ -187,7 +147,7 @@ function createAttribute(name, value) {
 }
 
 /**
- * @param {{ [x: string]: Primitive }} attrObj 
+ * @param {{ [x: string]: import("./utility.js").Primitive }} attrObj 
  * @returns {JqList<JqAttribute, typeof JqAttribute>}
  */
 function _attr(attrObj) {
@@ -238,14 +198,15 @@ export function animate(...parameters) {
 }
 
 /**
- * @param  {[string | { [x: string]: Primitive }, ...string[]]} args
+ * @param  {[string | { [x: string]: import("./utility.js").Primitive }, ...string[]]} args
  */
 function _css(...args) {
 
 	const [ruleName, ...ruleArgs] = args
 
 	if (args.length == 1 && !isPrimitive(ruleName)) {
-		const rule = new JqCSSRule([":host", ...ruleArgs], /**@type {{ [x: string]: Primitive }}*/ (ruleName))
+		const rule = new JqCSSRule([":host", ...ruleArgs],
+			/**@type {{ [x: string]: import("./utility.js").Primitive }}*/(ruleName))
 		return rule
 	}
 
@@ -259,39 +220,67 @@ function _css(...args) {
 }
 
 /**
- * @param {{ [x: string | symbol]: unknown }} state
- * @returns {JqReference}
+ * @param {{ [x: string | symbol]: unknown }} initialState
+ * @returns {JqState}
  */
-export function ref(state) {
-	const refObj = new JqReference(state ?? {})
+export function state(initialState) {
+	if (isPrimitive(initialState))
+		throw new TypeError("JqError - Expected an object as a value to state(...)")
 
-	const refProxy = new Proxy(refObj, {
+	const stateObj = new JqState(initialState ?? {})
+	const stateProxy = new Proxy(stateObj, {
 		get(target, prop) {
 			if (prop == JqNodeReference)
 				return target
-			if (typeof prop == "symbol")
-				return target[prop]
-			else if (prop == "deref")
-				return target.deref
-			else if (prop == "refresh")
-				return target.refresh
-			else if (prop == "attachTo")
-				return target.attachTo
-			else {
-				return target[StateReference][prop]
-			}
+			
+			return target[StateReference][prop]
 		},
 		set(target, prop, value) {
-			if (typeof prop == "symbol")
-				return target[prop] = value
-
-			target.jqParent?.setStateRefValue(prop, value)
+			target[StateReference][prop] = value
+			target.jqCallbacks.map(jqCallback => jqCallback.update.updateCallback())
 			return true
-		}
+		},
+		has(target, prop) {
+			return Reflect.has(target[StateReference], prop)
+		},
 	})
 
-	return refProxy
+	return stateProxy
+}
+
+/**
+ * @param {JqState[]} _states
+ * @returns {JqList<JqState, typeof JqState>}
+ */
+export function states(..._states) {
+	throw new JqList(JqState, _states)
 }
 
 export const nodes = { attr, text, fragment }
-export { pathSetter, showIf, getNodes } from "./utility.js"
+export { pathSetter, getNodes } from "./utility.js"
+
+/**
+ * @typedef {{ [name: string]: (...nodes: Array<import("./utility.js").JqNode>) => JqElement }} NativeConstructor
+ * 
+ * @typedef {{ globalize: (_globalThis?: {}) => void }} Globalizer
+ * 
+ * @typedef {NativeConstructor & Globalizer} Natives
+ * 
+ * @typedef {(name: string, parent?: typeof HTMLElement) => (...nodes: import("./utility.js").JqNode[]) => JqElement} CustomConstructor
+ * 
+ * @typedef {{[CustomElements]: string[]}} Customizer
+ * 
+ * @typedef {CustomConstructor & Customizer} Customs
+ * 
+ * @typedef {(attrObj: { [x: string]: import("./utility.js").Primitive }) => JqList<JqAttribute, typeof JqAttribute>} AttrFn
+ * 
+ * @typedef {{ [x: string]: JqAttribute }} AttrProps
+ * 
+ * @typedef {(styleObj: { [x: string]: import("./utility.js").Primitive }) => JqCSSRule} CSSFn
+ * 
+ * @typedef {{ [x: string]: JqCSSProperty }} CSSProps
+ * 
+ * @typedef {(event?: Event, ...a: unknown[]) => JqEvent} OnFn
+ * 
+ * @typedef {{ [eventName: string | symbol]: (handler: (event?: Event, ...a: unknown[]) => unknown) => JqEvent }} OnProps
+ */

@@ -11,10 +11,10 @@
 <body>
 	<script type="module">
 		import {
-			natives, nodes, showIf,
-			on, ref, pathSetter,
-			getNodes, animate, css, custom
-		} from "./src/jquire.min.js"
+			natives, nodes, states,
+			on, state, pathSetter,
+			getNodes, animate, css, custom,
+		} from "./src/jquire.js"
 
 		const {
 			div, input, button,
@@ -23,68 +23,32 @@
 			footer, template, span
 		} = natives
 
-		const { HelloWorld } = custom
-
 		const { attr, text, fragment } = nodes
 
-		const assets = pathSetter("../assets/")
-		let navLinks = [
-			{ name: "works", link: "#" },
-			{ name: "skills", link: "#" },
-			{ name: "hire me", link: "#" },
-			{ name: "contact me", link: "#" },
-			{ name: "support", link: "#" },
-			{ name: "contributions", link: "#" },
-			{ name: "education", link: "#" },
-		]
-
-		const navLinksRef = ref({ navLinks })
-
-		const originalNavLinks = [...navLinks]
-		const handleInput = (evt) => {
-			navLinksRef.navLinks = originalNavLinks.filter(x =>
-				x.name.toLowerCase().includes(evt.target.value.trim().toLowerCase()))
-		}
-
-		const btnRef = ref({ clicked: false })
-		const handleClick = evt => {
-			btnRef.clicked = !btnRef.clicked
-		}
+		const data = [1, 2, 3, 4, 5, 6, 7]
+		const numbersST = state(data)
 
 		const app = div(
-			HelloWorld("Hello World!"),
-			input(
-				on.input(handleInput),
-			),
-			button(
-				on.click(handleClick),
-				"click me!"
-			),
 			div(
-				btnRef,
-				() => showIf(btnRef.clicked) && span("visible"),
+				"My name is ",
+				(_ = states(numbersST)) => numbersST
 			),
-			ul(
-				navLinksRef,
-				({ navLinks }) => navLinks.map(x =>
-					li(
-						x.name
-					)
-				)
+			" ",
+			button(
+				"toggle name",
+				on.click(evt => {/* debugger; */ return numbersST.push(numbersST.length+1)})
 			)
 		)
 
-		/* 
-		const data = ['a', 'b', 'c', 'd']
-		const dataRef = ref({ data })
+		/*
+		const data = state(['a', 'b', 'c', 'd'])
 		div(
-			({ data } = refs(dataRef)) => null,
+			(changed = states(data)) => null,
 			(condition = when(x == y)) => null,
 			(event = on("click")) => null,
 			([item, idx] = each(data)) => null,
 			(event = mount()) => null,
 			(event = unmount()) => null,
-			(event = update()) => null,
 		)
 		*/
 
