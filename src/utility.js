@@ -296,7 +296,7 @@ export class JqEvent {
 	 * @param {string} event
 	 * @param {(event?: Event, ...a: unknown[]) => void} handler 
 	 */
-	constructor(event, handler) {
+	constructor(event, handler = (_, ...a) => { }) {
 		this.event = event
 		this.handler = handler
 	}
@@ -399,14 +399,21 @@ export class JqCallback {
 	 * @param {Node | JqElement} node
 	 */
 	attachTo(node) {
-		if (node instanceof HTMLElement) {
-			const childNode = /**@type {JqElement | JqAttribute | JqCSSProperty | JqCSSRule | JqAnimation | JqFragment | JqText}*/ (this.invoke())
-			childNode.attachTo(node)
-		}
-		else if (node instanceof JqElement || node instanceof JqFragment) {
-			this.jqParent = node
-			this.callbackArg = JqCallback.getCallbackArg(this)
+		this.callbackArg = JqCallback.getCallbackArg(this)
 
+		if (this.callbackArg instanceof JqEvent) {
+			this.callbackArg.attachTo(node)
+			return this
+		}
+
+		if (node instanceof HTMLElement) {
+			const childNode = this.returned = /**@type {JqElement | JqAttribute | JqCSSProperty | JqCSSRule | JqAnimation | JqFragment | JqText}*/ (this.invoke())
+			childNode.attachTo(node)
+			return this
+		}
+
+		if (node instanceof JqElement || node instanceof JqFragment) {
+			this.jqParent = node
 			const childNode = this.returned = /**@type {JqElement | JqAttribute | JqCSSProperty | JqCSSRule | JqAnimation | JqFragment | JqText}*/ (this.invoke())
 
 			childNode.jqParent = node
@@ -418,11 +425,11 @@ export class JqCallback {
 
 			retNodeInsertPos = retNodeInsertPos == -1 ? (node.childNodes.length || 1) - 1 : retNodeInsertPos
 			node.childNodes.splice(retNodeInsertPos, 0, /**@type {JqElement | JqFragment | JqText}*/(this.returned))
+
+			return this
 		}
-		else {
-			throw new Error(`JqError - Cannot attach JqCallback to a node not of instance JqElement or JqText or JqFragment or HTMLElement`)
-		}
-		return this
+
+		throw new Error(`JqError - Cannot attach JqCallback to a node not of instance JqElement or JqText or JqFragment or HTMLElement`)
 	}
 
 	/**
@@ -633,13 +640,14 @@ export class JqCallback {
 			}
 
 			if (e instanceof JqEvent) {
+				e.handler = /**@type {typeof e.handler}*/ (context.callback)
 				return e
 			}
 
 			throw e
 		}
 
-		throw new TypeError(`JqError - Expected a JqCallback<"state" | "event" | "condition" | "each" | "mount" | "unmount"> but instead found a 'function'`)
+		throw new TypeError(`JqError - Expected a JqCallback<"watch" | "event" | "condition" | "each" | "mount" | "unmount"> but instead found a 'function'`)
 	}
 }
 

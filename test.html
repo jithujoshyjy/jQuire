@@ -11,7 +11,7 @@
 <body>
 	<script type="module">
 		import {
-			natives, nodes, states,
+			natives, nodes, watch,
 			on, state, pathSetter,
 			getNodes, animate, css, custom,
 		} from "./src/jquire.js"
@@ -25,20 +25,19 @@
 
 		const { attr, text, fragment } = nodes
 
-		const data = [1, 2, 3, 4, 5, 6, 7]
-		const numbersST = state(data)
+		const numbersST = state([1, 2, 3, 4, 5, 6, 7])
 
 		const app = div(
 			div(
-				"My name is ",
-				(_ = states(numbersST)) => ul(
+				"natural numbers ",
+				(_ = watch(numbersST)) => ul(
 					numbersST.map(x => li(x))
 				)
 			),
 			" ",
 			button(
-				"toggle name",
-				on.click(evt => numbersST.push(numbersST.length+1))
+				"more natual numbers",
+				(event = on("click")) => numbersST.push(numbersST.length+1)
 			)
 		)
 

@@ -58,7 +58,15 @@ const attr = /**@type {AttrFn & AttrProps}*/ (new Proxy(_attr, {
 	}
 }))
 
-export const on = /**@type {OnFn & OnProps}*/ (new Proxy({}, {
+/**
+ * @param {string} eventName
+ * @returns {JqEvent}
+ */
+const _on = (eventName) => {
+	throw new JqEvent(eventName)
+}
+
+export const on = /**@type {OnFn & OnProps}*/ (new Proxy(_on, {
 	/**
 	 * @param {string | symbol} prop 
 	 * @returns {(handler: (event?: Event, ...a: unknown[]) => unknown) => JqEvent}
@@ -252,7 +260,7 @@ export function state(initialState) {
  * @param {JqState[]} _states
  * @returns {JqList<JqState, typeof JqState>}
  */
-export function states(..._states) {
+export function watch(..._states) {
 	throw new JqList(JqState, _states)
 }
 
@@ -280,7 +288,7 @@ export { pathSetter, getNodes } from "./utility.js"
  * 
  * @typedef {{ [x: string]: JqCSSProperty }} CSSProps
  * 
- * @typedef {(event?: Event, ...a: unknown[]) => JqEvent} OnFn
+ * @typedef {(eventName: string) => JqEvent} OnFn
  * 
  * @typedef {{ [eventName: string | symbol]: (handler: (event?: Event, ...a: unknown[]) => unknown) => JqEvent }} OnProps
  */
