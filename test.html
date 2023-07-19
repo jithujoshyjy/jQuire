@@ -31,12 +31,14 @@
 		const app = div(
 			div(
 				"My name is ",
-				(_ = states(numbersST)) => numbersST
+				(_ = states(numbersST)) => ul(
+					numbersST.map(x => li(x))
+				)
 			),
 			" ",
 			button(
 				"toggle name",
-				on.click(evt => {/* debugger; */ return numbersST.push(numbersST.length+1)})
+				on.click(evt => numbersST.push(numbersST.length+1))
 			)
 		)
 

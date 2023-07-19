@@ -120,6 +120,15 @@ export function getNodes(nodes) {
 			node.nodePosition = i
 			events.push(node)
 		}
+		else if (node instanceof JqState) {
+			const _node = convertToJqNode(node[JqNodeReference][StateReference], null)
+			_node.nodePosition = i
+
+			if (_node instanceof JqCallback)
+				callbacks.push(_node)
+			else if (_node instanceof JqFragment || _node instanceof JqText)
+				childNodes.push(_node)
+		}
 		else if (node instanceof JqAnimation) {
 			node.nodePosition = i
 			animations.push(node)
@@ -202,7 +211,7 @@ export function convertToJqNode(value, jqParent) {
 		return convertToJqText(value)
 	if (typeof value == "function")
 		return convertToJqCallback(value)
-	if(value instanceof JqState)
+	if (value instanceof JqState)
 		return convertToJqNode(value[JqNodeReference][StateReference], jqParent)
 
 	if (getJqNodeConstructors().some(ctor => value instanceof ctor))
