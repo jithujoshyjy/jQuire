@@ -880,6 +880,8 @@ export class JqList {
 	pop() {
 		return this.nodes.pop()
 	}
+
+	[Symbol.iterator] = () => this.nodes[Symbol.iterator]()
 }
 
 export class JqAttribute {
