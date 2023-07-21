@@ -272,6 +272,53 @@ export function isNullish(...values) {
 
 export const ElementReference = Symbol("ElementReference")
 export const StateReference = Symbol("StateReference")
+export const SubsequentCondition = Symbol("SubsequentCondition")
+
+export class JqCondition {
+	nodePosition = -1
+	/**
+	 * @type {JqElement | JqFragment | null}
+	 */
+	jqParent = null
+	condition = false
+	/**
+	 * @type {JqCallback | null}
+	 */
+	callback = null
+	/**
+	 * @param {boolean} condition 
+	 */
+	constructor(condition) {
+		this.condition = condition
+	}
+
+	/**
+	 * @param {Node | JqElement | JqFragment} node
+	 */
+	attachTo(node) {
+		if (!this.condition) return this
+
+		const callback = /**@type {JqCallback}*/ (this.callback)
+		callback.returned = callback.invoke()
+
+		if (node instanceof HTMLElement) {
+			callback.returned.attachTo(node)
+		}
+		else if (node instanceof JqElement) {
+			this.jqParent = node
+			callback.returned.attachTo(node)
+		}
+		else if (node instanceof JqFragment) {
+			this.jqParent = node;
+			const returned = /**@type {JqElement | JqFragment | JqText}*/ (callback.returned)
+			returned.attachTo(node)
+		}
+		else {
+			throw new Error(`JqError - Cannot attach JqCondition to a node not of instance JqElement or JqFragment or HTMLElement`)
+		}
+		return this
+	}
+}
 
 export class JqEvent {
 	nodePosition = -1
@@ -323,6 +370,9 @@ export class JqEvent {
 			this.attachHandler(node)
 		}
 		else if (node instanceof JqElement) {
+			this.jqParent = node
+			if (!node.events.includes(this)) node.events.push(this)
+
 			this.attachHandler(/**@type {HTMLElement}*/(node.htmlNode))
 		}
 		else {
@@ -366,12 +416,12 @@ export class JqCallback {
 	 */
 	returned = null
 	/**
-	 * @param {CallbackArg} [_] 
+	 * @param {CallbackArg} [_]
 	 * @returns {JqNode | Primitive}
 	 */
 	callback = (_) => null
 	/**
-	 * @type {JqEvent | JqList<JqState, typeof JqState>}
+	 * @type {JqCondition | JqEvent | JqList<JqState, typeof JqState>}
 	*/
 	callbackArg
 
@@ -382,43 +432,96 @@ export class JqCallback {
 		this.callback = callback
 	}
 
+	/**
+	 * @returns {DiffableJqNode}
+	 */
 	invoke() {
-		if (this.callbackArg instanceof JqList && this.callbackArg.nodeClass == JqState) {
-			let result = this.callback(this.callbackArg)
+		const isJqStateList = () =>
+			this.callbackArg instanceof JqList && this.callbackArg.nodeClass == JqState
 
-			if (isPrimitive(result) || Array.isArray(result) || result instanceof JqState)
-				result = convertToJqNode(result, this.jqParent)
-
-			return /**@type {DiffableJqNode}*/ (result)
+		/**
+		 * @type {JqNode | Primitive | DiffableJqNode}
+		 */
+		let result
+		if (isJqStateList()) {
+			result = this.callback(this.callbackArg)
+		}
+		else if (this.callbackArg instanceof JqCondition) {
+			this.callbackArg = JqCallback.getCallbackArg(this)
+			const condition = /**@type {JqCondition}*/ (this.callbackArg).condition
+			result = condition ? this.callback(condition) : new JqText('')
+		}
+		else {
+			throw new TypeError(`JqError - Cannot invoke JqCallback without arguments of type JqList<JqState, typeof JqState> | JqEvent`)
 		}
 
-		throw new TypeError(`JqError - Cannot invoke JqCallback without arguments of type JqList<JqState, typeof JqState> | JqEvent`)
+		const isConvertable = isPrimitive(result)
+			|| Array.isArray(result)
+			|| result instanceof JqState
+			|| typeof result == "function"
+
+		if (isConvertable) result = convertToJqNode(result, this.jqParent)
+		if (result instanceof JqCallback) {
+			result.callbackArg = JqCallback.getCallbackArg(result)
+			result = result.invoke()
+		}
+		
+		return /**@type {DiffableJqNode}*/ (result)
 	}
 
 	/**
 	 * @param {Node | JqElement} node
 	 */
 	attachTo(node) {
-		this.callbackArg = JqCallback.getCallbackArg(this)
+		const isJqEvent = () => this.callbackArg instanceof JqEvent
+		const isJqCondition = () => this.callbackArg instanceof JqCondition
 
-		if (this.callbackArg instanceof JqEvent) {
-			this.callbackArg.attachTo(node)
-			return this
+		/**
+		 * @param {JqElement | Node} node
+		 * @param {JqCallback} context
+		 * @param {boolean[]} arg2
+		 */
+		function attachCallbackResult(node, context, [isJqEvent, isJqCondition]) {
+			if (isJqEvent) {
+				const callbackArg =/**@type {JqEvent}*/ (context.callbackArg)
+				callbackArg.nodePosition = context.nodePosition
+				callbackArg.jqParent = /**@type {JqElement}*/ (context.jqParent)
+
+				callbackArg.attachTo(node)
+				return context
+			}
+
+			if (isJqCondition) {
+				const node = context.invoke()
+				node.attachTo(/**@type {JqElement}*/(context.jqParent))
+				return context
+			}
+
+			throw new Error("JqInternalError - attachCallbackResult(...) must have atleast a single true in the third argument array.")
 		}
 
+		this.callbackArg = JqCallback.getCallbackArg(this)
 		if (node instanceof HTMLElement) {
-			const childNode = this.returned = /**@type {JqElement | JqAttribute | JqCSSProperty | JqCSSRule | JqAnimation | JqFragment | JqText}*/ (this.invoke())
-			childNode.attachTo(node)
+			const hasSpecialCallbackArgs = [isJqEvent, isJqCondition].map(f => f())
+			if (hasSpecialCallbackArgs.some(Boolean))
+				return attachCallbackResult(node, this, hasSpecialCallbackArgs)
+
+			this.returned = /**@type {JqElement | JqAttribute | JqCSSProperty | JqCSSRule | JqAnimation | JqFragment | JqText}*/ (this.invoke())
+			this.returned.attachTo(node)
 			return this
 		}
 
 		if (node instanceof JqElement || node instanceof JqFragment) {
 			this.jqParent = node
-			const childNode = this.returned = /**@type {JqElement | JqAttribute | JqCSSProperty | JqCSSRule | JqAnimation | JqFragment | JqText}*/ (this.invoke())
+			const hasSpecialCallbackArgs = [isJqEvent, isJqCondition].map(f => f())
+			if (hasSpecialCallbackArgs.some(Boolean))
+				return attachCallbackResult(node, this, hasSpecialCallbackArgs)
 
-			childNode.jqParent = node
-			childNode.nodePosition = this.nodePosition
-			childNode.attachTo(node)
+			this.returned = /**@type {JqElement | JqAttribute | JqCSSProperty | JqCSSRule | JqAnimation | JqFragment | JqText}*/ (this.invoke())
+
+			this.returned.jqParent = node
+			this.returned.nodePosition = this.nodePosition
+			this.returned.attachTo(node)
 
 			let retNodeInsertPos = node.childNodes
 				.findIndex(childNode => this.nodePosition == childNode.nodePosition)
@@ -641,6 +744,11 @@ export class JqCallback {
 
 			if (e instanceof JqEvent) {
 				e.handler = /**@type {typeof e.handler}*/ (context.callback)
+				return e
+			}
+
+			if (e instanceof JqCondition) {
+				e.callback = context
 				return e
 			}
 
@@ -2017,7 +2125,7 @@ export const validHTMLElements = /**@type {const}*/ ([
 ])
 
 /**
- * @typedef {null | undefined | number | string | symbol | bigint} Primitive
+ * @typedef {null | undefined | boolean | number | string | symbol | bigint} Primitive
  * 
  * @typedef {{ [styleName: string]: Primitive | Primitive[] }
  * | Map<string, Primitive>
@@ -2066,7 +2174,7 @@ export const validHTMLElements = /**@type {const}*/ ([
  * 
  * @typedef {JqText | JqAttribute | JqElement | JqFragment} DiffableJqNode
  * 
- * @typedef {JqList<JqState, typeof JqState> | JqEvent} CallbackArg
+ * @typedef {JqList<JqState, typeof JqState> | JqEvent | JqCondition | Event | boolean} CallbackArg
  */
 
 /**

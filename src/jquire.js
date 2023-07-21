@@ -3,7 +3,7 @@ import {
 	stringify, JqAnimation, JqCallback,
 	isPrimitive, JqState, JqElement,
 	JqCSSProperty, JqFragment, JqText, JqCSSRule, JqList,
-	JqAttribute, StateReference, JqNodeReference, validHTMLElements, camelToKebab, ElementReference
+	JqAttribute, StateReference, JqNodeReference, validHTMLElements, camelToKebab, ElementReference, JqCondition, SubsequentCondition
 } from "./utility.js"
 
 /**
@@ -57,6 +57,13 @@ const attr = /**@type {AttrFn & AttrProps}*/ (new Proxy(_attr, {
 		return (value) => createAttribute(prop, value)
 	}
 }))
+
+/**
+ * @param {boolean} condition
+ */
+export const when = (condition) => {
+	throw new JqCondition(condition)
+}
 
 /**
  * @param {string} eventName
@@ -240,7 +247,7 @@ export function state(initialState) {
 		get(target, prop) {
 			if (prop == JqNodeReference)
 				return target
-			
+
 			return target[StateReference][prop]
 		},
 		set(target, prop, value) {

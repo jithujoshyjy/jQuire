@@ -12,7 +12,7 @@
 	<script type="module">
 		import {
 			natives, nodes, watch,
-			on, state, pathSetter,
+			on, state, pathSetter, when,
 			getNodes, animate, css, custom,
 		} from "./src/jquire.js"
 
@@ -26,7 +26,6 @@
 		const { attr, text, fragment } = nodes
 
 		const numbersST = state([1, 2, 3, 4, 5, 6, 7])
-
 		const app = div(
 			div(
 				"natural numbers ",
@@ -38,15 +37,17 @@
 			button(
 				"more natual numbers",
 				(event = on("click")) => numbersST.push(numbersST.length+1)
-			)
+			),
+			(_ = watch(numbersST)) =>
+				(_ = when(numbersST[numbersST.length-1] % 2 == 0)) => "even"
 		)
 
 		/*
 		const data = state(['a', 'b', 'c', 'd'])
 		div(
-			(changed = states(data)) => null,
-			(condition = when(x == y)) => null,
-			(event = on("click")) => null,
+			(changed = watch(data)) => null,    [✔]
+			(condition = when(x == y)) => null, [✔]
+			(event = on("click")) => null,      [✔]
 			([item, idx] = each(data)) => null,
 			(event = mount()) => null,
 			(event = unmount()) => null,
