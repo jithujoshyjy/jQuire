@@ -198,7 +198,7 @@ export function convertToJqNode(value, jqParent) {
 
 			if (childNode instanceof JqCallback) {
 				childNode.callbackArg = JqCallback.getCallbackArg(childNode)
-				if (childNode.callbackArg instanceof JqCondition) {
+				if ([JqCondition, JqEach].some(X => childNode.callbackArg instanceof X)) {
 					const _childNode = childNode.invoke()
 					return /**@type {JqFragment | JqText}*/ (_childNode)
 				}
@@ -276,9 +276,58 @@ export function isNullish(...values) {
 	return values.every(x => x === null || x === undefined)
 }
 
-export const ElementReference = Symbol("ElementReference")
 export const StateReference = Symbol("StateReference")
-export const SubsequentCondition = Symbol("SubsequentCondition")
+
+/**
+ * @template T
+ */
+export class JqEach {
+	nodePosition = -1
+	/**
+	 * @type {JqElement | JqFragment | null}
+	 */
+	jqParent = null
+	/**
+	 * @type {{[Symbol.iterator]: () => IterableIterator<T>, [x: string | symbol | number]: any}}
+	 */
+	iterable
+	/**
+	 * @type {JqCallback | null}
+	 */
+	callback = null
+	/**
+	 * @param {{[Symbol.iterator]: () => IterableIterator<T>, [x: string | symbol | number]: any}} iterable 
+	 */
+	constructor(iterable) {
+		this.iterable = iterable
+	}
+
+	/**
+	 * @param {Node | JqElement | JqFragment} node
+	 */
+	attachTo(node) {
+
+		const callback = /**@type {JqCallback}*/ (this.callback)
+		callback.returned = callback.invoke()
+
+		if (node instanceof HTMLElement) {
+			callback.returned.attachTo(node)
+		}
+		else if (node instanceof JqElement) {
+			this.jqParent = node
+			callback.returned.attachTo(node)
+		}
+		else if (node instanceof JqFragment) {
+			this.jqParent = node;
+			const returned = /**@type {JqElement | JqFragment | JqText}*/ (callback.returned)
+			returned.attachTo(node)
+		}
+		else {
+			throw new Error(`JqError - Cannot attach JqCondition to a node not of instance JqElement or JqFragment or HTMLElement`)
+		}
+		return this
+	}
+}
 
 export class JqCondition {
 	nodePosition = -1
@@ -427,7 +476,7 @@ export class JqCallback {
 	 */
 	callback = (_) => null
 	/**
-	 * @type {JqCondition | JqEvent | JqList<JqState, typeof JqState>}
+	 * @type {JqCondition | JqEvent | JqEach<any> | JqList<JqState, typeof JqState>}
 	*/
 	callbackArg
 
@@ -446,7 +495,7 @@ export class JqCallback {
 			this.callbackArg instanceof JqList && this.callbackArg.nodeClass == JqState
 
 		/**
-		 * @type {JqNode | Primitive | DiffableJqNode}
+		 * @type {JqNode | Primitive | DiffableJqNode | Array<JqNode | Primitive>}
 		 */
 		let result
 		if (isJqStateList()) {
@@ -457,8 +506,23 @@ export class JqCallback {
 			const condition = /**@type {JqCondition}*/ (this.callbackArg).condition
 			result = condition ? this.callback(condition) : new JqText('')
 		}
+		else if (this.callbackArg instanceof JqEach) {
+			let i = 0
+			/**
+			 * @type {Array<JqNode | Primitive>}
+			 */
+			const items = [],
+				callback = this.callback,
+				iterable = this.callbackArg.iterable
+			
+			for (const item of iterable) {
+				items.push(callback([item, i, iterable]))
+				i++
+			}
+			result = items
+		}
 		else {
-			throw new TypeError(`JqError - Cannot invoke JqCallback without arguments of type JqList<JqState, typeof JqState> | JqEvent`)
+			throw new TypeError(`JqError - Cannot invoke JqCallback without arguments of type JqList<JqState, typeof JqState> | JqEvent | JqCondition | JqEach`)
 		}
 
 		const isConvertable = isPrimitive(result)
@@ -481,13 +545,14 @@ export class JqCallback {
 	attachTo(node) {
 		const isJqEvent = () => this.callbackArg instanceof JqEvent
 		const isJqCondition = () => this.callbackArg instanceof JqCondition
+		const isJqEach = () => this.callbackArg instanceof JqEach
 
 		/**
 		 * @param {JqElement | Node} node
 		 * @param {JqCallback} context
 		 * @param {boolean[]} arg2
 		 */
-		function attachCallbackResult(node, context, [isJqEvent, isJqCondition]) {
+		function attachCallbackResult(node, context, [isJqEvent, isJqCondition, isJqEach]) {
 			if (isJqEvent) {
 				const callbackArg =/**@type {JqEvent}*/ (context.callbackArg)
 				callbackArg.nodePosition = context.nodePosition
@@ -497,7 +562,7 @@ export class JqCallback {
 				return context
 			}
 
-			if (isJqCondition) {
+			if (isJqCondition || isJqEach) {
 				const node = context.invoke()
 				node.attachTo(/**@type {JqElement}*/(context.jqParent))
 				return context
@@ -508,7 +573,7 @@ export class JqCallback {
 
 		this.callbackArg = JqCallback.getCallbackArg(this)
 		if (node instanceof HTMLElement) {
-			const hasSpecialCallbackArgs = [isJqEvent, isJqCondition].map(f => f())
+			const hasSpecialCallbackArgs = [isJqEvent, isJqCondition, isJqEach].map(f => f())
 			if (hasSpecialCallbackArgs.some(Boolean))
 				return attachCallbackResult(node, this, hasSpecialCallbackArgs)
 
@@ -519,7 +584,7 @@ export class JqCallback {
 
 		if (node instanceof JqElement || node instanceof JqFragment) {
 			this.jqParent = node
-			const hasSpecialCallbackArgs = [isJqEvent, isJqCondition].map(f => f())
+			const hasSpecialCallbackArgs = [isJqEvent, isJqCondition, isJqEach].map(f => f())
 			if (hasSpecialCallbackArgs.some(Boolean))
 				return attachCallbackResult(node, this, hasSpecialCallbackArgs)
 
@@ -753,7 +818,7 @@ export class JqCallback {
 				return e
 			}
 
-			if (e instanceof JqCondition) {
+			if (e instanceof JqCondition || e instanceof JqEach) {
 				e.callback = context
 				return e
 			}
@@ -2176,7 +2241,7 @@ export const validHTMLElements = /**@type {const}*/ ([
  * 
  * @typedef {JqText | JqAttribute | JqElement | JqFragment} DiffableJqNode
  * 
- * @typedef {JqList<JqState, typeof JqState> | JqEvent | JqCondition | Event | boolean} CallbackArg
+ * @typedef {JqList<JqState, typeof JqState> | JqEach<any> | JqEvent | JqCondition | Event | boolean | [any, number, Iterable<any>]} CallbackArg
  * 
  * @typedef {{ object: JqNode, props: string[][] }} CompareProps
  */

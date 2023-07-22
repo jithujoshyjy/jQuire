@@ -1,9 +1,9 @@
 import {
-	JqEvent, getNodes, escapeHTMLEntities,
-	stringify, JqAnimation, JqCallback,
-	isPrimitive, JqState, JqElement,
+	JqEvent, JqEach, getNodes, escapeHTMLEntities,
+	stringify, JqAnimation, isPrimitive, JqState, JqElement,
 	JqCSSProperty, JqFragment, JqText, JqCSSRule, JqList,
-	JqAttribute, StateReference, JqNodeReference, validHTMLElements, camelToKebab, ElementReference, JqCondition, SubsequentCondition
+	JqAttribute, StateReference, JqNodeReference, validHTMLElements,
+	camelToKebab, JqCondition,
 } from "./utility.js"
 
 /**
@@ -269,6 +269,14 @@ export function state(initialState) {
  */
 export function watch(..._states) {
 	throw new JqList(JqState, _states)
+}
+
+/**
+ * @template T
+ * @param {{[Symbol.iterator]: () => IterableIterator<T>, [x: string | symbol | number]: any}} iterable 
+ */
+export function each(iterable) {
+	throw new JqEach(iterable)
 }
 
 export const nodes = { attr, text, fragment }

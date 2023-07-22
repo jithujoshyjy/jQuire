@@ -11,7 +11,7 @@
 <body>
 	<script type="module">
 		import {
-			natives, nodes, watch,
+			natives, nodes, watch, each,
 			on, state, pathSetter, when,
 			getNodes, animate, css, custom,
 		} from "./src/jquire.js"
@@ -30,9 +30,7 @@
 			div(
 				"natural numbers ",
 				(_ = watch(numbersST)) => ul(
-					numbersST.map(x =>
-						(_ = when(x % 2 == 0)) => li(x)
-					)
+					([x] = each(numbersST)) => (_ = when(x % 2 == 0)) => li(x)
 				)// ([x, i] = each(numbersST), _ = when(x % 2 == 0)) => li(x)
 			),
 			" ",
