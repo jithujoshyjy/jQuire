@@ -193,14 +193,21 @@ export function convertToJqNode(value, jqParent) {
 	 * @param {Primitive[]} value
 	 */
 	const convertToJqFragment = (value) => {
-		const childNodes = value.map(x => /**@type {JqFragment | JqText}*/(convertToJqNode(x, null)))
-		const jqFragment = new JqFragment(childNodes)
+		const childNodes = value.map((x, i) => {
+			const childNode = /**@type {DiffableJqNode}*/ (convertToJqNode(x, null))
 
-		childNodes.forEach((childNode, i) => {
-			childNode.jqParent = jqFragment
-			childNode.nodePosition = i
+			if (childNode instanceof JqCallback) {
+				childNode.callbackArg = JqCallback.getCallbackArg(childNode)
+				if (childNode.callbackArg instanceof JqCondition) {
+					const _childNode = childNode.invoke()
+					return /**@type {JqFragment | JqText}*/ (_childNode)
+				}
+			}
+
+			return /**@type {JqFragment | JqText}*/ (childNode)
 		})
 
+		const jqFragment = new JqFragment(childNodes)
 		jqFragment.jqParent = jqParent
 		return jqFragment
 	}
@@ -213,7 +220,6 @@ export function convertToJqNode(value, jqParent) {
 		return convertToJqCallback(value)
 	if (value instanceof JqState)
 		return convertToJqNode(value[JqNodeReference][StateReference], jqParent)
-
 	if (getJqNodeConstructors().some(ctor => value instanceof ctor))
 		return /**@type {JqText | JqFragment | JqCallback}*/ (value)
 
@@ -465,7 +471,7 @@ export class JqCallback {
 			result.callbackArg = JqCallback.getCallbackArg(result)
 			result = result.invoke()
 		}
-		
+
 		return /**@type {DiffableJqNode}*/ (result)
 	}
 
@@ -1459,7 +1465,7 @@ export class JqElement {
 			throw new Error(`JqError - Cannot attach JqElement '${this.name}' to a node not of instance JqElement or JqFragment or HTMLElement`)
 		}
 
-		// return this.toString()
+		return this.toString()
 	}
 
 	/**
@@ -1774,10 +1780,6 @@ export function adjustColor(col, amt) {
 function diff(node1, node2) {
 	const nodeComparison = compareJqNodes(node1, node2)
 	return nodeComparison
-
-	/**
-	 * @typedef {{ object: JqNode, props: string[][] }} CompareProps
-	 */
 
 	/**
 	 * @param {CompareProps} affected1 
@@ -2175,6 +2177,8 @@ export const validHTMLElements = /**@type {const}*/ ([
  * @typedef {JqText | JqAttribute | JqElement | JqFragment} DiffableJqNode
  * 
  * @typedef {JqList<JqState, typeof JqState> | JqEvent | JqCondition | Event | boolean} CallbackArg
+ * 
+ * @typedef {{ object: JqNode, props: string[][] }} CompareProps
  */
 
 /**
