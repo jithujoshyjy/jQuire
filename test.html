@@ -25,12 +25,14 @@
 
 		const { attr, text, fragment } = nodes
 
-		const numbersST = state(Array.from({ length: 10 }, (_, i) => i+1))
+		const numbers = Array.from({ length: 2 }, (_, i) => i+1)
+		console.log(numbers)
+		const numbersST = state(numbers)
 		const app = div(
 			div(
 				"natural numbers ",
 				(_ = watch(numbersST)) => ul(
-					([x] = each(numbersST)) => (_ = when(x % 2 == 0)) => li(x)
+					([x] = each(numbers)) => (_ = when(x % 2 == 0)) => li(x)
 					// numbersST.map(x => (_ = when(x % 2 == 0)) => li(x))
 				)// ([x, i] = each(numbersST), _ = when(x % 2 == 0)) => li(x)
 			),

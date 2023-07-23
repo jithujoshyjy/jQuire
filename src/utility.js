@@ -508,7 +508,9 @@ export class JqCallback {
 				iterable = this.callbackArg.iterable
 
 			for (const item of iterable) {
-				items.push(callback([item, i, iterable]))
+				const _item = callback([item, i, iterable])
+
+				items.push(_item)
 				i++
 			}
 			result = items
@@ -530,6 +532,7 @@ export class JqCallback {
 
 		const _result = /**@type {DiffableJqNode}*/ (result)
 		_result.nodePosition = this.nodePosition
+		
 		return _result
 	}
 
@@ -617,7 +620,7 @@ export class JqCallback {
 						const result = /**@type {JqElement | JqFragment | JqText}*/ (callback.invoke());
 						_newNode.childNodes.splice(callback.nodePosition, 0, result)
 					})
-
+				
 				const _diff = diff(oldNode, newNode)
 
 				const node1 = _diff.node1
@@ -797,16 +800,13 @@ export class JqCallback {
 
 		if (isJqCondition) {
 			const result = context.invoke()
-			const jqParent = /**@type {JqElement}*/(context.jqParent)
-
-			result.attachTo(jqParent)
+			result.attachTo(node)
 			return context
 		}
 
 		if (isJqEach) {
 			const result = /**@type {JqElement}*/ (context.invoke())
-			const childNodes = /**@type {JqElement[]}*/ (node.childNodes)
-
+			const childNodes = /**@type {Array<JqElement | JqFragment | JqText>}*/ (node.childNodes)
 			childNodes.splice(context.nodePosition, 0, result)
 			result.attachTo(node)
 			return context

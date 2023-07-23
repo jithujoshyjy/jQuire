@@ -252,6 +252,8 @@ export function state(initialState) {
 		},
 		set(target, prop, value) {
 			target[StateReference][prop] = value
+			if(Array.isArray(target[StateReference]) && prop == "length") return true
+			
 			target.jqCallbacks.map(jqCallback => jqCallback.update.updateCallback())
 			return true
 		},
