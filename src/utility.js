@@ -195,15 +195,7 @@ export function convertToJqNode(value, jqParent) {
 	const convertToJqFragment = (value) => {
 		const childNodes = value.map((x, i) => {
 			const childNode = /**@type {DiffableJqNode}*/ (convertToJqNode(x, null))
-
-			if (childNode instanceof JqCallback) {
-				childNode.callbackArg = JqCallback.getCallbackArg(childNode)
-				if ([JqCondition, JqEach].some(X => childNode.callbackArg instanceof X)) {
-					const _childNode = childNode.invoke()
-					return /**@type {JqFragment | JqText}*/ (_childNode)
-				}
-			}
-
+			childNode.nodePosition = i
 			return /**@type {JqFragment | JqText}*/ (childNode)
 		})
 
@@ -514,7 +506,7 @@ export class JqCallback {
 			const items = [],
 				callback = this.callback,
 				iterable = this.callbackArg.iterable
-			
+
 			for (const item of iterable) {
 				items.push(callback([item, i, iterable]))
 				i++
@@ -536,46 +528,25 @@ export class JqCallback {
 			result = result.invoke()
 		}
 
-		return /**@type {DiffableJqNode}*/ (result)
+		const _result = /**@type {DiffableJqNode}*/ (result)
+		_result.nodePosition = this.nodePosition
+		return _result
 	}
 
 	/**
 	 * @param {Node | JqElement} node
 	 */
 	attachTo(node) {
+
 		const isJqEvent = () => this.callbackArg instanceof JqEvent
 		const isJqCondition = () => this.callbackArg instanceof JqCondition
 		const isJqEach = () => this.callbackArg instanceof JqEach
-
-		/**
-		 * @param {JqElement | Node} node
-		 * @param {JqCallback} context
-		 * @param {boolean[]} arg2
-		 */
-		function attachCallbackResult(node, context, [isJqEvent, isJqCondition, isJqEach]) {
-			if (isJqEvent) {
-				const callbackArg =/**@type {JqEvent}*/ (context.callbackArg)
-				callbackArg.nodePosition = context.nodePosition
-				callbackArg.jqParent = /**@type {JqElement}*/ (context.jqParent)
-
-				callbackArg.attachTo(node)
-				return context
-			}
-
-			if (isJqCondition || isJqEach) {
-				const node = context.invoke()
-				node.attachTo(/**@type {JqElement}*/(context.jqParent))
-				return context
-			}
-
-			throw new Error("JqInternalError - attachCallbackResult(...) must have atleast a single true in the third argument array.")
-		}
 
 		this.callbackArg = JqCallback.getCallbackArg(this)
 		if (node instanceof HTMLElement) {
 			const hasSpecialCallbackArgs = [isJqEvent, isJqCondition, isJqEach].map(f => f())
 			if (hasSpecialCallbackArgs.some(Boolean))
-				return attachCallbackResult(node, this, hasSpecialCallbackArgs)
+				return JqCallback.attachCallbackResult(node, this, hasSpecialCallbackArgs)
 
 			this.returned = /**@type {JqElement | JqAttribute | JqCSSProperty | JqCSSRule | JqAnimation | JqFragment | JqText}*/ (this.invoke())
 			this.returned.attachTo(node)
@@ -586,7 +557,7 @@ export class JqCallback {
 			this.jqParent = node
 			const hasSpecialCallbackArgs = [isJqEvent, isJqCondition, isJqEach].map(f => f())
 			if (hasSpecialCallbackArgs.some(Boolean))
-				return attachCallbackResult(node, this, hasSpecialCallbackArgs)
+				return JqCallback.attachCallbackResult(node, this, hasSpecialCallbackArgs)
 
 			this.returned = /**@type {JqElement | JqAttribute | JqCSSProperty | JqCSSRule | JqAnimation | JqFragment | JqText}*/ (this.invoke())
 
@@ -621,9 +592,10 @@ export class JqCallback {
 
 			const oldNode = jqCallback.returned
 			const newNode = jqCallback.invoke()
-			const rootNode = oldNode, parentNode = oldNode
 
+			const rootNode = oldNode, parentNode = oldNode
 			reconcile(rootNode, parentNode, oldNode, newNode)
+
 			return this
 
 			/**
@@ -633,6 +605,19 @@ export class JqCallback {
 			 * @param {JqNode} newNode 
 			 */
 			function reconcile(rootNode, parentNode, oldNode, newNode) {
+				if (oldNode instanceof JqCallback && newNode instanceof JqCallback) return
+
+				if (newNode instanceof JqElement)
+					newNode.callbacks.forEach(callback => {
+						if (!(callback instanceof JqCallback)) return
+
+						const _newNode = /**@type {JqElement}*/ (newNode)
+						callback.callbackArg = JqCallback.getCallbackArg(callback)
+
+						const result = /**@type {JqElement | JqFragment | JqText}*/ (callback.invoke());
+						_newNode.childNodes.splice(callback.nodePosition, 0, result)
+					})
+
 				const _diff = diff(oldNode, newNode)
 
 				const node1 = _diff.node1
@@ -793,6 +778,41 @@ export class JqCallback {
 				childNode.delete.deleteSelf()
 			}
 		}
+	}
+
+	/**
+	 * @param {JqElement | Node} node
+	 * @param {JqCallback} context
+	 * @param {boolean[]} arg2
+	 */
+	static attachCallbackResult(node, context, [isJqEvent, isJqCondition, isJqEach]) {
+		if (isJqEvent) {
+			const callbackArg = /**@type {JqEvent}*/ (context.callbackArg)
+			callbackArg.nodePosition = context.nodePosition
+			callbackArg.jqParent = /**@type {JqElement}*/ (context.jqParent)
+
+			callbackArg.attachTo(node)
+			return context
+		}
+
+		if (isJqCondition) {
+			const result = context.invoke()
+			const jqParent = /**@type {JqElement}*/(context.jqParent)
+
+			result.attachTo(jqParent)
+			return context
+		}
+
+		if (isJqEach) {
+			const result = /**@type {JqElement}*/ (context.invoke())
+			const childNodes = /**@type {JqElement[]}*/ (node.childNodes)
+
+			childNodes.splice(context.nodePosition, 0, result)
+			result.attachTo(node)
+			return context
+		}
+
+		throw new Error("JqInternalError - attachCallbackResult(...) must have atleast a single true in the third argument array.")
 	}
 
 	/**
@@ -1995,9 +2015,9 @@ function diff(node1, node2) {
 			const secondElemChild = secondElemChildren[i]
 
 			if (firstElemChild === undefined)
-				_diff[CREATED].push(["childNodes", i + ""])
+				_diff[CREATED].push(["childNodes", secondElemChild])
 			else if (secondElemChild === undefined)
-				_diff[DELETED].push(["childNodes", i + ""])
+				_diff[DELETED].push(["childNodes", firstElemChild])
 			else
 				_diff.childDiffs.push(diff(firstElemChild, secondElemChild))
 		}
@@ -2007,9 +2027,9 @@ function diff(node1, node2) {
 			const secondElemAttribute = secondElemAttributes[i]
 
 			if (firstElemAttribute === undefined)
-				_diff[CREATED].push(["attributes", i + ''])
+				_diff[CREATED].push(["attributes", secondElemAttribute])
 			else if (secondElemAttribute === undefined)
-				_diff[DELETED].push(["attributes", i + ''])
+				_diff[DELETED].push(["attributes", firstElemAttribute])
 			else
 				_diff.childDiffs.push(diff(firstElemAttribute, secondElemAttribute))
 		}

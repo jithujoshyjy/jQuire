@@ -31,12 +31,13 @@
 				"natural numbers ",
 				(_ = watch(numbersST)) => ul(
 					([x] = each(numbersST)) => (_ = when(x % 2 == 0)) => li(x)
+					// numbersST.map(x => (_ = when(x % 2 == 0)) => li(x))
 				)// ([x, i] = each(numbersST), _ = when(x % 2 == 0)) => li(x)
 			),
 			" ",
 			button(
 				"more natual numbers",
-				(event = on("click")) => numbersST.push(numbersST.length + 1)
+				(event = on("click")) => {/* debugger; */return numbersST.push(numbersST.length + 1)}
 			),
 		)
 
