@@ -1,4 +1,4 @@
-import { natives, nodes, css, pathSetter } from "https://cdn.jsdelivr.net/npm/jquire@latest/dist/jquire.min.js"
+import { natives, nodes, css, pathSetter } from "https://cdn.jsdelivr.net/npm/jquire@latest/src/jquire.min.js"
 
 const { div, img, h4, p } = natives
 const { attr, text, fragment } = nodes

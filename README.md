@@ -20,7 +20,7 @@ you can also use a cdn if you like
 
 ```html
 <!-- JQuery goes here if you're want to use it as well -->
-<script type="module" src="https://cdn.jsdelivr.net/npm/jquire@latest/dist/jquire.min.js"></script>
+<script type="module" src="https://cdn.jsdelivr.net/npm/jquire@latest/src/jquire.min.js"></script>
 ```
 
 after installation 👇
