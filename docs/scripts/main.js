@@ -1,6 +1,6 @@
 import {
-	natives, nodes, showIf,
-	on, ref, pathSetter,
+	natives, nodes, when,
+	on, state, watch, each, pathSetter,
 	getNodes, animate, css
 } from "https://cdn.jsdelivr.net/npm/jquire@latest/dist/jquire.min.js"
 
@@ -84,10 +84,10 @@ const Navbar = () => {
 		)
 	}
 
-	const MenuIcon = (sidebarRef) => {
+	const MenuIcon = (sidebarST) => {
 		const handleMenuBtnClick = (evt) => {
 			evt.stopPropagation()
-			sidebarRef.clicked = !sidebarRef.clicked
+			sidebarST.clicked = !sidebarST.clicked
 		}
 
 		return button(
@@ -97,7 +97,7 @@ const Navbar = () => {
 		)
 	}
 
-	const Sidebar = (sidebarRef) => {
+	const Sidebar = (sidebarST) => {
 		const style = {
 			position: "absolute",
 			top: "3rem",
@@ -116,7 +116,6 @@ const Navbar = () => {
 		const searchFieldStyle = {
 			width: "100%",
 			backgroundColor: "var(--background-color-primary)",
-			border: "none",
 			outline: "none",
 			color: "var(--font-color)",
 			fontSize: "0.6rem",
@@ -167,8 +166,8 @@ const Navbar = () => {
 			textDecoration: "underline"
 		}
 
-		const onUpdateCallback = () => {
-			sidebarRef.deref().style.setProperty("display", sidebarRef.clicked ? "initial" : "none")
+		const onUpdateCallback = (sidebar) => {
+			sidebar.style.setProperty("display", sidebarST.clicked ? "initial" : "none")
 		}
 
 		let headings = [
@@ -195,19 +194,19 @@ const Navbar = () => {
 		]
 
 		const hasHeadingListRefreshed = false
-		const headingRefreshRef = ref({ hasHeadingListRefreshed })
+		const headingRefreshST = state({ hasHeadingListRefreshed })
 
 		const originalHeadings = [...headings]
 		const handleInput = (evt) => {
 			headings = originalHeadings.filter(x =>
 				x.text.toLowerCase().includes(evt.target.value.trim().toLowerCase()))
-			return headingRefreshRef.hasHeadingListRefreshed = true
+			return headingRefreshST.hasHeadingListRefreshed = true
 		}
 
-		return aside(
-			sidebarRef,
+		let sidebar
+		return sidebar = aside(
 			css(style),
-			onUpdateCallback,
+			(_ = watch(sidebarST)) => onUpdateCallback(sidebar),
 			css("input.search-field")(searchFieldStyle),
 			css("input.search-field:focus")(searchFieldFocusStyle),
 			css("ul.section-list")(sectionListStyle),
@@ -224,9 +223,8 @@ const Navbar = () => {
 				attr.placeholder("Filter Headings")
 			),
 			ul(
-				headingRefreshRef,
 				attr.class("section-list"),
-				() => headings.map(h =>
+				(_ = watch(headingRefreshST)) => headings.map(h =>
 					li(
 						a(
 							attr.class("go-to-section-link"),
@@ -274,7 +272,7 @@ const Navbar = () => {
 	}
 
 	const clicked = false
-	const sidebarRef = ref({ clicked })
+	const sidebarST = state({ clicked })
 
 	return nav(
 		css(style),
@@ -288,8 +286,8 @@ const Navbar = () => {
 					backgroundImage: `url('${assets("icon - menu_book-dark.svg")}')`
 				})
 			),
-			MenuIcon(sidebarRef),
-			Sidebar(sidebarRef)
+			MenuIcon(sidebarST),
+			Sidebar(sidebarST)
 		)
 	)
 }
@@ -901,8 +899,8 @@ const HandlingEventsSection = () => {
 	const code1 = `button(
     "click me!",
     on.click(_ => console.log("clicked!")),
-	// using effect function
-	(event = on("click")) => console.log("effecive click!")
+    // using effect function
+    (event = on("click")) => console.log("effecive click!")
 )`
 
 	return section(
@@ -936,8 +934,8 @@ const fruitEmojis = ['🍎', '🍊', '🍌']
 ul(
     fruits.map((fruit, i) =>
         \`\${fruit} - \${fruitEmojis[i]}\`),
-	// using effect function
-	([fruit, i] = each(fruits)) => \`\${fruit} - \${fruitEmojis[i]}\`
+    // using effect function
+    ([fruit, i] = each(fruits)) => \`\${fruit} - \${fruitEmojis[i]}\`
 )`
 
 	return section(
@@ -979,11 +977,6 @@ div(
         "increment age",
         (_ = on("click")) => personST.age++
     )
-)`
-
-	const code2 = `button(
-    "increment age",
-    on.click(_ => personRef.refresh(() => person.age++))
 )`
 
 	return section(
@@ -1056,33 +1049,33 @@ const CustomElementsSection = () => {
 
 	const code1 = `const MyButton = (label = '', theme = "normal") => {
 	const primary = theme == "normal"
-		? "lightgrey"
-		: "danger"
-			? "palevioletred"
-			: "info"
-				? "cornflowerblue"
-				: "coral" // warning
-	
-	const accent = theme == normal
-		? "darkgrey"
-		: "danger"
-			? "red"
-			: "info"
-				? "royalblue"
-				: "orangered" // warning
-	
-	const style = {
-		padding: "3px 5px",
-		border: \`1px solid \${accent}\`,
-		backgroundColor: primary,
-		borderRadius: "5px"
-	}
+        ? "lightgrey"
+        : "danger"
+            ? "palevioletred"
+            : "info"
+                ? "cornflowerblue"
+                : "coral" // warning
+    
+    const accent = theme == normal
+        ? "darkgrey"
+        : "danger"
+            ? "red"
+            : "info"
+                ? "royalblue"
+                : "orangered" // warning
+    
+    const style = {
+        padding: "3px 5px",
+        border: \`1px solid \${accent}\`,
+        backgroundColor: primary,
+        borderRadius: "5px"
+    }
 
-	// custom(tagName: a string in kebab-case, _extends: an optional HTMLElement)
-	return custom("my-btn", HTMLButtonElement)(
-		css(style),
-		label
-	)
+    // custom(tagName: a string in kebab-case, _extends: an optional HTMLElement)
+    return custom("my-btn", HTMLButtonElement)(
+        css(style),
+        label
+    )
 }`
 
 	const code2 = `const { HelloWorld } = custom
