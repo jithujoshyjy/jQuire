@@ -24,22 +24,21 @@
 		} = natives
 
 		const { attr, text, fragment } = nodes
-
-		const numbers = Array.from({ length: 2 }, (_, i) => i+1)
-		console.log(numbers)
+		
+		const numbers = Array.from({ length: 10 }, (_, i) => i+1)
 		const numbersST = state(numbers)
+		
 		const app = div(
 			div(
 				"natural numbers ",
 				(_ = watch(numbersST)) => ul(
-					([x] = each(numbers)) => (_ = when(x % 2 == 0)) => li(x)
-					// numbersST.map(x => (_ = when(x % 2 == 0)) => li(x))
+					([x] = each(numbersST)) => (_ = when(x % 2 == 0)) => li(x)
 				)// ([x, i] = each(numbersST), _ = when(x % 2 == 0)) => li(x)
 			),
 			" ",
 			button(
 				"more natual numbers",
-				(event = on("click")) => {/* debugger; */return numbersST.push(numbersST.length + 1)}
+				(event = on("click")) => numbersST.push(numbersST.length + 1)
 			),
 		)
 
@@ -49,11 +48,12 @@
 			(changed = watch(data)) => null,    [✔]
 			(condition = when(x == y)) => null, [✔]
 			(event = on("click")) => null,      [✔]
-			([item, idx] = each(data)) => null,
+			([item, idx] = each(data)) => null, [✔]
 			(event = mount()) => null,
 			(event = unmount()) => null,
-			(result = then(promise)) => null,
-			(result = capture(promise)) => null
+			(promise = awaitable.pending) => null,
+			(value = awaitable.then) => null,
+			(error = awaitable.catch) => null
 		)
 		*/
 

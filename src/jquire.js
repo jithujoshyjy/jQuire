@@ -3,7 +3,7 @@ import {
 	stringify, JqAnimation, isPrimitive, JqState, JqElement,
 	JqCSSProperty, JqFragment, JqText, JqCSSRule, JqList,
 	JqAttribute, StateReference, JqNodeReference, validHTMLElements,
-	camelToKebab, JqCondition,
+	camelToKebab, JqCondition, JqLifecycle, JqPromise, JqWatch,
 } from "./utility.js"
 
 /**
@@ -58,21 +58,6 @@ const attr = /**@type {AttrFn & AttrProps}*/ (new Proxy(_attr, {
 	}
 }))
 
-/**
- * @param {boolean} condition
- */
-export const when = (condition) => {
-	throw new JqCondition(condition)
-}
-
-/**
- * @param {string} eventName
- * @returns {JqEvent}
- */
-const _on = (eventName) => {
-	throw new JqEvent(eventName)
-}
-
 export const on = /**@type {OnFn & OnProps}*/ (new Proxy(_on, {
 	/**
 	 * @param {string | symbol} prop 
@@ -82,8 +67,7 @@ export const on = /**@type {OnFn & OnProps}*/ (new Proxy(_on, {
 		if (typeof prop == "symbol")
 			return target[/**@type {keyof typeof target}*/ (prop)]
 
-		return (handler) =>
-			new JqEvent(prop, handler)
+		return (handler) => new JqEvent(prop, handler)
 	}
 }))
 
@@ -238,11 +222,13 @@ function _css(...args) {
  * @param {{ [x: string | symbol]: unknown }} initialState
  * @returns {JqState}
  */
-export function state(initialState) {
+export function state(initialState = {}) {
 	if (isPrimitive(initialState))
 		throw new TypeError("JqError - Expected an object as a value to state(...)")
 
-	const stateObj = new JqState(initialState ?? {})
+	const isArray = Array.isArray(initialState)
+	const stateObj = new JqState(initialState)
+	
 	const stateProxy = new Proxy(stateObj, {
 		get(target, prop) {
 			if (prop == JqNodeReference)
@@ -252,9 +238,11 @@ export function state(initialState) {
 		},
 		set(target, prop, value) {
 			target[StateReference][prop] = value
-			if(Array.isArray(target[StateReference]) && prop == "length") return true
-			
-			target.jqCallbacks.map(jqCallback => jqCallback.update.updateCallback())
+			if(isArray && prop == "length") return true
+
+			for(const watcher of target.watchers) {
+				watcher.reconcile()
+			}
 			return true
 		},
 		has(target, prop) {
@@ -270,7 +258,22 @@ export function state(initialState) {
  * @returns {JqList<JqState, typeof JqState>}
  */
 export function watch(..._states) {
-	throw new JqList(JqState, _states)
+	throw new JqWatch(..._states)
+}
+
+/**
+ * @param {boolean} condition
+ */
+export function when(condition) {
+	throw new JqCondition(condition)
+}
+
+/**
+ * @param {string} eventName
+ * @returns {JqEvent}
+ */
+function _on(eventName) {
+	throw new JqEvent(eventName)
 }
 
 /**
@@ -279,6 +282,28 @@ export function watch(..._states) {
  */
 export function each(iterable) {
 	throw new JqEach(iterable)
+}
+
+/**
+ * @returns {JqElement | JqFragment}
+ */
+export function mount() {
+	throw new JqLifecycle()
+}
+
+/**
+ * @returns {JqElement | JqFragment}
+ */
+export function unmount() {
+	throw new JqLifecycle()
+}
+
+/**
+ * @template T
+ * @param {() => Promise<T>} promisedCallback 
+ */
+export function wait(promisedCallback) {
+	return new JqPromise(promisedCallback)
 }
 
 export const nodes = { attr, text, fragment }
