@@ -534,8 +534,8 @@ const InstallationNImportsSection = () => {
 
 		const code1 = `import
 {
-	natives, nodes, showIf,
-	on, ref, pathSetter,
+	natives, nodes, when,
+	on, state, watch, pathSetter,
 	getNodes, animate, css
 }
 from "./node_modules/jquire/jquire.min.js"`
@@ -900,7 +900,9 @@ const HandlingEventsSection = () => {
 
 	const code1 = `button(
     "click me!",
-    on.click(_ => console.log("clicked!"))
+    on.click(_ => console.log("clicked!")),
+	// using effect function
+	(event = on("click")) => console.log("effecive click!")
 )`
 
 	return section(
@@ -933,7 +935,9 @@ const fruitEmojis = ['🍎', '🍊', '🍌']
 
 ul(
     fruits.map((fruit, i) =>
-        \`\${fruit} - \${fruitEmojis[i]}\`)
+        \`\${fruit} - \${fruitEmojis[i]}\`),
+	// using effect function
+	([fruit, i] = each(fruits)) => \`\${fruit} - \${fruitEmojis[i]}\`
 )`
 
 	return section(
@@ -967,18 +971,15 @@ const ReactiveDataNElementReferenceSection = () => {
     profession: "Artist"
 }
 
-const personRef = ref({ person })
+const personST = state({ person })
 div(
-    personRef,
-    ({ person }) => \`John is \${person.age} years old!\`,
-    // will be refreshed for every state change
+    ([person] = watch(personST)) =>
+        \`John is \${person.age} years old!\`, // will be refreshed for every state change
     button(
         "increment age",
-        on.click(_ => personRef.person.age++)
+        (_ = on("click")) => personST.age++
     )
-)
-
-console.log(personRef.deref()) // HTMLDivElement`
+)`
 
 	const code2 = `button(
     "increment age",
@@ -995,19 +996,13 @@ console.log(personRef.deref()) // HTMLDivElement`
 		),
 		p(
 			`You can use the`,
-			Emphasize("ref()"),
-			`function to store reactive objects and reference to html elements.`,
+			Emphasize("state()"),
+			`function to store reactive objects.`,
 			br(),
-			`The`, Emphasize("deref()"),
-			`method of the JqReference object will give back the reference to the html elements. `
+			`Then using the`, Emphasize("deref()"),
+			`effect function, update the elements to be in sync with the state object. `
 		),
 		CodeBox("javascript", code1, highlight),
-		p(
-			`You can also use the`,
-			Emphasize("JqReference.refresh()"),
-			`function to batch together updates for more efficiency. It can especially be handy if you're push or popping elements from an array.`
-		),
-		CodeBox("javascript", code2, highlight),
 	)
 }
 
@@ -1026,8 +1021,7 @@ const ConditionalRenderingSection = () => {
 
 	const code1 = `const age = 50
 div(
-    showIf(age > 200) &&
-        span("Invalid age: It cannot be greater than 200.")
+    (_ = when(age > 200)) => span("Invalid age: Greater than 200.")
 )`
 
 	return section(
@@ -1040,8 +1034,8 @@ div(
 		),
 		p(
 			`You can choose to render or not to render certain elements based on a condition using`,
-			Emphasize("showIf()"),
-			`function.`,
+			Emphasize("when()"),
+			`effect function.`,
 		),
 		CodeBox("javascript", code1, highlight),
 	)

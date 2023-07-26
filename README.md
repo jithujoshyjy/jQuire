@@ -28,7 +28,7 @@ after installation 👇
 ```javascript
 import {
     natives, nodes, showIf,
-    on, ref, pathSetter,
+    on, state, watch, each, pathSetter,
     getNodes, animate, css
 } from "./node_modules/jquire/dist/jquire.min.js"
 ```
@@ -165,7 +165,9 @@ div(
 ```javascript
 button(
     "click me!",
-    on.click(_ => console.log("clicked!"))
+    on.click(event => console.log("clicked!")),
+	// using effect function
+	(event = on("click")) => console.log("effecive click!")
 )
 ```
 
@@ -176,14 +178,16 @@ const fruits = ["apple", "orange", "banana"]
 const fruitEmojis = ['🍎', '🍊', '🍌']
 
 ul(
-    fruits.map((fruit, i) => `${fruit} - ${fruitEmojis[i]}`)
+    fruits.map((fruit, i) => `${fruit} - ${fruitEmojis[i]}`),
+	// using effect function
+	([fruit, i] = each(fruits)) => `${fruit} - ${fruitEmojis[i]}`
 )
 ```
 
 ### Reactive Data and Element Reference
 
-You can use the `ref` function to store reactive objects and reference to html elements.
-The `deref()` method of the JqReference object will give back the reference to the html elements.
+You can use the `state()` function to store reactive objects.
+Then using the `watch()` effect function, update the elements to be in sync with the state object.
 
 ```javascript
 const person = {
@@ -192,38 +196,26 @@ const person = {
     profession: "Artist"
 }
 
-const personRef = ref({ person })
+const personST = state({ person })
 div(
-    personRef,
-    ({ person }) => `John is ${person.age} years old!`, // will be refreshed for every state change
+    ([person] = watch(personST)) =>
+		`John is ${person.age} years old!`, // will be refreshed for every state change
     button(
         "increment age",
-        on.click(_ => personRef.person.age++)
+        (_ = on("click")) => personST.age++
     )
-)
-
-console.log(personRef.deref()) // HTMLDivElement
-```
-
-You can also use the `JqReference.refresh` function to batch together updates for more efficiency.
-It can especially be handy if you're push or popping elements from an array.
-
-```javascript
-button(
-    "increment age",
-    on.click(_ => personRef.refresh(() => person.age++))
 )
 ```
 
 ### Conditional Rendering
 
-You can choose to render or not to render certain elements based on a condition using `showIf` function.
+You can choose to render or not to render certain elements based on a condition using `when()` effect function.
 
 ```javascript
 const age = 50
 
 div(
-    showIf(age > 200) && span("Invalid age: It cannot be greater than 200.")
+    (_ = when(age > 200)) => span("Invalid age: Greater than 200.")
 )
 ```
 
