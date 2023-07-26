@@ -179,8 +179,8 @@ const fruitEmojis = ['🍎', '🍊', '🍌']
 
 ul(
     fruits.map((fruit, i) => `${fruit} - ${fruitEmojis[i]}`),
-	// using effect function
-	([fruit, i] = each(fruits)) => `${fruit} - ${fruitEmojis[i]}`
+    // using effect function
+    ([fruit, i] = each(fruits)) => `${fruit} - ${fruitEmojis[i]}`
 )
 ```
 
@@ -224,34 +224,34 @@ jQuire supports HTML5 Custom Elements out of the box.You can use them like any o
 
 ```javascript
 const MyButton = (label = '', theme = "normal") => {
-	const primary = theme == "normal"
-		? "lightgrey"
-		: "danger"
-			? "palevioletred"
-			: "info"
-				? "cornflowerblue"
-				: "coral" // warning
+    const primary = theme == "normal"
+        ? "lightgrey"
+        : "danger"
+            ? "palevioletred"
+            : "info"
+                ? "cornflowerblue"
+                : "coral" // warning
 	
-	const accent = theme == normal
-		? "darkgrey"
-		: "danger"
-			? "red"
-			: "info"
-				? "royalblue"
-				: "orangered" // warning
+    const accent = theme == normal
+        ? "darkgrey"
+        : "danger"
+            ? "red"
+            : "info"
+                ? "royalblue"
+                : "orangered" // warning
 	
-	const style = {
-		padding: "3px 5px",
-		border: `1px solid ${accent}`,
-		backgroundColor: primary,
-		borderRadius: "5px"
-	}
+    const style = {
+        padding: "3px 5px",
+        border: `1px solid ${accent}`,
+        backgroundColor: primary,
+        borderRadius: "5px"
+    }
 
-	// custom(tagName: a string in kebab-case, _extends: an optional HTMLElement)
-	return custom("my-btn", HTMLButtonElement)(
-		css(style),
-		label
-	)
+    // custom(tagName: a string in kebab-case, _extends: an optional HTMLElement)
+    return custom("my-btn", HTMLButtonElement)(
+        css(style),
+        label
+    )
 }
 ```
 
