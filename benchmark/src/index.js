@@ -1,8 +1,8 @@
-import { natives, nodes, css, showIf, ref, on } from "https://cdn.jsdelivr.net/gh/jithujoshyjy/jquire@latest/dist/jquire.min.js"
+import { natives, nodes, css, when, state, on, watch } from "https://cdn.jsdelivr.net/npm/jquire@latest/src/jquire.min.js"
 
 natives.globalize()
 const { attr } = nodes
-const dataRef = ref({ data: [] })
+const dataST = state({ data: [] })
 
 const adjectives = [
 	"pretty", "large", "big", "small", "tall", "short", "long", "handsome", "plain", "quaint", "clean", "elegant", "easy", "angry", "crazy", "helpful", "mushy", "odd", "unsightly", "adorable", "important", "inexpensive", "cheap", "expensive", "fancy"
@@ -23,25 +23,25 @@ let selected = -1
 
 const add = () => {
 	const perfStart = performance.now()
-	dataRef.data = dataRef.data.concat(buildData(1000))
+	dataST.data = dataST.data.concat(buildData(1000))
 	const perfEnd = performance.now()
 	console.log("add: ", perfEnd - perfStart)
 }
 const run = () => {
 	const perfStart = performance.now()
-	dataRef.data = buildData(1000)
+	dataST.data = buildData(1000)
 	const perfEnd = performance.now()
 	console.log("run: ", perfEnd - perfStart)
 }
 const runLots = () => {
 	const perfStart = performance.now()
-	dataRef.data = buildData(10000)
+	dataST.data = buildData(10000)
 	const perfEnd = performance.now()
 	console.log("runLots: ", perfEnd - perfStart)
 }
 const clear = () => {
 	const perfStart = performance.now()
-	dataRef.data = []
+	dataST.data = []
 	const perfEnd = performance.now()
 	console.log("clear: ", perfEnd - perfStart)
 }
@@ -55,45 +55,45 @@ const interact = e => {
 }
 
 const del = id => {
-	const idx = dataRef.data.findIndex(d => d.id === id)
-	dataRef.data.splice(idx, 1)
+	const idx = dataST.data.findIndex(d => d.id === id)
+	dataST.data.splice(idx, 1)
 	const perfStart = performance.now()
-	dataRef.data = dataRef.data
+	dataST.data = dataST.data
 	const perfEnd = performance.now()
 	console.log("del: ", perfEnd - perfStart)
 }
 
 const select = id => {
 	if (selected > -1) {
-		dataRef.data[selected].selected = false
+		dataST.data[selected].selected = false
 	}
-	selected = dataRef.data.findIndex(d => d.id === id)
-	dataRef.data[selected].selected = true
+	selected = dataST.data.findIndex(d => d.id === id)
+	dataST.data[selected].selected = true
 	const perfStart = performance.now()
-	dataRef.data = dataRef.data
+	dataST.data = dataST.data
 	const perfEnd = performance.now()
 	console.log("select: ", perfEnd - perfStart)
 }
 
 const swapRows = () => {
-	if (dataRef.data.length > 998) {
-		const tmp = dataRef.data[1]
-		dataRef.data[1] = dataRef.data[998]
-		dataRef.data[998] = tmp
+	if (dataST.data.length > 998) {
+		const tmp = dataST.data[1]
+		dataST.data[1] = dataST.data[998]
+		dataST.data[998] = tmp
 	}
 	const perfStart = performance.now()
-	dataRef.data = dataRef.data
+	dataST.data = dataST.data
 	const perfEnd = performance.now()
 	console.log("swapRows: ", perfEnd - perfStart)
 }
 
 const update = () => {
-	for (let i = 0; i < dataRef.data.length; i += 10) {
-		const item = dataRef.data[i]
-		dataRef.data[i].label += " !!!"
+	for (let i = 0; i < dataST.data.length; i += 10) {
+		const item = dataST.data[i]
+		dataST.data[i].label += " !!!"
 	}
 	const perfStart = performance.now()
-	dataRef.data = dataRef.data
+	dataST.data = dataST.data
 	const perfEnd = performance.now()
 	console.log("update: ", perfEnd - perfStart)
 }
@@ -172,8 +172,7 @@ const app = div(
 		on.click(interact),
 		attr.class("table table-hover table-striped test-data"),
 		tbody(
-			dataRef,
-			({ data }) => data.map(item =>
+			(_ = watch(dataST)) => ([item] = each(dataST.data)) =>
 				tr(
 					attr({ id: item.id, class: item.selected ? "selected" : "" }),
 					td(
@@ -194,7 +193,6 @@ const app = div(
 					),
 					td(attr.class("col-md-6"))
 				)
-			)
 		)
 	),
 
