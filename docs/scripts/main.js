@@ -196,7 +196,7 @@ const Navbar = () => {
 			return headingRefreshST.hasHeadingListRefreshed = true
 		}
 
-		return (_ = when(sidebarST.clicked)) =>
+		return (_ = when(!sidebarST.clicked)) =>
 			aside(
 				css(style),
 				css("input.search-field")(searchFieldStyle),

@@ -1270,7 +1270,7 @@ export class JqText {
 	}
 
 	toString(indent = 0) {
-		return /**@type {Text}*/ (this.domNode).nodeValue ?? ''
+		return this.text
 	}
 
 	initial = {
