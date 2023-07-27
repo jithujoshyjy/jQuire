@@ -1,4 +1,4 @@
-import { natives, nodes, css, state } from "https://cdn.jsdelivr.net/npm/jquire@latest/src/jquire.min.js"
+import { natives, nodes, css, state, watch } from "https://cdn.jsdelivr.net/npm/jquire@latest/src/jquire.min.js"
 const { pre, code, link } = natives
 const { attr, fragment } = nodes
 
@@ -35,8 +35,8 @@ export default (language = '', sourceCode = '', highlighter) => {
 		border: "0.1rem solid var(--background-color-tertiary)"
 	}
 
-	const codeThemeLinkRef = decideCodeTheme()
-	const codeBlock = ref()
+	const codeThemeLinkST = decideCodeTheme()
+	let codeBlock
 
 	return div(
 		css(style),
@@ -44,16 +44,14 @@ export default (language = '', sourceCode = '', highlighter) => {
 		css(`:host::-webkit-scrollbar`)(codeBoxScrollbarStyle),
 		css(`:host::-webkit-scrollbar-thumb`)(codeBoxScrollbarThumbStyle),
 		link(
-			codeThemeLinkRef,
 			attr.rel("stylesheet"),
-			({ codeThemeLink }) => attr.href(codeThemeLink)
+			(_ = watch(codeThemeLinkST)) => attr.href(codeThemeLinkST.codeThemeLink)
 		),
 		pre(
-			code(
-				codeBlock,
+			codeBlock = code(
 				attr.class(`language-${language}`),
 				sourceCode,
-				() => highlighter.highlightElement(codeBlock.deref())
+				(_ = watch(codeThemeLinkST)) => highlighter.highlightElement(codeBlock.domNode)
 			)
 		)
 	)
@@ -64,18 +62,18 @@ export default (language = '', sourceCode = '', highlighter) => {
 			light: "https://cdn.jsdelivr.net/npm/highlight.js@latest/styles/github.css",
 		}
 
-		if (!window.matchMedia) return ref({ codeThemeLink: codeThemes.dark })
+		if (!window.matchMedia) return state({ codeThemeLink: codeThemes.dark })
 
 		const preferLightTheme = window.matchMedia("(prefers-color-scheme: light)").matches
 
 		const codeThemeLink = preferLightTheme ? codeThemes.light : codeThemes.dark
-		const codeThemeLinkRef = ref({ codeThemeLink })
+		const codeThemeLinkST = state({ codeThemeLink })
 
 		window.matchMedia("(prefers-color-scheme: light)").addEventListener("change", event => {
 			const codeThemeLink = event.matches ? codeThemes.light : codeThemes.dark
-			codeThemeLinkRef.codeThemeLink = codeThemeLink
+			codeThemeLinkST.codeThemeLink = codeThemeLink
 		})
 
-		return codeThemeLinkRef
+		return codeThemeLinkST
 	}
 }

@@ -31,9 +31,9 @@
 		const app = div(
 			div(
 				"natural numbers ",
-				(_ = watch(numbersST)) => ul(
-					([x] = each(numbersST)) => (_ = when(x % 2 == 0)) => li(x)
-				)// ([x, i] = each(numbersST), _ = when(x % 2 == 0)) => li(x)
+				(_ = watch(numbersST)) =>
+					([x] = each(numbersST)) => (_ = when(x % 2 == 0)) => div(x)
+				// ([x, i] = each(numbersST), _ = when(x % 2 == 0)) => li(x)
 			),
 			" ",
 			button(

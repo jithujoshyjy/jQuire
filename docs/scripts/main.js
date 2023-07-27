@@ -1,7 +1,5 @@
 import {
-	natives, nodes, when,
-	on, state, watch, each, pathSetter,
-	getNodes, animate, css
+	natives, nodes, on, state, each, watch, pathSetter, css, when
 } from "https://cdn.jsdelivr.net/npm/jquire@latest/src/jquire.min.js"
 
 import highlight from "https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@latest/build/es/highlight.min.js"
@@ -9,7 +7,6 @@ import javascript from "https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@late
 import bash from "https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@latest/build/es/languages/bash.min.js"
 import xml from "https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@latest/build/es/languages/xml.min.js"
 
-import AlertBox from "../components/AlertBox.js"
 import CodeBox from "../components/CodeBox.js"
 import Link from "../components/Link.js"
 import Emphasize from "../components/Emphasize.js"
@@ -84,9 +81,10 @@ const Navbar = () => {
 		)
 	}
 
-	const MenuIcon = (sidebarST) => {
+	const MenuBtn = (sidebarST) => {
 		const handleMenuBtnClick = (evt) => {
 			evt.stopPropagation()
+			debugger
 			sidebarST.clicked = !sidebarST.clicked
 		}
 
@@ -97,7 +95,7 @@ const Navbar = () => {
 		)
 	}
 
-	const Sidebar = (sidebarST) => {
+	const Sidebar = () => {
 		const style = {
 			position: "absolute",
 			top: "3rem",
@@ -166,10 +164,6 @@ const Navbar = () => {
 			textDecoration: "underline"
 		}
 
-		const onUpdateCallback = (sidebar) => {
-			sidebar.style.setProperty("display", sidebarST.clicked ? "initial" : "none")
-		}
-
 		let headings = [
 			{ id: "what-n-why-section", text: "What and Why?" },
 			{ id: "installation-n-imports-section", text: "Installation and Imports" },
@@ -203,38 +197,36 @@ const Navbar = () => {
 			return headingRefreshST.hasHeadingListRefreshed = true
 		}
 
-		let sidebar
-		return sidebar = aside(
-			css(style),
-			(_ = watch(sidebarST)) => onUpdateCallback(sidebar),
-			css("input.search-field")(searchFieldStyle),
-			css("input.search-field:focus")(searchFieldFocusStyle),
-			css("ul.section-list")(sectionListStyle),
-			css(`ul.section-list::-webkit-scrollbar`)(sectionListScrollbarStyle),
-			css(`ul.section-list::-webkit-scrollbar-thumb`)(sectionListScrollbarThumbStyle),
-			css("ul.section-list > li")(sectionListItemStyle),
-			css("ul.section-list > li:hover")(sectionListItemHoverStyle),
-			css("a.go-to-section-link")(goToSectionLinkStyle),
-			css("a.go-to-section-link:hover")(goToSectionLinkHoverStyle),
-			input(
-				on.input(handleInput),
-				attr.class("search-field"),
-				attr.type("search"),
-				attr.placeholder("Filter Headings")
-			),
-			ul(
-				attr.class("section-list"),
-				(_ = watch(headingRefreshST)) => headings.map(h =>
-					li(
-						a(
-							attr.class("go-to-section-link"),
-							attr.href('#' + h.id),
-							h.text
+		return (_ = when(sidebarST.clicked)) =>
+			aside(
+				css(style),
+				css("input.search-field")(searchFieldStyle),
+				css("input.search-field:focus")(searchFieldFocusStyle),
+				css("ul.section-list")(sectionListStyle),
+				css(`ul.section-list::-webkit-scrollbar`)(sectionListScrollbarStyle),
+				css(`ul.section-list::-webkit-scrollbar-thumb`)(sectionListScrollbarThumbStyle),
+				css("ul.section-list > li")(sectionListItemStyle),
+				css("ul.section-list > li:hover")(sectionListItemHoverStyle),
+				css("a.go-to-section-link")(goToSectionLinkStyle),
+				css("a.go-to-section-link:hover")(goToSectionLinkHoverStyle),
+				input(
+					on.input(handleInput),
+					attr.class("search-field"),
+					attr.type("search"),
+					attr.placeholder("Filter Headings")
+				),
+				ul(
+					attr.class("section-list"),
+					(_ = watch(headingRefreshST)) => ([h] = each(headings)) =>
+						li(
+							a(
+								attr.class("go-to-section-link"),
+								attr.href('#' + h.id),
+								h.text
+							)
 						)
-					)
 				)
 			)
-		)
 	}
 
 	const style = {
@@ -286,8 +278,8 @@ const Navbar = () => {
 					backgroundImage: `url('${assets("icon - menu_book-dark.svg")}')`
 				})
 			),
-			MenuIcon(sidebarST),
-			Sidebar(sidebarST)
+			MenuBtn(sidebarST),
+			(_ = watch(sidebarST)) => Sidebar()
 		)
 	)
 }
@@ -992,7 +984,7 @@ div(
 			Emphasize("state()"),
 			`function to store reactive objects.`,
 			br(),
-			`Then using the`, Emphasize("deref()"),
+			`Then using the`, Emphasize("watch()"),
 			`effect function, update the elements to be in sync with the state object. `
 		),
 		CodeBox("javascript", code1, highlight),

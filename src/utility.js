@@ -507,7 +507,6 @@ export class JqEach {
 	}
 
 	/**
-	 * 
 	 * @returns {JqFragment}
 	 */
 	invoke() {
@@ -640,16 +639,13 @@ export class JqWatch {
 		this.jqStates = jqStates
 	}
 
-	/**
-	 * @returns {any}
-	 */
 	invoke() {
 		return this.callback(this.jqStates.map(jqState => jqState[StateReference]))
 	}
 
 	reconcile() {
 		const oldNode = this.returned
-		const newNode = this.invoke()
+		const newNode = extractEffectReturn(this, this.jqParent)
 		newNode.attachTo(null, false)
 
 		const _diff = diff(oldNode, newNode)
@@ -1722,13 +1718,13 @@ export class JqElement {
 
 		const childMarkup = this.childNodes.map(x => x.toString(indent + 1)).join('\n' + '\t'.repeat(indent + 1))
 		const selfAttrs = this.attributes.map(x => `${x.name} = "${stringify(x.value)}"`).join(" ")
-		// const selfCallbacks = this.callbacks.map(x => x.toString(indent + 1)).join('\n' + '\t'.repeat(indent))
+		const selfCallbacks = this.watchers.map(x => x.returned?.toString(indent + 1) ?? '').join('\n' + '\t'.repeat(indent))
 
 		const selfMarkupHead = `<${this.name}${selfAttrs.length ? ' ' : ''}${selfAttrs}${emptyTagSelfClosure}>`
-		const selfMarkupTail = `${hasElmStartIndent(childMarkup.length /* || selfCallbacks.length */) +
+		const selfMarkupTail = `${hasElmStartIndent(childMarkup.length || selfCallbacks.length) +
 			childMarkup +
-			// (selfCallbacks.length ? hasElmStartIndent(childMarkup.length) + selfCallbacks : '') +
-			hasElmEndIndent(childMarkup.length /* || selfCallbacks.length */)}</${this.name}>`
+			(selfCallbacks.length ? hasElmStartIndent(childMarkup.length) + selfCallbacks : '') +
+			hasElmEndIndent(childMarkup.length || selfCallbacks.length)}</${this.name}>`
 		const selfMarkup = `${selfMarkupHead}${!emptyTagSelfClosure ? selfMarkupTail : ''}`
 
 		return selfMarkup
@@ -1767,21 +1763,7 @@ export class JqElement {
 			function attachEffectNodes(effectNodes) {
 				for (const effectNode of effectNodes) {
 					effectNode.jqParent = jqElement
-					let jqNode = effectNode.invoke()
-					/**
-					 * @param {JqNode} jqNode
-					 */
-					const isInvokableEffectNode = (jqNode) => jqNode instanceof JqEach
-						|| jqNode instanceof JqCondition
-						|| jqNode instanceof JqWatch
-
-					while (isInvokableEffectNode(jqNode) || typeof jqNode == "function") {
-						jqNode = convertToJqNode(jqNode, jqElement)
-						jqNode = /**@type {JqEach<any> | JqCondition | JqWatch}*/ (jqNode).invoke()
-					}
-
-					const childNode = /**@type {JqText | JqFragment | JqElement}*/ (convertToJqNode(jqNode, jqElement))
-					childNode.nodePosition = effectNode.nodePosition
+					const childNode = extractEffectReturn(effectNode, jqElement)
 
 					if (effectNode instanceof JqWatch) {
 						effectNode.returned = childNode
@@ -1971,13 +1953,37 @@ export class JqElement {
 }
 
 /**
+ * @param {JqNode} jqNode
+ */
+const isInvokableEffectNode = (jqNode) => jqNode instanceof JqEach
+|| jqNode instanceof JqCondition
+|| jqNode instanceof JqWatch
+
+/**
+ * @param {Exclude<JqEffectNode, JqEvent>} effectNode 
+ * @param {JqElement | JqFragment | null} jqParent 
+ * @returns 
+ */
+function extractEffectReturn(effectNode, jqParent) {
+	let jqNode = effectNode.invoke()
+
+	while (isInvokableEffectNode(jqNode) || typeof jqNode == "function") {
+		jqNode = convertToJqNode(jqNode, jqParent)
+		jqNode = /**@type {JqEach<any> | JqCondition | JqWatch}*/ (jqNode).invoke()
+	}
+
+	const childNode = /**@type {JqText | JqFragment | JqElement}*/ (convertToJqNode(jqNode, jqParent))
+	childNode.nodePosition = effectNode.nodePosition
+	return childNode
+}
+
+/**
  * @param {HTMLElement} element 
  * @param {ResolveFn} callback
  */
 export function observeElement(element, callback) {
 
 	/**
-	 * 
 	 * @param {ResolveFn} callback 
 	 * @returns {IntersectionObserverCallback}
 	 */
