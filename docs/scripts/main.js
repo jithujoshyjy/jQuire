@@ -1,6 +1,6 @@
 import {
 	natives, nodes, on, state, each, watch, pathSetter, css, when
-} from "https://cdn.jsdelivr.net/npm/jquire@latest/src/jquire.min.js"
+} from "https://cdn.jsdelivr.net/npm/jquire@1.3.18/src/jquire.min.js"
 
 import highlight from "https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@latest/build/es/highlight.min.js"
 import javascript from "https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@latest/build/es/languages/javascript.min.js"
@@ -196,7 +196,7 @@ const Navbar = () => {
 			return headingRefreshST.hasHeadingListRefreshed = true
 		}
 
-		return (_ = when(!sidebarST.clicked)) =>
+		return (_ = when(sidebarST.clicked)) =>
 			aside(
 				css(style),
 				css("input.search-field")(searchFieldStyle),
