@@ -84,7 +84,6 @@ const Navbar = () => {
 	const MenuBtn = (sidebarST) => {
 		const handleMenuBtnClick = (evt) => {
 			evt.stopPropagation()
-			debugger
 			sidebarST.clicked = !sidebarST.clicked
 		}
 
