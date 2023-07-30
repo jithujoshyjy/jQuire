@@ -20,26 +20,30 @@
 			div, input, button,
 			form, dialog, img,
 			main, nav, a, br, hr, ul, li,
-			footer, template, span
+			footer, template, span, aside
 		} = natives
 
 		const { attr, text, fragment } = nodes
-		
-		const numbers = Array.from({ length: 10 }, (_, i) => i+1)
-		const numbersST = state(numbers)
-		
+
+		const sidebarST = state({ clicked: false })
+		const numbersST = state(Array.from({ length: 10 }, (_, i) => i + 1))
+		const style = {
+			lineHeight: "8px"
+		}
+
 		const app = div(
-			div(
-				"natural numbers ",
-				(_ = watch(numbersST)) =>
-					([x] = each(numbersST)) => (_ = when(x % 2 == 0)) => div(x)
-				// ([x, i] = each(numbersST), _ = when(x % 2 == 0)) => li(x)
-			),
-			" ",
 			button(
-				"more natual numbers",
-				(event = on("click")) => numbersST.push(numbersST.length + 1)
+				div(css(style), "➖", br(), "➖", br(), "➖"),
+				(_ = on("click")) => sidebarST.clicked = !sidebarST.clicked
 			),
+			(_ = watch(sidebarST)) => {
+				return (_ = when(sidebarST.clicked)) =>
+					aside(
+						ul(
+							([x] = each(numbersST)) => li(x)
+						)
+					)
+			}
 		)
 
 		/*

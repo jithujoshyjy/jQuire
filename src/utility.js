@@ -500,6 +500,10 @@ export class JqEach {
 	 */
 	callback = (_) => ''
 	/**
+	 * @type {JqFragment | null}
+	 */
+	returned = null
+	/**
 	 * @param {{[Symbol.iterator]: () => IterableIterator<T>, [x: string | symbol | number]: any}} iterable 
 	 */
 	constructor(iterable) {
@@ -522,7 +526,7 @@ export class JqEach {
 		const result = /**@type {JqFragment}*/ (convertToJqNode(results, this.jqParent))
 		result.nodePosition = this.nodePosition
 
-		return result
+		return this.returned = result
 	}
 }
 
@@ -537,6 +541,10 @@ export class JqCondition {
 	 * @type {(_: boolean) => any}
 	 */
 	callback = (_) => ''
+	/**
+	 * @type {JqElement | JqFragment | JqText | null}
+	 */
+	returned = null
 	/**
 	 * @param {boolean} condition 
 	 */
@@ -629,7 +637,7 @@ export class JqWatch {
 	 */
 	callback = (_) => ''
 	/**
-	 * @type {any}
+	 * @type {JqElement | JqFragment | JqText | null}
 	 */
 	returned = null
 	/**
@@ -644,7 +652,7 @@ export class JqWatch {
 	}
 
 	reconcile() {
-		const oldNode = this.returned
+		const oldNode = /**@type {NonNullable<typeof this.returned>}*/ (this.returned)
 		const newNode = extractEffectReturn(this, this.jqParent)
 		newNode.attachTo(null, false)
 
@@ -1438,23 +1446,13 @@ export class JqFragment {
 			function attachEffectNodes(effectNodes) {
 				for (const effectNode of effectNodes) {
 					effectNode.jqParent = jqFragment
-					let jqNode = effectNode.invoke()
-					/**
-					 * @param {JqNode} jqNode
-					 */
-					const isInvokableEffectNode = (jqNode) => jqNode instanceof JqEach
-						|| jqNode instanceof JqCondition
-						|| jqNode instanceof JqWatch
+					const returned = effectNode.returned
 
-					while (isInvokableEffectNode(jqNode)) {
-						jqNode = /**@type {JqEach<any> | JqCondition | JqWatch}*/ (jqNode).invoke()
-					}
-
-					const childNode = /**@type {JqText | JqFragment | JqElement}*/ (convertToJqNode(jqNode, jqFragment))
+					if (effectNode.jqParent.childNodes.includes(/**@type {any}*/ (returned))) continue
+					const childNode = extractEffectReturn(effectNode, jqFragment)
 					childNode.nodePosition = effectNode.nodePosition
 
 					if (effectNode instanceof JqWatch) {
-						effectNode.returned = childNode
 						for (const _jqState of effectNode.jqStates) {
 							const jqState = /**@type {JqState}*/ (_jqState[JqNodeReference])
 							const stateHasWatcher = jqState.watchers
@@ -1676,7 +1674,7 @@ export class JqElement {
 			if (alterDomNode) {
 				/**@type {Node}*/ (node.domNode).appendChild(/**@type {Node}*/(this.domNode))
 				let ancestor = node.jqParent
-				
+
 				while (ancestor != null && isJqFragment(ancestor)) {
 					ancestor = ancestor.jqParent
 				}
@@ -1763,10 +1761,12 @@ export class JqElement {
 			function attachEffectNodes(effectNodes) {
 				for (const effectNode of effectNodes) {
 					effectNode.jqParent = jqElement
+					const returned = effectNode.returned
+
+					if (effectNode.jqParent.childNodes.includes(/**@type {any}*/ (returned))) continue
 					const childNode = extractEffectReturn(effectNode, jqElement)
 
 					if (effectNode instanceof JqWatch) {
-						effectNode.returned = childNode
 						for (const _jqState of effectNode.jqStates) {
 							const jqState = /**@type {JqState}*/ (_jqState[JqNodeReference])
 							const stateHasWatcher = jqState.watchers
@@ -1956,8 +1956,8 @@ export class JqElement {
  * @param {JqNode} jqNode
  */
 const isInvokableEffectNode = (jqNode) => jqNode instanceof JqEach
-|| jqNode instanceof JqCondition
-|| jqNode instanceof JqWatch
+	|| jqNode instanceof JqCondition
+	|| jqNode instanceof JqWatch
 
 /**
  * @param {Exclude<JqEffectNode, JqEvent>} effectNode 
@@ -1974,7 +1974,8 @@ function extractEffectReturn(effectNode, jqParent) {
 
 	const childNode = /**@type {JqText | JqFragment | JqElement}*/ (convertToJqNode(jqNode, jqParent))
 	childNode.nodePosition = effectNode.nodePosition
-	return childNode
+	
+	return effectNode.returned = childNode
 }
 
 /**

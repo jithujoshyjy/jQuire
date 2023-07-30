@@ -216,14 +216,14 @@ const Navbar = () => {
 				),
 				ul(
 					attr.class("section-list"),
-					(_ = watch(headingRefreshST)) => ([h] = each(headings)) =>
-						li(
-							a(
-								attr.class("go-to-section-link"),
-								attr.href('#' + h.id),
-								h.text
-							)
-						)
+					// (_ = watch(headingRefreshST)) => ([h] = each(headings)) =>
+					// 	li(
+					// 		a(
+					// 			attr.class("go-to-section-link"),
+					// 			attr.href('#' + h.id),
+					// 			h.text
+					// 		)
+					// 	)
 				)
 			)
 	}
@@ -261,9 +261,8 @@ const Navbar = () => {
 		marginLeft: "auto",
 		position: "relative"
 	}
-
-	const clicked = false
-	const sidebarST = state({ clicked })
+	
+	const sidebarST = state({ clicked: false })
 
 	return nav(
 		css(style),
