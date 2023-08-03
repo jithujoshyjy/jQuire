@@ -1,4 +1,4 @@
-import { natives, nodes, css, state, watch } from "https://cdn.jsdelivr.net/npm/jquire@1.3.19/src/jquire.min.js"
+import { natives, nodes, css, state, watch } from "https://cdn.jsdelivr.net/npm/jquire@1.3.20/src/jquire.min.js"
 const { pre, code, link } = natives
 const { attr, fragment } = nodes
 
