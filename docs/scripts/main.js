@@ -1,6 +1,6 @@
 import {
 	natives, nodes, on, state, each, watch, pathSetter, css, when
-} from "https://cdn.jsdelivr.net/npm/jquire@1.3.18/src/jquire.min.js"
+} from "https://cdn.jsdelivr.net/npm/jquire@1.3.19/src/jquire.min.js"
 
 import highlight from "https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@latest/build/es/highlight.min.js"
 import javascript from "https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@latest/build/es/languages/javascript.min.js"
@@ -216,14 +216,14 @@ const Navbar = () => {
 				),
 				ul(
 					attr.class("section-list"),
-					// (_ = watch(headingRefreshST)) => ([h] = each(headings)) =>
-					// 	li(
-					// 		a(
-					// 			attr.class("go-to-section-link"),
-					// 			attr.href('#' + h.id),
-					// 			h.text
-					// 		)
-					// 	)
+					(_ = watch(headingRefreshST)) => ([h] = each(headings)) =>
+						li(
+							a(
+								attr.class("go-to-section-link"),
+								attr.href('#' + h.id),
+								h.text
+							)
+						)
 				)
 			)
 	}

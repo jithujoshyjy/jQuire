@@ -526,7 +526,23 @@ export class JqEach {
 		const result = /**@type {JqFragment}*/ (convertToJqNode(results, this.jqParent))
 		result.nodePosition = this.nodePosition
 
-		return this.returned = result
+		return result
+	}
+
+	delete = {
+		context: this,
+		deleteSelf() {
+			const jqEach = this.context
+			const jqParent = /**@type {JqElement | JqFragment}*/ (jqEach.jqParent)
+
+			const delNodeIdx = jqParent.iterators.findIndex(iterator => Object.is(iterator, jqEach))
+			if (delNodeIdx == -1)
+				throwError("JqInternalError - JqEach not found in its jqParent.iterators")
+
+			jqParent.iterators.splice(delNodeIdx, 1)
+			jqEach.returned = null
+			return this
+		}
 	}
 }
 
@@ -561,6 +577,22 @@ export class JqCondition {
 
 		const _result = this.condition ? result.callback(this.condition) : new JqText()
 		return _result
+	}
+
+	delete = {
+		context: this,
+		deleteSelf() {
+			const jqCondition = this.context
+			const jqParent = /**@type {JqElement | JqFragment}*/ (jqCondition.jqParent)
+
+			const delNodeIdx = jqParent.conditions.findIndex(condition => Object.is(condition, jqCondition))
+			if (delNodeIdx == -1)
+				throwError("JqInternalError - JqCondition not found in its jqParent.conditions")
+
+			jqParent.conditions.splice(delNodeIdx, 1)
+			jqCondition.returned = null
+			return this
+		}
 	}
 }
 
@@ -619,6 +651,24 @@ export class JqEvent {
 		}
 		return this
 	}
+
+	delete = {
+		context: this,
+		deleteSelf() {
+			const jqEvent = this.context
+			const jqParent = /**@type {JqElement}*/ (jqEvent.jqParent)
+
+			const delNodeIdx = jqParent.events.findIndex(event => Object.is(event, jqEvent))
+			if (delNodeIdx == -1)
+				throwError("JqInternalError - JqCondition not found in its jqParent.conditions")
+
+			jqParent.events.splice(delNodeIdx, 1)
+			const domNode = jqParent.domNode
+			domNode && jqEvent.detachHandler(domNode)
+
+			return this
+		}
+	}
 }
 
 export class JqWatch {
@@ -659,7 +709,30 @@ export class JqWatch {
 		const _diff = diff(oldNode, newNode)
 		JqWatch.reconcile(_diff)
 
+		if (_diff[UPDATED].length) this.returned = newNode
+
 		return this
+	}
+
+	delete = {
+		context: this,
+		deleteSelf() {
+			const jqWatcher = this.context
+			const jqParent = /**@type {JqElement | JqFragment}*/ (jqWatcher.jqParent)
+
+			const delNodeIdx = jqParent.watchers.findIndex(watcher => Object.is(watcher, jqWatcher))
+			if (delNodeIdx == -1)
+				throwError("JqInternalError - JqWatcher not found in its jqParent.watchers")
+
+			jqParent.watchers.splice(delNodeIdx, 1)
+			for (const _jqState of jqWatcher.jqStates) {
+				const jqState = /**@type {JqState}*/ (_jqState[JqNodeReference])
+				jqState.delete.removeWatcher(jqWatcher)
+			}
+
+			jqWatcher.returned = null
+			return this
+		}
 	}
 
 	/**
@@ -685,7 +758,6 @@ export class JqWatch {
 			}
 			else if (!isNullish(node1) && !isNullish(node2)) {
 				JqWatch.updateElement(_diff, [firstProp, ...nestedProps])
-				this.returned = /**@type {DiffableJqNode}*/ (node2)
 			}
 		}
 
@@ -846,6 +918,23 @@ export class JqState {
 	constructor(state) {
 		this[StateReference] = state
 		this[JqNodeReference] = this
+	}
+
+	delete = {
+		context: this,
+		/**
+		 * @param {JqWatch} watcher
+		 */
+		removeWatcher(watcher) {
+			const jqState = this.context
+			const delNodeIdx = jqState.watchers.findIndex(_watcher => Object.is(_watcher, watcher))
+
+			if (delNodeIdx == -1)
+				throwError("JqInternalError - JqWatcher not found in one of its jqState.watchers")
+			jqState.watchers.splice(delNodeIdx, 1)
+
+			return this
+		}
 	}
 }
 
@@ -1432,87 +1521,13 @@ export class JqFragment {
 			const jqEffectNodes = getEffectNodes(jqFragment)
 
 			for (const childNode of jqFragment.childNodes) {
-				const precedingEffectNodes = getPrecedingEffectNodes(childNode)
-				attachEffectNodes(precedingEffectNodes)
+				const precedingEffectNodes = getPrecedingEffectNodes(jqEffectNodes, childNode)
+				attachEffectNodes(precedingEffectNodes, jqFragment, alterDomNode)
 				childNode.attachTo(jqFragment, alterDomNode)
 			}
 
-			attachEffectNodes(jqEffectNodes)
+			attachEffectNodes(jqEffectNodes, jqFragment, alterDomNode)
 			return this
-
-			/**
-			 * @param {Array<JqWatch | JqCondition | JqEach<any>>} effectNodes 
-			 */
-			function attachEffectNodes(effectNodes) {
-				for (const effectNode of effectNodes) {
-					effectNode.jqParent = jqFragment
-					const returned = effectNode.returned
-
-					if (effectNode.jqParent.childNodes.includes(/**@type {any}*/ (returned))) continue
-					const childNode = extractEffectReturn(effectNode, jqFragment)
-					childNode.nodePosition = effectNode.nodePosition
-
-					if (effectNode instanceof JqWatch) {
-						for (const _jqState of effectNode.jqStates) {
-							const jqState = /**@type {JqState}*/ (_jqState[JqNodeReference])
-							const stateHasWatcher = jqState.watchers
-								.some(watcher => watcher.callback.toString() == effectNode.callback.toString())
-
-							if (!stateHasWatcher) jqState.watchers.push(effectNode)
-						}
-					}
-
-					childNode.attachTo(jqFragment, alterDomNode)
-				}
-			}
-
-			/**
-			 * @param {JqElement | JqFragment} jqNode 
-			 * @returns 
-			 */
-			function getEffectNodes(jqNode) {
-				/**
-				 * @type {Exclude<JqEffectNode, JqEvent>[]}
-				 */
-				const jqEffectNodes = []
-				const maxLength = Math.max(
-					jqNode.watchers.length,
-					jqNode.conditions.length,
-					jqNode.iterators.length
-				)
-
-				for (let i = 0; i < maxLength; i++) {
-					const _jqEffectNodes = [
-						jqNode.watchers[i],
-						jqNode.conditions[i],
-						jqNode.iterators[i]
-					].filter(Boolean)
-
-					jqEffectNodes.push(..._jqEffectNodes)
-				}
-
-				return jqEffectNodes
-			}
-
-			/**
-			 * @param {JqElement | JqFragment | JqText} jqNode
-			 */
-			function getPrecedingEffectNodes(jqNode) {
-				/**
-				 * @type {Exclude<JqEffectNode, JqEvent>[]}
-				 */
-				const precedingJqEffectNodes = []
-				for (let i = 0; i < jqEffectNodes.length; i++) {
-					const jqEffectNode = jqEffectNodes[i]
-					const effectNodePos = jqEffectNode.nodePosition
-
-					if (effectNodePos > jqNode.nodePosition) continue
-
-					jqEffectNodes.splice(effectNodePos, 1)
-					precedingJqEffectNodes.push(jqEffectNode)
-				}
-				return precedingJqEffectNodes
-			}
 		}
 	}
 
@@ -1551,6 +1566,12 @@ export class JqFragment {
 				const childNode = jqFragment.childNodes[0]
 				childNode.delete.deleteSelf()
 			}
+
+			const jqEffectNodes = getEffectNodes(jqFragment)
+			for (const jqEffectNode of jqEffectNodes) {
+				jqEffectNode.delete.deleteSelf()
+			}
+
 			return this
 		}
 	}
@@ -1747,87 +1768,13 @@ export class JqElement {
 			const jqEffectNodes = getEffectNodes(jqElement)
 
 			for (const childNode of jqElement.childNodes) {
-				const precedingEffectNodes = getPrecedingEffectNodes(childNode)
-				attachEffectNodes(precedingEffectNodes)
+				const precedingEffectNodes = getPrecedingEffectNodes(jqEffectNodes, childNode)
+				attachEffectNodes(precedingEffectNodes, jqElement, alterDomNode)
 				childNode.attachTo(jqElement, alterDomNode)
 			}
 
-			attachEffectNodes(jqEffectNodes)
+			attachEffectNodes(jqEffectNodes, jqElement, alterDomNode)
 			return this
-
-			/**
-			 * @param {Array<JqWatch | JqCondition | JqEach<any>>} effectNodes 
-			 */
-			function attachEffectNodes(effectNodes) {
-				for (const effectNode of effectNodes) {
-					effectNode.jqParent = jqElement
-					const returned = effectNode.returned
-
-					if (effectNode.jqParent.childNodes.includes(/**@type {any}*/ (returned))) continue
-					const childNode = extractEffectReturn(effectNode, jqElement)
-
-					if (effectNode instanceof JqWatch) {
-						for (const _jqState of effectNode.jqStates) {
-							const jqState = /**@type {JqState}*/ (_jqState[JqNodeReference])
-							const stateHasWatcher = jqState.watchers
-								.some(watcher => watcher.callback.toString() == effectNode.callback.toString())
-
-							if (!stateHasWatcher) jqState.watchers.push(effectNode)
-						}
-					}
-
-					childNode.attachTo(jqElement, alterDomNode)
-				}
-			}
-
-			/**
-			 * 
-			 * @param {JqElement | JqFragment} jqNode 
-			 * @returns 
-			 */
-			function getEffectNodes(jqNode) {
-				/**
-				 * @type {Exclude<JqEffectNode, JqEvent>[]}
-				 */
-				const jqEffectNodes = []
-				const maxLength = Math.max(
-					jqNode.watchers.length,
-					jqNode.conditions.length,
-					jqNode.iterators.length
-				)
-
-				for (let i = 0; i < maxLength; i++) {
-					const _jqEffectNodes = [
-						jqNode.watchers[i],
-						jqNode.conditions[i],
-						jqNode.iterators[i]
-					].filter(Boolean)
-
-					jqEffectNodes.push(..._jqEffectNodes)
-				}
-
-				return jqEffectNodes
-			}
-
-			/**
-			 * @param {JqElement | JqFragment | JqText} jqNode
-			 */
-			function getPrecedingEffectNodes(jqNode) {
-				/**
-				 * @type {Exclude<JqEffectNode, JqEvent>[]}
-				 */
-				const precedingJqEffectNodes = []
-				for (let i = 0; i < jqEffectNodes.length; i++) {
-					const jqEffectNode = jqEffectNodes[i]
-					const effectNodePos = jqEffectNode.nodePosition
-
-					if (effectNodePos > jqNode.nodePosition) continue
-
-					jqEffectNodes.splice(effectNodePos, 1)
-					precedingJqEffectNodes.push(jqEffectNode)
-				}
-				return precedingJqEffectNodes
-			}
 		},
 		attachEventListeners() {
 			const jqElement = this.context
@@ -1937,6 +1884,16 @@ export class JqElement {
 				childNode.delete.deleteSelf()
 			}
 
+			/**
+			 * @type {JqEffectNode[]}
+			 */
+			const jqEffectNodes = getEffectNodes(jqElement)
+			jqEffectNodes.push(...jqElement.events)
+
+			for (const jqEffectNode of jqEffectNodes) {
+				jqEffectNode.delete.deleteSelf()
+			}
+
 			/**@type {HTMLElement}*/ (jqElement.domNode).remove()
 			return this
 		}
@@ -1960,6 +1917,89 @@ const isInvokableEffectNode = (jqNode) => jqNode instanceof JqEach
 	|| jqNode instanceof JqWatch
 
 /**
+ * @param {Array<JqWatch | JqCondition | JqEach<any>>} effectNodes
+ * @param {JqElement | JqFragment} jqNode
+ * @param {boolean} alterDomNode
+ */
+function attachEffectNodes(effectNodes, jqNode, alterDomNode) {
+	for (const effectNode of effectNodes) {
+		effectNode.jqParent = jqNode
+		const returned = effectNode.returned
+
+		if (effectNode.jqParent.childNodes.includes(/**@type {any}*/(returned))) continue
+		const childNode = extractEffectReturn(effectNode, jqNode)
+		effectNode.returned = childNode
+
+		if (effectNode instanceof JqWatch) {
+			for (const _jqState of effectNode.jqStates) {
+				const jqState = /**@type {JqState}*/ (_jqState[JqNodeReference])
+				const watcherIdx = jqState.watchers
+					.findIndex(watcher => watcher.callback.toString() == effectNode.callback.toString())
+
+				if (watcherIdx == -1) {
+					jqState.watchers.push(effectNode)
+					continue
+				}
+
+				jqState.watchers.splice(watcherIdx, 1, effectNode)
+			}
+		}
+
+		childNode.attachTo(jqNode, alterDomNode)
+	}
+}
+
+/**
+ * @param {Exclude<JqEffectNode, JqEvent>[]} jqEffectNodes
+ * @param {JqElement | JqFragment | JqText} jqNode
+ */
+function getPrecedingEffectNodes(jqEffectNodes, jqNode) {
+	/**
+	 * @type {Exclude<JqEffectNode, JqEvent>[]}
+	 */
+	const precedingJqEffectNodes = []
+	for (let i = 0; i < jqEffectNodes.length; i++) {
+		const jqEffectNode = jqEffectNodes[i]
+		const effectNodePos = jqEffectNode.nodePosition
+
+		if (effectNodePos > jqNode.nodePosition) continue
+
+		jqEffectNodes.splice(effectNodePos, 1)
+		precedingJqEffectNodes.push(jqEffectNode)
+	}
+	return precedingJqEffectNodes
+}
+
+/**
+ * 
+ * @param {JqElement | JqFragment} jqNode 
+ * @returns 
+ */
+function getEffectNodes(jqNode) {
+	/**
+	 * @type {Exclude<JqEffectNode, JqEvent>[]}
+	 */
+	const jqEffectNodes = []
+	const maxLength = Math.max(
+		jqNode.watchers.length,
+		jqNode.conditions.length,
+		jqNode.iterators.length
+	)
+
+	for (let i = 0; i < maxLength; i++) {
+		const _jqEffectNodes = [
+			jqNode.watchers[i],
+			jqNode.conditions[i],
+			jqNode.iterators[i]
+		].filter(Boolean)
+
+		jqEffectNodes.push(..._jqEffectNodes)
+	}
+
+	return jqEffectNodes
+}
+
+/**
  * @param {Exclude<JqEffectNode, JqEvent>} effectNode 
  * @param {JqElement | JqFragment | null} jqParent 
  * @returns 
@@ -1974,8 +2014,8 @@ function extractEffectReturn(effectNode, jqParent) {
 
 	const childNode = /**@type {JqText | JqFragment | JqElement}*/ (convertToJqNode(jqNode, jqParent))
 	childNode.nodePosition = effectNode.nodePosition
-	
-	return effectNode.returned = childNode
+
+	return childNode
 }
 
 /**

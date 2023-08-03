@@ -228,19 +228,22 @@ export function state(initialState = {}) {
 
 	const isArray = Array.isArray(initialState)
 	const stateObj = new JqState(initialState)
-	
+
 	const stateProxy = new Proxy(stateObj, {
 		get(target, prop) {
 			if (prop == JqNodeReference)
 				return target
 
+			if (prop == StateReference)
+				return target[StateReference]
+
 			return target[StateReference][prop]
 		},
 		set(target, prop, value) {
 			target[StateReference][prop] = value
-			if(isArray && prop == "length") return true
+			if (isArray && prop == "length") return true
 
-			for(const watcher of target.watchers) {
+			for (const watcher of target.watchers) {
 				watcher.reconcile()
 			}
 			return true

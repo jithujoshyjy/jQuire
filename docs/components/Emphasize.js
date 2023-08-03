@@ -1,4 +1,4 @@
-import { natives, nodes } from "https://cdn.jsdelivr.net/npm/jquire@1.3.18/src/jquire.min.js"
+import { natives, nodes } from "https://cdn.jsdelivr.net/npm/jquire@1.3.19/src/jquire.min.js"
 
 const { em } = natives
 const { attr } = nodes
