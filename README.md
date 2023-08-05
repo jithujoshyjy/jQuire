@@ -262,5 +262,21 @@ const { HelloWorld } = custom
 HelloWorld("hello world!")
 ```
 
+### Lifecycle Effects
+
+These are events that let you run code when an element is attached or detached from DOM using `mount()` and `unmount()` effect functions respectively.
+
+```javascript
+const sidebarST = state({ clicked: false })
+div(
+    button("⊞", (_ = on("click")) => sidebarST.clicked = !sidebarST.clicked),
+    (_ = watch(sidebarST)) => (_ = when(sidebarST.clicked)) =>
+        aside(
+            (_ = mount()) => console.log("sidebar visible"),
+            (_ = unmount()) => console.log("sidebar hidden")
+        ),
+)
+```
+
 > More ideas on the horizon...<br/>
 > stay tuned for more

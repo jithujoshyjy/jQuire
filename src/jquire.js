@@ -3,7 +3,7 @@ import {
 	stringify, JqAnimation, isPrimitive, JqState, JqElement,
 	JqCSSProperty, JqFragment, JqText, JqCSSRule, JqList,
 	JqAttribute, StateReference, JqNodeReference, validHTMLElements,
-	camelToKebab, JqCondition, JqLifecycle, JqPromise, JqWatch,
+	camelToKebab, JqCondition, JqLifecycle, JqPromise, JqWatch, OnMountCallback, OnUnMountCallback,
 } from "./utility.js"
 
 /**
@@ -219,7 +219,7 @@ function _css(...args) {
 }
 
 /**
- * @param {{ [x: string | symbol]: unknown }} initialState
+ * @param {{ [x: string | symbol | number]: unknown }} initialState
  * @returns {JqState}
  */
 export function state(initialState = {}) {
@@ -258,7 +258,7 @@ export function state(initialState = {}) {
 
 /**
  * @param {JqState[]} _states
- * @returns {JqList<JqState, typeof JqState>}
+ * @returns {JqWatch}
  */
 export function watch(..._states) {
 	throw new JqWatch(..._states)
@@ -291,14 +291,14 @@ export function each(iterable) {
  * @returns {JqElement | JqFragment}
  */
 export function mount() {
-	throw new JqLifecycle()
+	throw new JqLifecycle(OnMountCallback)
 }
 
 /**
  * @returns {JqElement | JqFragment}
  */
 export function unmount() {
-	throw new JqLifecycle()
+	throw new JqLifecycle(OnUnMountCallback)
 }
 
 /**

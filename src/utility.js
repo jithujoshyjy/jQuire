@@ -242,6 +242,7 @@ function getCallbackArg(callback) {
 			|| e instanceof JqEvent
 			|| e instanceof JqCondition
 			|| e instanceof JqEach
+			|| e instanceof JqLifecycle
 
 		if (isJqEffectNode()) {
 			e.callback = callback
@@ -470,15 +471,34 @@ export class JqLifecycle {
 	 */
 	jqParent = null
 	/**
-	 * @type {typeof OnMountCallback | typeof OnUnMountCallback}
+	 * @type {OnMountCallback | OnUnMountCallback}
 	 */
 	type
 	/**
 	 * @type {(...x: any[]) => any}
 	 */
 	callback
-	constructor() {
+	/**
+	 * 
+	 * @param {OnMountCallback | OnUnMountCallback} type 
+	 */
+	constructor(type) {
+		this.type = type
+	}
 
+	delete = {
+		context: this,
+		deleteSelf() {
+			const jqLifecycle = this.context
+			const jqParent = /**@type {JqElement | JqFragment}*/ (jqLifecycle.jqParent)
+
+			const delNodeIdx = jqParent.lifecycles.findIndex(lifecycle => Object.is(lifecycle, jqLifecycle))
+			if (delNodeIdx == -1)
+				throwError("JqInternalError - JqLifecycle not found in its jqParent.lifecycles")
+
+			jqParent.lifecycles.splice(delNodeIdx, 1)
+			return this
+		}
 	}
 }
 
@@ -1499,6 +1519,15 @@ export class JqFragment {
 			throw new Error(`JqError - Cannot attach JqFragment to a node not of instance JqElement or JqFragment or HTMLElement`)
 		}
 
+		if (alterDomNode) {
+			for (let i = 0; i < this.lifecycles.length; i++) {
+				const lifecycle = this.lifecycles[i]
+				if (lifecycle.type != OnMountCallback) continue
+
+				lifecycle.callback(this)
+			}
+		}
+
 		return this.toString()
 	}
 
@@ -1560,6 +1589,14 @@ export class JqFragment {
 			const delChildIdx = jqParent.childNodes.findIndex(childNode => Object.is(childNode, jqFragment))
 			if (delChildIdx == -1)
 				throwError("JqInternalError - JqFragment not found in its jqParent.childNodes")
+
+
+			for (let i = 0; i < jqFragment.lifecycles.length; i++) {
+				const lifecycle = jqFragment.lifecycles[i]
+				if (lifecycle.type != OnUnMountCallback) continue
+
+				lifecycle.callback(jqFragment)
+			}
 
 			jqParent.childNodes.splice(delChildIdx, 1)
 			while (jqFragment.childNodes.length) {
@@ -1707,6 +1744,16 @@ export class JqElement {
 		}
 		else {
 			throw new Error(`JqError - Cannot attach JqElement '${this.name}' to a node not of instance JqElement or JqFragment or HTMLElement`)
+		}
+
+		if (alterDomNode) {
+			for (let i = 0; i < this.lifecycles.length; i++) {
+				const lifecycle = this.lifecycles[i]
+				lifecycle.jqParent = this
+
+				if (lifecycle.type != OnMountCallback) continue
+				lifecycle.callback(this)
+			}
 		}
 
 		return this.toString()
@@ -1878,6 +1925,13 @@ export class JqElement {
 			if (delChildIdx == -1)
 				throwError("JqInternalError - JqElement not found in its jqParent.childNodes")
 
+			for (let i = 0; i < jqElement.lifecycles.length; i++) {
+				const lifecycle = jqElement.lifecycles[i]
+				if (lifecycle.type != OnUnMountCallback) continue
+
+				lifecycle.callback(jqElement)
+			}
+
 			jqParent.childNodes.splice(delChildIdx, 1)
 			while (jqElement.childNodes.length) {
 				const childNode = jqElement.childNodes[0]
@@ -1889,6 +1943,7 @@ export class JqElement {
 			 */
 			const jqEffectNodes = getEffectNodes(jqElement)
 			jqEffectNodes.push(...jqElement.events)
+			jqEffectNodes.push(...jqElement.lifecycles)
 
 			for (const jqEffectNode of jqEffectNodes) {
 				jqEffectNode.delete.deleteSelf()
@@ -1950,12 +2005,12 @@ function attachEffectNodes(effectNodes, jqNode, alterDomNode) {
 }
 
 /**
- * @param {Exclude<JqEffectNode, JqEvent>[]} jqEffectNodes
+ * @param {Exclude<JqEffectNode, JqEvent | JqLifecycle>[]} jqEffectNodes
  * @param {JqElement | JqFragment | JqText} jqNode
  */
 function getPrecedingEffectNodes(jqEffectNodes, jqNode) {
 	/**
-	 * @type {Exclude<JqEffectNode, JqEvent>[]}
+	 * @type {Exclude<JqEffectNode, JqEvent | JqLifecycle>[]}
 	 */
 	const precedingJqEffectNodes = []
 	for (let i = 0; i < jqEffectNodes.length; i++) {
@@ -1971,13 +2026,11 @@ function getPrecedingEffectNodes(jqEffectNodes, jqNode) {
 }
 
 /**
- * 
- * @param {JqElement | JqFragment} jqNode 
- * @returns 
+ * @param {JqElement | JqFragment} jqNode
  */
 function getEffectNodes(jqNode) {
 	/**
-	 * @type {Exclude<JqEffectNode, JqEvent>[]}
+	 * @type {Exclude<JqEffectNode, JqEvent | JqLifecycle>[]}
 	 */
 	const jqEffectNodes = []
 	const maxLength = Math.max(
@@ -2000,7 +2053,7 @@ function getEffectNodes(jqNode) {
 }
 
 /**
- * @param {Exclude<JqEffectNode, JqEvent>} effectNode 
+ * @param {Exclude<JqEffectNode, JqEvent | JqLifecycle>} effectNode 
  * @param {JqElement | JqFragment | null} jqParent 
  * @returns 
  */
@@ -2514,7 +2567,7 @@ export const validHTMLElements = /**@type {const}*/ ([
  * 
  * @typedef {{ object: JqNode, props: string[][] }} CompareProps
  * 
- * @typedef {JqWatch | JqEvent | JqCondition | JqEach<any>} JqEffectNode
+ * @typedef {JqWatch | JqEvent | JqCondition | JqEach<any> | JqLifecycle} JqEffectNode
  */
 
 /**

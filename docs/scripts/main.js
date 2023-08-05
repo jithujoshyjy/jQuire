@@ -1094,6 +1094,46 @@ HelloWorld("hello world!")
 	)
 }
 
+const LifecycleEffectsSection = () => {
+	const style = {
+		...sectionStyle,
+		boxSizing: "border-box",
+		paddingLeft: "3.5rem",
+		paddingRight: "3.5rem",
+	}
+
+	const lifecycleEffectsHeadingStyle = {
+		...sectionHeadingStyle,
+		marginBottom: "1rem"
+	}
+
+	const code1 = `const sidebarST = state({ clicked: false })
+div(
+    button("⊞", (_ = on("click")) => sidebarST.clicked = !sidebarST.clicked),
+    (_ = watch(sidebarST)) => (_ = when(sidebarST.clicked)) =>
+        aside(
+            (_ = mount()) => console.log("sidebar visible"),
+            (_ = unmount()) => console.log("sidebar hidden")
+        ),
+)`
+
+	return section(
+		css(style),
+		css("h3.lifecycle-effects-heading")(lifecycleEffectsHeadingStyle),
+		attr.id("lifecycle-effects-section"),
+		h3(
+			attr.class("lifecycle-effects-heading"),
+			"Lifecycle Effects"
+		),
+		p(
+			`These are events that let you run code when an element is attached or detached from DOM using`,
+			Emphasize(`mount()`), `and`, Emphasize(`unmount()`),
+			`effect functions respectively.`
+		),
+		CodeBox("javascript", code1, highlight),
+	)
+}
+
 const Footer = () => {
 	const style = {
 		boxSizing: "border-box",
@@ -1140,6 +1180,7 @@ const _main = main(
 	ReactiveDataNElementReferenceSection(),
 	ConditionalRenderingSection(),
 	CustomElementsSection(),
+	LifecycleEffectsSection(),
 	Footer()
 )
 
