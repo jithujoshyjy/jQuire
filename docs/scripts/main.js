@@ -184,6 +184,7 @@ const Navbar = () => {
 			{ id: "reactive-data-n-element-reference-section", text: "Reactive Data and Element Reference" },
 			{ id: "conditional-rendering-section", text: "Conditional Rendering" },
 			{ id: "custom-elements-section", text: "Custom Elements" },
+			{ id: "lifecycle-effects-section", text: "Lifecycle Effects" },
 		]
 
 		const hasHeadingListRefreshed = false
