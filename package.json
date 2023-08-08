@@ -7,7 +7,7 @@
   "types": "./types/index.d.ts",
   "scripts": {
     "build": "rollup -c",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node ./tests/src.test/jquire.test.js --input-type=module"
   },
   "author": "jithu_joshy",
   "repository": {

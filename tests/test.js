@@ -3,7 +3,7 @@ import {
 	on, state, pathSetter, when,
 	getNodes, animate, css, custom,
 	mount, unmount
-} from "./src/jquire.js"
+} from "../src/jquire.js"
 
 const {
 	div, input, button,
@@ -21,25 +21,6 @@ const style = {
 }
 
 const app = div(
-	// button(
-	// 	div(css(style), "➖", br(), "➖", br(), "➖"),
-	// 	(_ = on("click")) => sidebarST.clicked = !sidebarST.clicked
-	// ),
-	// div(
-	// 	css.fontSize("30px"),
-	// 	button(
-	// 		(_ = on("click")) => numbersST.push(numbersST[numbersST.length - 1] + 1),
-	// 		"+",
-	// 	),
-	// ),
-	// (_ = watch(sidebarST)) => (_ = when(sidebarST.clicked)) =>
-	// 	aside(
-	// 		(_ = mount()) => console.log("mounted"),
-	// 		(_ = unmount()) => console.log("unmounted"),
-	// 		(_ = watch(numbersST)) => ul(
-	// 			([x] = each(numbersST)) => li(x)
-	// 		)
-	// 	),
 	div(
 		button("⊞", (_ = on("click")) => sidebarST.clicked = !sidebarST.clicked),
 		(_ = watch(sidebarST)) => (_ = when(sidebarST.clicked)) =>
@@ -57,8 +38,8 @@ div(
 	(condition = when(x == y)) => null, [✔]
 	(event = on("click")) => null,      [✔]
 	([item, idx] = each(data)) => null, [✔]
-	(event = mount()) => null,
-	(event = unmount()) => null,
+	(event = mount()) => null,			[✔]
+	(event = unmount()) => null,		[✔]
 	(promise = awaitable.pending) => null,
 	(value = awaitable.then) => null,
 	(error = awaitable.catch) => null
