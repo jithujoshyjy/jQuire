@@ -8,21 +8,21 @@ let testContext
 let descriptContext = { tests: [], __isDefault: true }
 
 /**
- * @param {TestContext | null} previous
- * @param {{ assertInstances: JqAssert[], description: string }} current
+ * @param {string} description
+ * @param {JqAssert[]} assertInstances
  * @returns {TestContext}
  */
-function createTestContext(previous = null, { assertInstances = [], description }) {
-	return { previous, current: { assertInstances, description, succeeded: false } }
+function createTestContext(description, assertInstances = []) {
+	return { description, assertInstances, succeeded: false }
 }
 
 /**
- * @param {TestContext[]} tests
  * @param {string} description
+ * @param {TestContext[]} tests
  * @returns {DescriptContext}
  */
-function createDescriptContext(tests = [], description) {
-	return { tests, __isDefault: false, description }
+function createDescriptContext(description, tests = []) {
+	return { description, tests, __isDefault: false }
 }
 
 class JqAssert {
@@ -921,12 +921,26 @@ class JqAssert {
 }
 
 /**
+ * @param {TestContext} test
+ */
+const getTestDescription = (test) => {
+	const status = test.succeeded ? '✅' : '❌'
+	const description = test.description
+
+	let text = `${status} ${description}`
+	for (const assertInstance of test.assertInstances) {
+		text += '\n    🧪 ' + assertInstance.description
+	}
+	return text
+}
+
+/**
  * @param {string} description
  * @param {() => any} fn
  */
 export function describe(description, fn) {
 	const prevDescriptContext = descriptContext
-	descriptContext = createDescriptContext([], description)
+	descriptContext = createDescriptContext(description)
 
 	const result = fn()
 	const totalTestCount = descriptContext.tests.length
@@ -934,28 +948,14 @@ export function describe(description, fn) {
 	let succeededTestCount = 0, failedTestCount = 0
 	let succeededTestsText = '', failedTestsText = ''
 
-	/**
-	 * @param {TestContext} test
-	 */
-	const testDescription = (test) => {
-		const status = test.current.succeeded ? '✅' : '❌'
-		const description = test.current.description
-
-		let text = `${status} ${description}`
-		for(const assertInstance of test.current.assertInstances) {
-			text += '\n    🧪 ' + assertInstance.description
-		}
-		return text
-	}
-
 	for (const test of descriptContext.tests) {
-		if (test.current.succeeded) {
+		if (test.succeeded) {
 			succeededTestCount++
-			succeededTestsText += '\n\n' + testDescription(test)
+			succeededTestsText += '\n\n' + getTestDescription(test)
 			continue
 		}
 
-		failedTestsText += '\n\n' + testDescription(test)
+		failedTestsText += '\n\n' + getTestDescription(test)
 		failedTestCount++
 	}
 
@@ -975,14 +975,19 @@ export function describe(description, fn) {
  */
 export function test(description, fn) {
 	const prevTestContext = testContext
-	testContext = createTestContext(testContext ?? null, { description })
+	testContext = createTestContext(description)
 
 	descriptContext.tests.push(testContext)
 	const result = fn()
 
-	testContext.current.succeeded = !testContext.current.assertInstances
+	testContext.succeeded = !testContext.assertInstances
 		.some(assertInstance => !assertInstance.succeeded)
-	
+
+	if (descriptContext.__isDefault) {
+		testContext.description = getTestDescription(testContext)
+		console.log(testContext.description)
+	}
+
 	testContext = prevTestContext
 	return result
 }
@@ -992,7 +997,7 @@ export function test(description, fn) {
  */
 export function expect(value) {
 	const jqAssert = new JqAssert(value)
-	testContext.current.assertInstances.push(jqAssert)
+	testContext.assertInstances.push(jqAssert)
 	return JqAssert.modifiers(jqAssert)
 }
 
@@ -1037,12 +1042,9 @@ export const fn = (f = new Function()) => {
  * }} SingletonAssert
  * 
  * @typedef {{
- *    previous: TestContext | null,
- *    current: {
- *       succeeded: boolean,
- *       description: string,
- *       assertInstances: JqAssert[],
- *    }
+ *    succeeded: boolean,
+ *    description: string,
+ *    assertInstances: JqAssert[],
  * }} TestContext
  * 
  * @typedef {{ tests: TestContext[], __isDefault: boolean, description: string }} DescriptContext

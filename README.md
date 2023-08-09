@@ -264,7 +264,7 @@ HelloWorld("hello world!")
 
 ### Lifecycle Effects
 
-These are events that let you run code when an element is attached or detached from DOM using `mount()` and `unmount()` effect functions respectively.
+These are events that let you run code when an element is attached or detached from DOM using `attach()` and `detach()` effect functions respectively.
 
 ```javascript
 const sidebarST = state({ clicked: false })
@@ -272,8 +272,8 @@ div(
     button("⊞", (_ = on("click")) => sidebarST.clicked = !sidebarST.clicked),
     (_ = watch(sidebarST)) => (_ = when(sidebarST.clicked)) =>
         aside(
-            (_ = mount()) => console.log("sidebar visible"),
-            (_ = unmount()) => console.log("sidebar hidden")
+            (_ = attach()) => console.log("sidebar visible"),
+            (_ = detach()) => console.log("sidebar hidden")
         ),
 )
 ```

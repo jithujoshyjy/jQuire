@@ -1113,8 +1113,8 @@ div(
     button("⊞", (_ = on("click")) => sidebarST.clicked = !sidebarST.clicked),
     (_ = watch(sidebarST)) => (_ = when(sidebarST.clicked)) =>
         aside(
-            (_ = mount()) => console.log("sidebar visible"),
-            (_ = unmount()) => console.log("sidebar hidden")
+            (_ = attach()) => console.log("sidebar visible"),
+            (_ = detach()) => console.log("sidebar hidden")
         ),
 )`
 
@@ -1128,7 +1128,7 @@ div(
 		),
 		p(
 			`These are events that let you run code when an element is attached or detached from DOM using`,
-			Emphasize(`mount()`), `and`, Emphasize(`unmount()`),
+			Emphasize(`attach()`), `and`, Emphasize(`detach()`),
 			`effect functions respectively.`
 		),
 		CodeBox("javascript", code1, highlight),

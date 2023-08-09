@@ -3,8 +3,8 @@ const UPDATED = Symbol("updated")
 const DELETED = Symbol("deleted")
 const UNCHANGED = Symbol("unchanged")
 
-export const OnMountCallback = Symbol("OnMountCallback")
-export const OnUnMountCallback = Symbol("OnUnMountCallback")
+export const OnAttachCallback = Symbol("OnAttachCallback")
+export const OnDetachCallback = Symbol("OnDetachCallback")
 
 export const StateReference = Symbol("StateReference")
 
@@ -471,7 +471,7 @@ export class JqLifecycle {
 	 */
 	jqParent = null
 	/**
-	 * @type {OnMountCallback | OnUnMountCallback}
+	 * @type {OnAttachCallback | OnDetachCallback}
 	 */
 	type
 	/**
@@ -480,7 +480,7 @@ export class JqLifecycle {
 	callback
 	/**
 	 * 
-	 * @param {OnMountCallback | OnUnMountCallback} type 
+	 * @param {OnAttachCallback | OnDetachCallback} type 
 	 */
 	constructor(type) {
 		this.type = type
@@ -800,10 +800,10 @@ export class JqWatch {
 
 		for (const [firstProp, ...nestedProps] of deletedChanges) {
 			if (isJqFragment(node1, node2)) {
-				JqWatch.deleteJqFragmentChild(_diff, [firstProp, ...nestedProps])
+				JqWatch.deleteFragmentChild(_diff, [firstProp, ...nestedProps])
 			}
 			else if (isJqElement(node1, node2)) {
-				JqWatch.deleteJqElementChild(_diff, [firstProp, ...nestedProps])
+				JqWatch.deleteElementChild(_diff, [firstProp, ...nestedProps])
 			}
 			else {
 					/**@type {DiffableJqNode}*/(node1).delete.deleteSelf()
@@ -896,7 +896,7 @@ export class JqWatch {
 	 * @param {Diff} diff 
 	 * @param {[string, ...Array<string | JqNode>]} param2 
 	 */
-	static deleteJqFragmentChild(diff, [firstProp, _childNode]) {
+	static deleteFragmentChild(diff, [firstProp, _childNode]) {
 		const _node1 = /**@type {JqFragment}*/(diff.node1)
 		const _node2 = /**@type {JqFragment}*/ (diff.node2)
 
@@ -908,7 +908,7 @@ export class JqWatch {
 	 * @param {Diff} diff 
 	 * @param {[string, ...Array<string | JqNode>]} param2 
 	 */
-	static deleteJqElementChild(diff, [firstProp, _childNode]) {
+	static deleteElementChild(diff, [firstProp, _childNode]) {
 		const _node1 = /**@type {JqElement}*/ (diff.node1)
 		const _node2 = /**@type {JqElement}*/ (diff.node2)
 
@@ -1042,7 +1042,7 @@ export class JqAnimation {
 	 * @param  {unknown[]} _ 
 	 * @returns 
 	 */
-	static setInitialStyles = (element, styles, ..._) => {
+	static setInitialStyles(element, styles, ..._) {
 		const styleNames = Object.keys(styles).filter(styleName => !Array.isArray(styles[styleName]))
 		const _styles = styleNames.map(styleName => {
 			const finalStyleValue = /**@type {Primitive}*/ (styles[styleName])
@@ -1401,9 +1401,6 @@ export class JqText {
 
 	update = {
 		context: this,
-		updateNode() {
-			return this
-		},
 		/**
 		 * @param {string} text 
 		 */
@@ -1522,7 +1519,7 @@ export class JqFragment {
 		if (alterDomNode) {
 			for (let i = 0; i < this.lifecycles.length; i++) {
 				const lifecycle = this.lifecycles[i]
-				if (lifecycle.type != OnMountCallback) continue
+				if (lifecycle.type != OnAttachCallback) continue
 
 				lifecycle.callback(this)
 			}
@@ -1593,7 +1590,7 @@ export class JqFragment {
 
 			for (let i = 0; i < jqFragment.lifecycles.length; i++) {
 				const lifecycle = jqFragment.lifecycles[i]
-				if (lifecycle.type != OnUnMountCallback) continue
+				if (lifecycle.type != OnDetachCallback) continue
 
 				lifecycle.callback(jqFragment)
 			}
@@ -1751,7 +1748,7 @@ export class JqElement {
 				const lifecycle = this.lifecycles[i]
 				lifecycle.jqParent = this
 
-				if (lifecycle.type != OnMountCallback) continue
+				if (lifecycle.type != OnAttachCallback) continue
 				lifecycle.callback(this)
 			}
 		}
@@ -1927,7 +1924,7 @@ export class JqElement {
 
 			for (let i = 0; i < jqElement.lifecycles.length; i++) {
 				const lifecycle = jqElement.lifecycles[i]
-				if (lifecycle.type != OnUnMountCallback) continue
+				if (lifecycle.type != OnDetachCallback) continue
 
 				lifecycle.callback(jqElement)
 			}

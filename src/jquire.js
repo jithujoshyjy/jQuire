@@ -3,7 +3,7 @@ import {
 	stringify, JqAnimation, isPrimitive, JqState, JqElement,
 	JqCSSProperty, JqFragment, JqText, JqCSSRule, JqList,
 	JqAttribute, StateReference, JqNodeReference, validHTMLElements,
-	camelToKebab, JqCondition, JqLifecycle, JqPromise, JqWatch, OnMountCallback, OnUnMountCallback,
+	camelToKebab, JqCondition, JqLifecycle, JqPromise, JqWatch, OnAttachCallback, OnDetachCallback,
 } from "./utility.js"
 
 /**
@@ -290,15 +290,15 @@ export function each(iterable) {
 /**
  * @returns {JqElement | JqFragment}
  */
-export function mount() {
-	throw new JqLifecycle(OnMountCallback)
+export function attach() {
+	throw new JqLifecycle(OnAttachCallback)
 }
 
 /**
  * @returns {JqElement | JqFragment}
  */
-export function unmount() {
-	throw new JqLifecycle(OnUnMountCallback)
+export function detach() {
+	throw new JqLifecycle(OnDetachCallback)
 }
 
 /**

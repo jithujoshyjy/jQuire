@@ -1,176 +1,69 @@
 import {
 	animate, css, custom, each, getNodes,
-	mount, natives, nodes, on, pathSetter,
-	state, unmount, wait, watch, when
+	attach, natives, nodes, on, pathSetter,
+	state, detach, wait, watch, when
 } from "../../src/jquire.js"
-
-import {
-	JqAnimation, JqAttribute, JqCSSProperty, JqCSSRule,
-	JqCondition, JqEach, JqElement, JqEvent, JqFragment,
-	JqLifecycle, JqList, JqPromise, JqPromiseState, JqState,
-	JqText, JqWatch, adjustColor, camelToKebab, canHaveShadow,
-	convertToJqNode, createPropertyListFromStyleObject,
-	escapeHTMLEntities, observeElement, stringify,
-} from "../../src/utility.js"
 
 import { describe, test, expect, fn } from "../lib.js"
 
-test("add 1 + 1", () => expect(1 + 1).toBe(2))
-
-/* describe("test function from jquire.js file", () => {
+describe("test functions from jquire.js file", () => {
 	test("test animate() function", () => {
-
+		const _animate = fn(animate)
 	})
 
 	test("test css() function", () => {
-
+		const _css = fn(css)
 	})
 
 	test("test custom() function", () => {
-
+		const _custom = fn(custom)
 	})
 
 	test("test each() function", () => {
-
+		const _each = fn(each)
 	})
 
 	test("test getNodes() function", () => {
-
+		const _getNodes = fn(getNodes)
 	})
 
 	test("test mount() function", () => {
-
+		const _attach = fn(attach)
 	})
 
 	test("test natives() function", () => {
-
+		const _natives = fn(natives)
 	})
 
 	test("test nodes() function", () => {
-
+		const _nodes = fn(nodes)
 	})
 
 	test("test on() function", () => {
-
+		const _on = fn(on)
 	})
 
 	test("test pathSetter() function", () => {
-
+		const _pathSetter = fn(pathSetter)
 	})
 
 	test("test state() function", () => {
-
+		const _state = fn(state)
 	})
 
 	test("test unmount() function", () => {
-
+		const _detach = fn(detach)
 	})
 
 	test("test wait() function", () => {
-
+		const _wait = fn(wait)
 	})
 
 	test("test watch() function", () => {
-
+		const _watch = fn(watch)
 	})
 
 	test("test when() function", () => {
-
+		const _when = fn(when)
 	})
 })
-
-describe("test function from utility.js file", () => {
-	describe("test JqAnimation class", () => {
-		test("test JqAnimation.prototype.animate() function", () => {
-
-		})
-	})
-
-	describe("test JqAttribute class", () => {
-
-	})
-
-	describe("test JqCSSProperty class", () => {
-
-	})
-
-	describe("test JqCSSRule class", () => {
-
-	})
-
-	describe("test JqCondition class", () => {
-
-	})
-
-	describe("test JqEach class", () => {
-
-	})
-
-	describe("test JqEvent class", () => {
-
-	})
-
-	describe("test JqFragment class", () => {
-
-	})
-
-	describe("test JqLifecycle class", () => {
-
-	})
-
-	describe("test JqList class", () => {
-
-	})
-
-	describe("test JqPromise class", () => {
-
-	})
-
-	describe("test JqPromiseState class", () => {
-
-	})
-
-	describe("test JqState class", () => {
-
-	})
-
-	describe("test JqText class", () => {
-
-	})
-
-	describe("test JqWatch class", () => {
-
-	})
-
-	test("test adjustColor function", () => {
-
-	})
-
-	test("test camelToKebab function", () => {
-
-	})
-
-	test("test canHaveShadow function", () => {
-
-	})
-
-	test("test convertToJqNode function", () => {
-
-	})
-
-	test("test createPropertyListFromStyleObject function", () => {
-
-	})
-
-	test("test escapeHTMLEntities function", () => {
-
-	})
-
-	test("test observeElement function", () => {
-
-	})
-	
-	test("test stringify function", () => {
-
-	})
-}) */
