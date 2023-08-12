@@ -2,7 +2,7 @@ import {
 	natives, nodes, watch, each,
 	on, state, pathSetter, when,
 	getNodes, animate, css, custom,
-	mount, unmount
+	attach, detach
 } from "../src/jquire.js"
 
 const {
@@ -22,12 +22,12 @@ const style = {
 
 const app = div(
 	div(
-		button("⊞", (_ = on("click")) => sidebarST.clicked = !sidebarST.clicked),
 		(_ = watch(sidebarST)) => (_ = when(sidebarST.clicked)) =>
 			aside(
-				(_ = mount()) => console.log("sidebar visible"),
-				(_ = unmount()) => console.log("sidebar hidden")
+				(_ = attach()) => console.log("sidebar visible"),
+				(_ = detach()) => console.log("sidebar hidden")
 			),
+		button("⊞", (_ = on("click")) => sidebarST.clicked = !sidebarST.clicked),
 	)
 )
 

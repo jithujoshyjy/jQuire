@@ -1471,61 +1471,7 @@ export class JqFragment {
 	 * @param {Node | JqElement | JqFragment | null} node
 	 */
 	attachTo(node, alterDomNode = true) {
-		const attachNode = () => {
-			if (alterDomNode) return this.initial
-				.createNode()
-				.attachChildren()
-			return this.initial.attachChildren(alterDomNode)
-		}
-
-		if (node === null) {
-			attachNode()
-		}
-		else if (node instanceof HTMLElement) {
-			attachNode()
-			alterDomNode && node.appendChild(/**@type {Node}*/(this.domNode))
-		}
-		else if (node instanceof JqElement) {
-			this.jqParent = node, attachNode()
-			if (!node.childNodes.includes(this)) {
-				node.childNodes.splice(this.nodePosition, 0, this)
-			}
-			const domNode = node.shadowRoot ?? /**@type {Node}*/ (node.domNode)
-			alterDomNode && domNode.appendChild(/**@type {Node}*/(this.domNode))
-		}
-		else if (node instanceof JqFragment) {
-			this.jqParent = node, attachNode()
-			if (!node.childNodes.includes(this)) {
-				node.childNodes.splice(this.nodePosition, 0, this)
-			}
-
-			if (alterDomNode) {
-				/**@type {Node}*/ (node.domNode).appendChild(/**@type {Node}*/(this.domNode))
-				let ancestor = node.jqParent
-
-				while (ancestor != null && isJqFragment(ancestor)) {
-					ancestor = ancestor.jqParent
-				}
-
-				if (ancestor != null) {
-					/**@type {Node}*/ (ancestor.domNode).appendChild(/**@type {Node}*/(this.domNode))
-				}
-			}
-		}
-		else {
-			throw new Error(`JqError - Cannot attach JqFragment to a node not of instance JqElement or JqFragment or HTMLElement`)
-		}
-
-		if (alterDomNode) {
-			for (let i = 0; i < this.lifecycles.length; i++) {
-				const lifecycle = this.lifecycles[i]
-				if (lifecycle.type != OnAttachCallback) continue
-
-				lifecycle.callback(this)
-			}
-		}
-
-		return this.toString()
+		return JqParentable.attachTo(this, node, JqFragment.attachNode, alterDomNode)
 	}
 
 	/**
@@ -1539,20 +1485,12 @@ export class JqFragment {
 		context: this,
 		createNode() {
 			const jqFragment = this.context
-			jqFragment.domNode = document.createDocumentFragment().cloneNode()
+			jqFragment.domNode = document.createDocumentFragment()
 			return this
 		},
 		attachChildren(alterDomNode = true) {
 			const jqFragment = this.context
-			const jqEffectNodes = getEffectNodes(jqFragment)
-
-			for (const childNode of jqFragment.childNodes) {
-				const precedingEffectNodes = getPrecedingEffectNodes(jqEffectNodes, childNode)
-				attachEffectNodes(precedingEffectNodes, jqFragment, alterDomNode)
-				childNode.attachTo(jqFragment, alterDomNode)
-			}
-
-			attachEffectNodes(jqEffectNodes, jqFragment, alterDomNode)
+			JqParentable.initial.attachChildren(jqFragment, alterDomNode)
 			return this
 		}
 	}
@@ -1565,14 +1503,7 @@ export class JqFragment {
 		 */
 		replaceChild(oldChildNode, newChildNode) {
 			const jqFragment = this.context
-			const delChildIdx = jqFragment.childNodes.findIndex(childNode => Object.is(childNode, oldChildNode))
-
-			if (delChildIdx == -1)
-				throwError("JqInternalError - childNode not found in jqFragment.childNodes")
-
-			newChildNode.nodePosition = oldChildNode.nodePosition
-			newChildNode.attachTo(jqFragment)
-			oldChildNode.delete.deleteSelf()
+			JqParentable.update.replaceChild(jqFragment, oldChildNode, newChildNode)
 			return this
 		}
 	}
@@ -1581,34 +1512,38 @@ export class JqFragment {
 		context: this,
 		deleteSelf() {
 			const jqFragment = this.context
-			const jqParent = /**@type {JqFragment | JqElement}*/ (jqFragment.jqParent)
-
-			const delChildIdx = jqParent.childNodes.findIndex(childNode => Object.is(childNode, jqFragment))
-			if (delChildIdx == -1)
-				throwError("JqInternalError - JqFragment not found in its jqParent.childNodes")
-
-
-			for (let i = 0; i < jqFragment.lifecycles.length; i++) {
-				const lifecycle = jqFragment.lifecycles[i]
-				if (lifecycle.type != OnDetachCallback) continue
-
-				lifecycle.callback(jqFragment)
-			}
-
-			jqParent.childNodes.splice(delChildIdx, 1)
-			while (jqFragment.childNodes.length) {
-				const childNode = jqFragment.childNodes[0]
-				childNode.delete.deleteSelf()
-			}
-
-			const jqEffectNodes = getEffectNodes(jqFragment)
-			for (const jqEffectNode of jqEffectNodes) {
-				jqEffectNode.delete.deleteSelf()
-			}
-
+			JqParentable.delete.deleteSelf(jqFragment)
 			return this
 		}
 	}
+
+	/**
+	 * @type {{
+	*    [x: string]: (jqFragment: JqFragment) => string
+	* }}
+	*/
+	static errors = {
+		invalidAttachTo: jqFragment => `JqError - Cannot attach JqFragment to a node not of instance JqElement or JqFragment or HTMLElement`,
+		childNodeNotFound: _ => "JqInternalError - childNode not found in JqFragment.childNodes",
+		invalidParent: _ => "JqInternalError - JqFragment not found in its jqParent.childNodes"
+	}
+
+	/**
+	 * @param {JqFragment} node
+	 * @param {boolean} alterDomNode
+	 */
+	static attachNode(node, alterDomNode) {
+		if (alterDomNode) return node.initial
+			.createNode()
+			.attachChildren()
+		return node.initial.attachChildren(alterDomNode)
+	}
+
+	/**
+	 * @param {JqFragment} jqFragment 
+	 * @param {JqEffectNode[]} jqEffectNodes 
+	 */
+	static collectDetachableEffectNodes(jqFragment, jqEffectNodes) { }
 }
 
 export class JqElement {
@@ -1691,69 +1626,7 @@ export class JqElement {
 	 * @param {Node | JqElement | JqFragment | null} node
 	 */
 	attachTo(node, alterDomNode = true) {
-		const attachNode = () => {
-			if (alterDomNode) return this.initial
-				.createNode()
-				.attachStyles()
-				.attachAttributes()
-				.attachChildren()
-				.attachEventListeners()
-				.attachAnimations()
-			return this.initial.attachChildren(alterDomNode)
-		}
-
-		if (node === null) {
-			attachNode()
-		}
-		else if (node instanceof HTMLElement) {
-			attachNode()
-			alterDomNode && node.appendChild(/**@type {HTMLElement}*/(this.domNode))
-		}
-		else if (node instanceof JqElement) {
-			this.jqParent = node, attachNode()
-
-			if (!node.childNodes.includes(this)) {
-				node.childNodes.splice(this.nodePosition, 0, this)
-			}
-
-			alterDomNode && (node.shadowRoot ?? /**@type {HTMLElement}*/ (node.domNode))
-				.appendChild(/**@type {HTMLElement}*/(this.domNode))
-		}
-		else if (node instanceof JqFragment) {
-			this.jqParent = node, attachNode()
-
-			if (!node.childNodes.includes(this)) {
-				node.childNodes.splice(this.nodePosition, 0, this)
-			}
-
-			if (alterDomNode) {
-				/**@type {Node}*/ (node.domNode).appendChild(/**@type {Node}*/(this.domNode))
-				let ancestor = node.jqParent
-
-				while (ancestor != null && isJqFragment(ancestor)) {
-					ancestor = ancestor.jqParent
-				}
-
-				if (ancestor != null) {
-					/**@type {Node}*/ (ancestor.domNode).appendChild(/**@type {Node}*/(this.domNode))
-				}
-			}
-		}
-		else {
-			throw new Error(`JqError - Cannot attach JqElement '${this.name}' to a node not of instance JqElement or JqFragment or HTMLElement`)
-		}
-
-		if (alterDomNode) {
-			for (let i = 0; i < this.lifecycles.length; i++) {
-				const lifecycle = this.lifecycles[i]
-				lifecycle.jqParent = this
-
-				if (lifecycle.type != OnAttachCallback) continue
-				lifecycle.callback(this)
-			}
-		}
-
-		return this.toString()
+		return JqParentable.attachTo(this, node, JqElement.attachNode, alterDomNode)
 	}
 
 	/**
@@ -1809,15 +1682,7 @@ export class JqElement {
 		},
 		attachChildren(alterDomNode = true) {
 			const jqElement = this.context
-			const jqEffectNodes = getEffectNodes(jqElement)
-
-			for (const childNode of jqElement.childNodes) {
-				const precedingEffectNodes = getPrecedingEffectNodes(jqEffectNodes, childNode)
-				attachEffectNodes(precedingEffectNodes, jqElement, alterDomNode)
-				childNode.attachTo(jqElement, alterDomNode)
-			}
-
-			attachEffectNodes(jqEffectNodes, jqElement, alterDomNode)
+			JqParentable.initial.attachChildren(jqElement, alterDomNode)
 			return this
 		},
 		attachEventListeners() {
@@ -1886,14 +1751,7 @@ export class JqElement {
 		 */
 		replaceChild(oldChildNode, newChildNode) {
 			const jqElement = this.context
-			const delChildIdx = jqElement.childNodes.findIndex(childNode => Object.is(childNode, oldChildNode))
-
-			if (delChildIdx == -1)
-				throwError("JqInternalError - childNode not found in jqElement.childNodes")
-
-			newChildNode.nodePosition = oldChildNode.nodePosition
-			newChildNode.attachTo(jqElement)
-			oldChildNode.delete.deleteSelf()
+			JqParentable.update.replaceChild(jqElement, oldChildNode, newChildNode)
 			return this
 		}
 	}
@@ -1915,37 +1773,7 @@ export class JqElement {
 		},
 		deleteSelf() {
 			const jqElement = this.context
-			const jqParent = /**@type {JqElement | JqFragment}*/ (jqElement.jqParent)
-
-			const delChildIdx = jqParent.childNodes.findIndex(childNode => Object.is(childNode, jqElement))
-
-			if (delChildIdx == -1)
-				throwError("JqInternalError - JqElement not found in its jqParent.childNodes")
-
-			for (let i = 0; i < jqElement.lifecycles.length; i++) {
-				const lifecycle = jqElement.lifecycles[i]
-				if (lifecycle.type != OnDetachCallback) continue
-
-				lifecycle.callback(jqElement)
-			}
-
-			jqParent.childNodes.splice(delChildIdx, 1)
-			while (jqElement.childNodes.length) {
-				const childNode = jqElement.childNodes[0]
-				childNode.delete.deleteSelf()
-			}
-
-			/**
-			 * @type {JqEffectNode[]}
-			 */
-			const jqEffectNodes = getEffectNodes(jqElement)
-			jqEffectNodes.push(...jqElement.events)
-			jqEffectNodes.push(...jqElement.lifecycles)
-
-			for (const jqEffectNode of jqEffectNodes) {
-				jqEffectNode.delete.deleteSelf()
-			}
-
+			JqParentable.delete.deleteSelf(jqElement);
 			/**@type {HTMLElement}*/ (jqElement.domNode).remove()
 			return this
 		}
@@ -1958,6 +1786,180 @@ export class JqElement {
 	 */
 	static custom = (context, name, nodes) => {
 		return new JqElement(name, { ...nodes, domNode: context })
+	}
+
+	/**
+	 * @type {{
+	 *    [x: string]: (jqElement: JqElement) => string
+	 * }}
+	 */
+	static errors = {
+		invalidAttachTo: jqElement => `JqError - Cannot attach JqElement '${jqElement.name}' to a node not of instance JqElement or JqFragment or HTMLElement`,
+		childNodeNotFound: _ => "JqInternalError - childNode not found in JqElement.childNodes",
+		invalidParent: _ => "JqInternalError - JqElement not found in its jqParent.childNodes"
+	}
+
+	/**
+	 * @param {JqElement} node
+	 * @param {boolean} alterDomNode
+	 */
+	static attachNode(node, alterDomNode) {
+		if (alterDomNode) return node.initial
+			.createNode()
+			.attachStyles()
+			.attachAttributes()
+			.attachChildren()
+			.attachEventListeners()
+			.attachAnimations()
+		return node.initial.attachChildren(alterDomNode)
+	}
+
+	/**
+	 * @param {JqElement} jqElement 
+	 * @param {JqEffectNode[]} jqEffectNodes 
+	 */
+	static collectDetachableEffectNodes(jqElement, jqEffectNodes) {
+		jqEffectNodes.push(...jqElement.events)
+		jqEffectNodes.push(...jqElement.lifecycles)
+		return jqEffectNodes
+	}
+}
+
+const JqParentable = {
+	/**
+	 * @param {JqElement | JqFragment} jqNode
+	 * @param {Node | JqElement | JqFragment | null} parentNode
+	 * @param {(typeof JqElement.attachNode) | (typeof JqFragment.attachNode)} attachNode
+	 * @returns {string}
+	 */
+	attachTo(jqNode, parentNode, attachNode, alterDomNode = true) {
+		if (parentNode === null) {
+			attachNode(/**@type {any}*/(jqNode), alterDomNode)
+		}
+		else if (parentNode instanceof HTMLElement) {
+			attachNode(/**@type {any}*/(jqNode), alterDomNode)
+			alterDomNode && parentNode.appendChild(/**@type {HTMLElement}*/(jqNode.domNode))
+		}
+		else if (parentNode instanceof JqElement) {
+			jqNode.jqParent = parentNode, attachNode(/**@type {any}*/(jqNode), alterDomNode)
+
+			if (!parentNode.childNodes.includes(jqNode)) {
+				parentNode.childNodes.splice(jqNode.nodePosition, 0, jqNode)
+			}
+
+			const domNode = parentNode.shadowRoot ?? /**@type {Node}*/ (parentNode.domNode)
+			alterDomNode && domNode.appendChild(/**@type {Node}*/(jqNode.domNode))
+		}
+		else if (parentNode instanceof JqFragment) {
+			jqNode.jqParent = parentNode, attachNode(/**@type {any}*/(jqNode), alterDomNode)
+
+			if (!parentNode.childNodes.includes(jqNode)) {
+				parentNode.childNodes.splice(jqNode.nodePosition, 0, jqNode)
+			}
+
+			if (alterDomNode) {
+				   /**@type {Node}*/ (parentNode.domNode).appendChild(/**@type {Node}*/(jqNode.domNode))
+				let ancestor = parentNode.jqParent
+
+				while (ancestor != null && isJqFragment(ancestor)) {
+					ancestor = ancestor.jqParent
+				}
+
+				if (ancestor != null) {
+					   /**@type {Node}*/ (ancestor.domNode).appendChild(/**@type {Node}*/(jqNode.domNode))
+				}
+			}
+		}
+		else {
+			const errors = (jqNode instanceof JqElement ? JqElement : JqFragment).errors
+			throw new Error(errors.invalidAttachTo(/**@type {any}*/(jqNode)))
+		}
+
+		if (alterDomNode) {
+			for (let i = 0; i < jqNode.lifecycles.length; i++) {
+				const lifecycle = jqNode.lifecycles[i]
+				lifecycle.jqParent = jqNode
+
+				if (lifecycle.type != OnAttachCallback) continue
+				lifecycle.callback(jqNode)
+			}
+		}
+
+		return jqNode.toString()
+	},
+	initial: {
+		/**
+		 * @param {JqElement | JqFragment} jqNode
+		 */
+		attachChildren(jqNode, alterDomNode = true) {
+			const jqEffectNodes = getEffectNodes(jqNode)
+
+			const childNodes = jqNode.childNodes, childCount = childNodes.length
+			for (let i = 0; i < childCount; i++) {
+				const childNode = childNodes[i]
+				const precedingEffectNodes = getPrecedingEffectNodes(jqEffectNodes, childNode)
+				attachEffectNodes(precedingEffectNodes, jqNode, alterDomNode)
+				childNode.attachTo(jqNode, alterDomNode)
+			}
+
+			attachEffectNodes(jqEffectNodes, jqNode, alterDomNode)
+		}
+	},
+	update: {
+		/**
+		 * @param {JqElement | JqFragment} jqNode
+		 * @param {JqElement | JqFragment | JqText} oldChildNode 
+		 * @param {JqElement | JqFragment | JqText} newChildNode
+		 */
+		replaceChild(jqNode, oldChildNode, newChildNode) {
+			const delChildIdx = jqNode.childNodes.findIndex(childNode => Object.is(childNode, oldChildNode))
+
+			if (delChildIdx == -1) {
+				const errors = (jqNode instanceof JqElement ? JqElement : JqFragment).errors
+				throwError(errors.childNodeNotFound(/**@type {any}*/(jqNode)))
+			}
+
+			newChildNode.nodePosition = oldChildNode.nodePosition
+			newChildNode.attachTo(jqNode)
+			oldChildNode.delete.deleteSelf()
+		}
+	},
+	delete: {
+		/**
+		 * @param {JqElement | JqFragment} jqNode
+		 */
+		deleteSelf(jqNode) {
+			const { errors, collectDetachableEffectNodes } = jqNode instanceof JqElement ? JqElement : JqFragment
+			const jqParent = /**@type {JqElement | JqFragment}*/ (jqNode.jqParent)
+
+			const delChildIdx = jqParent.childNodes.findIndex(childNode => Object.is(childNode, jqNode))
+
+			if (delChildIdx == -1)
+				throwError(errors.invalidParent(/**@type {any}*/(jqNode)))
+
+			for (let i = 0; i < jqNode.lifecycles.length; i++) {
+				const lifecycle = jqNode.lifecycles[i]
+				if (lifecycle.type != OnDetachCallback) continue
+
+				lifecycle.callback(jqNode)
+			}
+
+			jqParent.childNodes.splice(delChildIdx, 1)
+			while (jqNode.childNodes.length) {
+				const childNode = jqNode.childNodes[0]
+				childNode.delete.deleteSelf()
+			}
+
+			/**
+			 * @type {JqEffectNode[]}
+			 */
+			const jqEffectNodes = getEffectNodes(jqNode)
+			collectDetachableEffectNodes(/**@type {any}*/(jqNode), jqEffectNodes)
+
+			for (const jqEffectNode of jqEffectNodes) {
+				jqEffectNode.delete.deleteSelf()
+			}
+		}
 	}
 }
 
