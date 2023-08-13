@@ -1,6 +1,6 @@
 import {
 	natives, nodes, watch, each,
-	on, state, pathSetter, when,
+	on, state, when,
 	getNodes, animate, css, custom,
 	attach, detach
 } from "../src/jquire.js"

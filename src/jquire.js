@@ -1,6 +1,5 @@
 import {
-	JqEvent, JqEach, getNodes, escapeHTMLEntities,
-	stringify, JqAnimation, isPrimitive, JqState, JqElement,
+	JqEvent, JqEach, getNodes, JqAnimation, isPrimitive, JqState, JqElement,
 	JqCSSProperty, JqFragment, JqText, JqCSSRule, JqList,
 	JqAttribute, StateReference, JqNodeReference, validHTMLElements,
 	camelToKebab, JqCondition, JqLifecycle, JqPromise, JqWatch, OnAttachCallback, OnDetachCallback,
@@ -141,7 +140,7 @@ export const custom = new Proxy(_custom, {
  * @returns {JqAttribute}
  */
 function createAttribute(name, value) {
-	const _value = isPrimitive(value) ? String(value) : stringify(value)
+	const _value = String(value ?? '')
 	return new JqAttribute(name, _value)
 }
 
@@ -159,7 +158,7 @@ function _attr(attrObj) {
  * @returns {JqText}
  */
 function createTextNode(value) {
-	const text = isPrimitive(value) ? String(value) : stringify(value)
+	const text = String(value ?? '')
 	return new JqText(text)
 }
 
@@ -168,13 +167,9 @@ function createTextNode(value) {
  * @param  {unknown[]} values
  */
 function _text(strs, ...values) {
-	let _strs = strs
-
-	if (Array.isArray(strs))
-		_strs = escapeHTMLEntities(strs.reduce((acc, curr, i) =>
-			"" + acc + (curr ?? "") + (stringify(values[i]) ?? ""), ""))
-	else if (typeof _strs == "string")
-		_strs = escapeHTMLEntities(_strs)
+	let _strs = Array.isArray(strs)
+		? strs.reduce((acc, curr, i) => acc + String(curr ?? '') + String(values[i] ?? ''), "")
+		: strs
 
 	return createTextNode(_strs)
 }
@@ -310,7 +305,7 @@ export function wait(promisedCallback) {
 }
 
 export const nodes = { attr, text, fragment }
-export { pathSetter, getNodes } from "./utility.js"
+export { paths, getNodes } from "./utility.js"
 
 /**
  * @typedef {{ [name: string]: (...nodes: Array<import("./utility.js").JqNode>) => JqElement }} NativeConstructor

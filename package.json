@@ -1,6 +1,6 @@
 {
   "name": "jquire",
-  "version": "1.4.3",
+  "version": "1.4.45",
   "description": "",
   "main": "./dist/jquire.js",
   "type": "module",

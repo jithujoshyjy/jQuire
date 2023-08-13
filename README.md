@@ -28,7 +28,7 @@ after installation 👇
 ```javascript
 import {
     natives, nodes, when,
-    on, state, watch, each, pathSetter,
+    on, state, watch, each, paths,
     getNodes, animate, css
 } from "./node_modules/jquire/dist/jquire.min.js"
 ```

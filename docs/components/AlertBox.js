@@ -1,9 +1,7 @@
-import { natives, nodes, css, pathSetter } from "https://cdn.jsdelivr.net/npm/jquire@1.4.3/src/jquire.min.js"
+import { natives, nodes, css, paths } from "https://cdn.jsdelivr.net/npm/jquire@1.4.4/src/jquire.min.js"
 
 const { div, img, h4, p } = natives
 const { attr, text, fragment } = nodes
-
-const assets = pathSetter("./assets/")
 
 export default (heading = '', content = '') => {
 	const style = {
@@ -39,7 +37,7 @@ export default (heading = '', content = '') => {
 			css("img.alert-icon")(alertIconStyle),
 			img(
 				attr.class("alert-icon"),
-				attr.src(assets("icon - warning.svg")),
+				attr.src(`${paths.assets}/icon - warning.svg`),
 				attr.alt("alert icon"),
 				attr.width("30"),
 				attr.height("30")

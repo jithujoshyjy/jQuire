@@ -1,6 +1,6 @@
 import {
-	natives, nodes, on, state, each, watch, pathSetter, css, when
-} from "https://cdn.jsdelivr.net/npm/jquire@1.4.3/src/jquire.min.js"
+	natives, nodes, on, state, each, watch, paths, css, when
+} from "https://cdn.jsdelivr.net/npm/jquire@1.4.4/src/jquire.min.js"
 
 import highlight from "https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@latest/build/es/highlight.min.js"
 import javascript from "https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@latest/build/es/languages/javascript.min.js"
@@ -18,7 +18,7 @@ highlight.registerLanguage("javascript", javascript)
 natives.globalize()
 const { attr } = nodes
 
-const assets = pathSetter("./assets/")
+paths.assets = "./assets"
 
 const sectionStyle = {
 	marginBottom: "2.5rem"
@@ -251,7 +251,7 @@ const Navbar = () => {
 		backgroundSize: "contain",
 		backgroundColor: "transparent",
 		transition: "transform 200ms",
-		backgroundImage: `url('${assets("icon - menu_book-light.svg")}')`
+		backgroundImage: `url('${paths.assets}/icon - menu_book-light.svg')`
 	}
 
 	const menuBtnActiveStyle = {
@@ -274,7 +274,7 @@ const Navbar = () => {
 			css("button.menu-btn:active")(menuBtnActiveStyle),
 			css("@media (prefers-color-scheme: light)")(
 				css("button.menu-btn")({
-					backgroundImage: `url('${assets("icon - menu_book-dark.svg")}')`
+					backgroundImage: `url('${paths.assets}/icon - menu_book-dark.svg')`
 				})
 			),
 			MenuBtn(sidebarST),
@@ -309,7 +309,7 @@ const Header = () => {
 		gridTemplate: "1fr / 1fr 0.85fr",
 		alignItems: "center",
 		marginTop: "3rem",
-		backgroundImage: `url('${assets("border-pattern-1-lg.svg")}')`
+		backgroundImage: `url('${paths.assets}/border-pattern-1-lg.svg')`
 	}
 
 	const calloutDivMaxWidth500pxStyle = {
@@ -369,7 +369,7 @@ const Header = () => {
 		backgroundSize: "contain",
 		backgroundColor: "transparent",
 		transition: "transform 200ms",
-		backgroundImage: `url('${assets("icon - github-light.svg")}')`
+		backgroundImage: `url('${paths.assets}/icon - github-light.svg')`
 	}
 
 	const linkActiveStyle = {
@@ -384,7 +384,7 @@ const Header = () => {
 		css("a.github-btn:active")(linkActiveStyle),
 		css("@media (prefers-color-scheme: light)")(
 			css("a.github-btn")({
-				backgroundImage: `url('${assets("icon - github-dark.svg")}')`
+				backgroundImage: `url('${paths.assets}/icon - github-dark.svg')`
 			})
 		),
 		a(
@@ -418,7 +418,7 @@ const Header = () => {
 				attr.width("250"),
 				attr.height("250"),
 				attr.alt("jquire logo"),
-				attr.src(assets("site-logo.png"))
+				attr.src(`${paths.assets}/site-logo.png`)
 			),
 			div(
 				css(calloutInnerDivStyle),
@@ -450,7 +450,7 @@ const WhatNWhySection = () => {
 		paddingLeft: "3.5rem",
 		paddingRight: "3.5rem",
 		backgroundRepeat: "no-repeat",
-		backgroundImage: `url('${assets("border-pattern-1-sm.svg")}'), url('${assets("border-pattern-1-lg.svg")}')`,
+		backgroundImage: `url('${paths.assets}/border-pattern-1-sm.svg'), url('${paths.assets}/border-pattern-1-lg.svg')`,
 		backgroundSize: "2rem, 7rem 7rem",
 		backgroundPosition: "0% 0%, 100% 100%",
 	}
