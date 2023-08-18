@@ -199,7 +199,7 @@ function _css(...args) {
 	const [ruleName, ...ruleArgs] = args
 
 	if (args.length == 1 && !isPrimitive(ruleName)) {
-		const rule = new JqCSSRule([":host", ...ruleArgs],
+		const rule = new JqCSSRule([":JqCSSRule", ...ruleArgs],
 			/**@type {{ [x: string]: import("./utility.js").Primitive }}*/(ruleName))
 		return rule
 	}

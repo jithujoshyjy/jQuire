@@ -1,6 +1,6 @@
-import { natives, nodes, css, state, watch } from "https://cdn.jsdelivr.net/npm/jquire@1.4.4/src/jquire.min.js"
-const { pre, code, link } = natives
-const { attr, fragment } = nodes
+import { natives, nodes, css, state, watch } from "https://cdn.jsdelivr.net/npm/jquire@1.5.0/src/jquire.min.js"
+const { pre, code } = natives
+const { attr } = nodes
 
 export default (language = '', sourceCode = '', highlighter) => {
 	const style = {
@@ -43,10 +43,6 @@ export default (language = '', sourceCode = '', highlighter) => {
 		css(`code.language-${language}`)(codeStyle),
 		css(`:host::-webkit-scrollbar`)(codeBoxScrollbarStyle),
 		css(`:host::-webkit-scrollbar-thumb`)(codeBoxScrollbarThumbStyle),
-		link(
-			attr.rel("stylesheet"),
-			(_ = watch(codeThemeLinkST)) => attr.href(codeThemeLinkST.codeThemeLink)
-		),
 		pre(
 			codeBlock = code(
 				attr.class(`language-${language}`),

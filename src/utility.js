@@ -49,16 +49,14 @@ export function isNullish(...values) {
 	return values.every(x => x === null || x === undefined)
 }
 
+const createHash = (length = 5) => Math.random().toString(32).replace(/\d\./, '').slice(0, length)
+
 const getJqNodeConstructors = () => [
 	JqElement, JqAttribute, JqCSSProperty,
 	JqCSSRule, JqAnimation, JqEvent,
 	JqWatch, JqFragment, JqText,
 	JqEach, JqEvent, JqCondition,
 	JqLifecycle, JqList, JqPromise
-]
-
-const getJqEffectNodeConstructors = () => [
-	JqPromiseState, JqLifecycle, JqEach, JqEvent, JqWatch, JqCondition
 ]
 
 /**
@@ -1089,7 +1087,7 @@ export class JqCSSProperty {
 			this.jqParent = node
 		}
 		else {
-			throw new Error(`JqError - Cannot attach JqCSS.Property to a node not of instance JqElement or JqFragment or HTMLElement`)
+			throw new Error(JqCSSProperty.errors.invalidAttachTo(this))
 		}
 		return this
 	}
@@ -1099,6 +1097,28 @@ export class JqCSSProperty {
 	 */
 	toString(indent = 1) {
 		return `${this.name}: ${this.value};`
+	}
+
+	/**
+	 * @type {{[x: string]: (jqCSSProperty: JqCSSProperty) => string}}
+	 */
+	static errors = {
+		invalidAttachTo: _ => `JqError - Cannot attach JqCSSProperty to a node not of instance JqElement or JqFragment or HTMLElement`
+	}
+
+	/**
+	 * @param {JqCSSProperty} jqCSSProperty 
+	 * @returns {JqFragment}
+	 */
+	static getStyleFragment(jqCSSProperty) {
+		const nameNode = new JqText(jqCSSProperty.name)
+		const valueNode = new JqText(jqCSSProperty.value)
+
+		const childNodes = getNodes([
+			nameNode, new JqText(': '), valueNode, new JqText(';')
+		]).childNodes
+
+		return new JqFragment(childNodes)
 	}
 }
 
@@ -1125,7 +1145,7 @@ export class JqCSSRule {
 
 		this.head = [ruleName, ...ruleArgs]
 
-		const errorMessage = `JqError - Invalid argument passed to ${this.head.join(' ').trim()}(...)`
+		const errorMessage = JqCSSRule.errors.invalidHeadArgument(this)
 		this.body = styleNodes.flatMap(styleNode =>
 			styleNode instanceof JqCSSProperty || styleNode instanceof JqCSSRule
 				? styleNode
@@ -1138,13 +1158,15 @@ export class JqCSSRule {
 	 */
 	attachTo(node) {
 		if (node instanceof HTMLElement) {
-			// node.style.setProperty(this.name, this.value)
+			const styleEl = document.createElement('style')
+			styleEl.textContent = this.toString()
+			node.appendChild(styleEl)
 		}
 		else if (node instanceof JqElement) {
 			this.jqParent = node
 		}
 		else {
-			throw new Error(`JqError - Cannot attach JqCSS.Rule to a node not of instance JqElement or JqFragment or HTMLElement`)
+			throw new Error(JqCSSRule.errors.invalidAttachTo(this))
 		}
 		return this
 	}
@@ -1156,6 +1178,31 @@ export class JqCSSRule {
 		const space = '\t'.repeat(indent)
 		let head = this.head.join(' ').trim()
 		return `${head} {\n${space}${this.body.map(styleNode => styleNode.toString(indent + 1)).join('\n' + space)}\n${'\t'.repeat(indent - 1)}}`
+	}
+
+	/**
+	 * @type {{[x: string]: (jqCSSRule: JqCSSRule) => string}}
+	 */
+	static errors = {
+		invalidAttachTo: _ => `JqError - Cannot attach JqCSSRule to a node not of instance JqElement or JqFragment or HTMLElement`,
+		invalidHeadArgument: jqCSSRule => `JqError - Invalid argument passed to ${jqCSSRule.head.join(' ').trim()}(...)`
+	}
+
+	/**
+	 * @param {JqCSSRule} jqCSSRule 
+	 * @returns {JqFragment}
+	 */
+	static getStyleFragment(jqCSSRule) {
+		const headFragment = new JqFragment(getNodes(jqCSSRule.head).childNodes)
+		const styleFragments = jqCSSRule.body.map(x =>
+			JqStyleNode.getStyleClass(x).getStyleFragment(/**@type {any}*/(x)))
+
+		const childNodes = getNodes([
+			headFragment, new JqText(' {\n'),
+			...styleFragments, new JqText('\n}')
+		]).childNodes
+
+		return new JqFragment(childNodes)
 	}
 }
 
@@ -1376,7 +1423,6 @@ export class JqText {
 				node.childNodes.splice(this.nodePosition, 0, this)
 			}
 			alterDomNode && /**@type {Node}*/ (node.domNode).appendChild(/**@type {Node}*/(this.domNode))
-			alterDomNode && node.jqParent?.domNode?.appendChild(/**@type {Text}*/(this.domNode))
 		}
 		else {
 			throw new TypeError(JqText.errors.invalidAttachTo(this))
@@ -1465,6 +1511,10 @@ export class JqFragment {
 	 * @type {JqPromiseState<any>[]}
 	 */
 	promisesStates = []
+	/**
+	 * @type {JqElement | null}
+	 */
+	scopedStyleSheet = null
 
 	/**
 	 * @param {Array<JqElement | JqFragment | JqText>} childNodes 
@@ -1536,9 +1586,10 @@ export class JqFragment {
 
 	/**
 	 * @param {JqFragment} node
+	 * @param {JqElement | JqFragment | HTMLElement | null} parentNode
 	 * @param {boolean} alterDomNode
 	 */
-	static attachNode(node, alterDomNode) {
+	static attachNode(node, parentNode, alterDomNode) {
 		if (alterDomNode) return node.initial
 			.createNode()
 			.attachChildren()
@@ -1615,9 +1666,10 @@ export class JqElement {
 	 */
 	promisesStates = []
 	/**
-	 * @type {HTMLStyleElement | null}
+	 * @type {JqElement | null}
 	 */
 	scopedStyleSheet = null
+	id = "jq" + createHash()
 
 	/**
 	 * @param {string} name 
@@ -1713,39 +1765,13 @@ export class JqElement {
 
 			return this
 		},
-		attachStyles() {
+		/**
+		 * @param {JqElement | JqFragment | HTMLElement | null} parentNode
+		 */
+		attachStyles(parentNode) {
 			const jqElement = this.context
-			if (jqElement.inlineStyles.length == 0 && jqElement.blockStyles.length == 0) return this
-			if (canHaveShadow(/**@type {HTMLElement}*/(jqElement.domNode))) {
-				jqElement.shadowRoot = /**@type {HTMLElement}*/ (jqElement.domNode).attachShadow({ mode: "open" })
-				const styleSheet = document.createElement("style")
-				styleSheet.textContent = ''
-
-				jqElement.scopedStyleSheet = styleSheet
-				jqElement.shadowRoot.appendChild(styleSheet)
-
-				/**
-				 * @type {JqCSSProperty[]}
-				 */
-				const styleProperties = []
-				for (const style of jqElement.inlineStyles) {
-					style.attachTo(jqElement)
-					styleProperties.push(style)
-				}
-
-				for (const style of jqElement.blockStyles) {
-					style.attachTo(jqElement)
-					styleSheet.textContent += '\n' + style.toString()
-				}
-
-				const stylePropertiesStr = styleProperties.join("\n\t")
-				if (stylePropertiesStr.length > 0)
-					styleSheet.textContent += `\n:host {\n\t${stylePropertiesStr}\n}`
-
-				return this
-			}
-
-			throw new Error(`JqError - scoped styles are not supported for '${jqElement.name}' element.`)
+			JqElement.attachStyles(jqElement, parentNode)
+			return this
 		}
 	}
 
@@ -1802,22 +1828,54 @@ export class JqElement {
 	static errors = {
 		invalidAttachTo: jqElement => `JqError - Cannot attach JqElement '${jqElement.name}' to a node not of instance JqElement or JqFragment or HTMLElement`,
 		childNodeNotFound: _ => "JqInternalError - childNode not found in JqElement.childNodes",
-		invalidParent: _ => "JqInternalError - JqElement not found in its jqParent.childNodes"
+		invalidParent: _ => "JqInternalError - JqElement not found in its jqParent.childNodes",
+		unstylableElement: jqElement => `JqError - The HTML '${jqElement.name}' Element cannot be styled`
 	}
 
 	/**
 	 * @param {JqElement} node
+	 * @param {JqElement | JqFragment | HTMLElement | null} parentNode
 	 * @param {boolean} alterDomNode
 	 */
-	static attachNode(node, alterDomNode) {
+	static attachNode(node, parentNode, alterDomNode) {
 		if (alterDomNode) return node.initial
 			.createNode()
-			.attachStyles()
+			.attachStyles(parentNode)
 			.attachAttributes()
 			.attachChildren()
 			.attachEventListeners()
 			.attachAnimations()
 		return node.initial.attachChildren(alterDomNode)
+	}
+
+	/**
+	 * @param {JqElement} jqElement
+	 * @param {JqElement | JqFragment | HTMLElement | null} parentNode
+	 */
+	static attachStyles(jqElement, parentNode) {
+		const {
+			formatSelectorAndGetStyleFragment: resolvePseudoClsAndGetStyleFragment,
+			maybeAttachStyleElementToHTMLParent,
+			attachStylesToStylesheet,
+		} = JqStyleNode
+
+		const isNonStylable = /style|script|template|link|meta|br|head|wbr|title|track/i.test(jqElement.name)
+
+		if (parentNode == null) return
+		maybeAttachStyleElementToHTMLParent(jqElement, parentNode, isNonStylable)
+
+		if (jqElement.blockStyles.length == 0 && jqElement.inlineStyles.length == 0) return
+		if (isNonStylable) throwError(JqElement.errors.unstylableElement(jqElement))
+
+		const domNode = /**@type {HTMLElement}*/ (jqElement.domNode)
+		domNode.classList.add(jqElement.id)
+
+		const blockStyle = new JqCSSRule(['.' + jqElement.id], ...jqElement.inlineStyles)
+		const styleFragments = Array
+			.from(jqElement.blockStyles, x => resolvePseudoClsAndGetStyleFragment(x, jqElement.id))
+
+		styleFragments.push(JqCSSRule.getStyleFragment(blockStyle))
+		attachStylesToStylesheet(jqElement, styleFragments)
 	}
 
 	/**
@@ -1840,14 +1898,16 @@ const JqParentable = {
 	 */
 	attachTo(jqNode, parentNode, attachNode, alterDomNode = true) {
 		if (parentNode === null) {
-			attachNode(/**@type {any}*/(jqNode), alterDomNode)
+			attachNode(/**@type {any}*/(jqNode), parentNode, alterDomNode)
 		}
 		else if (parentNode instanceof HTMLElement) {
-			attachNode(/**@type {any}*/(jqNode), alterDomNode)
+			attachNode(/**@type {any}*/(jqNode), parentNode, alterDomNode)
 			alterDomNode && parentNode.appendChild(/**@type {HTMLElement}*/(jqNode.domNode))
 		}
 		else if (parentNode instanceof JqElement) {
-			jqNode.jqParent = parentNode, attachNode(/**@type {any}*/(jqNode), alterDomNode)
+			jqNode.jqParent = parentNode
+			jqNode.scopedStyleSheet = parentNode.scopedStyleSheet
+			attachNode(/**@type {any}*/(jqNode), parentNode, alterDomNode)
 
 			if (!parentNode.childNodes.includes(jqNode)) {
 				parentNode.childNodes.splice(jqNode.nodePosition, 0, jqNode)
@@ -1857,14 +1917,16 @@ const JqParentable = {
 			alterDomNode && domNode.appendChild(/**@type {Node}*/(jqNode.domNode))
 		}
 		else if (parentNode instanceof JqFragment) {
-			jqNode.jqParent = parentNode, attachNode(/**@type {any}*/(jqNode), alterDomNode)
+			jqNode.jqParent = parentNode
+			jqNode.scopedStyleSheet = parentNode.scopedStyleSheet
+			attachNode(/**@type {any}*/(jqNode), parentNode, alterDomNode)
 
 			if (!parentNode.childNodes.includes(jqNode)) {
 				parentNode.childNodes.splice(jqNode.nodePosition, 0, jqNode)
 			}
 
 			if (alterDomNode) {
-				   /**@type {Node}*/ (parentNode.domNode).appendChild(/**@type {Node}*/(jqNode.domNode))
+				/**@type {Node}*/ (parentNode.domNode).appendChild(/**@type {Node}*/(jqNode.domNode))
 				let ancestor = parentNode.jqParent
 
 				while (ancestor != null && isJqFragment(ancestor)) {
@@ -1899,8 +1961,8 @@ const JqParentable = {
 		 */
 		attachChildren(jqNode, alterDomNode = true) {
 			const jqEffectNodes = JqEffectNode.getEffectNodes(jqNode)
-
 			const childNodes = jqNode.childNodes, childCount = childNodes.length
+
 			for (let i = 0; i < childCount; i++) {
 				const childNode = childNodes[i]
 				const precedingEffectNodes = JqEffectNode.getPrecedingEffectNodes(jqEffectNodes, childNode)
@@ -2109,6 +2171,61 @@ const JqEffectNode = {
 		childNode.nodePosition = effectNode.nodePosition
 
 		return childNode
+	}
+}
+
+const JqStyleNode = {
+	/**
+	 * @param {JqCSSProperty | JqCSSRule} styleNode
+	 */
+	getStyleClass(styleNode) {
+		if (styleNode instanceof JqCSSProperty) return JqCSSProperty
+		if (styleNode instanceof JqCSSRule) return JqCSSRule
+
+		throw new Error("JqInternalError - Expected an instance of JqStyleNode as the first argument")
+	},
+	/**
+	 * @param {JqElement} jqElement
+	 * @param {JqFragment[]} styleFragments
+	 */
+	attachStylesToStylesheet(jqElement, styleFragments) {
+		const jqStyleElement = jqElement.scopedStyleSheet
+
+		styleFragments.forEach(x => x.attachTo(jqStyleElement))
+		return jqStyleElement// 849, 71, -4414
+	},
+	/**
+	 * @param {JqElement} jqElement
+	 * @param {JqElement | JqFragment | HTMLElement | null} parentNode
+	 * @param {boolean} isNonStylable 
+	 */
+	maybeAttachStyleElementToHTMLParent(jqElement, parentNode, isNonStylable) {
+		if (!(parentNode instanceof HTMLElement) || isNonStylable) return
+		const jqStyleElement = new JqElement("style", /**@type {any}*/({}))
+		jqStyleElement.attachTo(parentNode)
+
+		jqElement.scopedStyleSheet = jqStyleElement
+	},
+	/**
+	 * @param {JqCSSRule} jqCSSRule
+	 * @param {string} hash
+	 */
+	formatSelectorAndGetStyleFragment(jqCSSRule, hash) {
+		jqCSSRule.head[0] = JqStyleNode.formatSelector(hash, jqCSSRule.head[0])
+		return JqCSSRule.getStyleFragment(jqCSSRule)
+	},
+	/**
+	 * @param {string} hash
+	 * @param {string} selector
+	 */
+	formatSelector(hash, selector) {
+		const hashCls = '.' + hash
+
+		if (selector == ":JqCSSRule") return hashCls
+		if (selector.startsWith('@')) return selector
+		if(selector.startsWith("::")) return `${hashCls}${selector}`
+
+		return `${hashCls} :where(${selector})`
 	}
 }
 

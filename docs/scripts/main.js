@@ -1,6 +1,6 @@
 import {
 	natives, nodes, on, state, each, watch, paths, css, when
-} from "https://cdn.jsdelivr.net/npm/jquire@1.4.4/src/jquire.min.js"
+} from "https://cdn.jsdelivr.net/npm/jquire@1.5.0/src/jquire.min.js"
 
 import highlight from "https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@latest/build/es/highlight.min.js"
 import javascript from "https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@latest/build/es/languages/javascript.min.js"
@@ -832,12 +832,7 @@ const StylingElementsSection = () => {
 			"Styling Elements"
 		),
 		p(
-			`All styles on block elements are scoped by default using the `,
-			Link(
-				"Shadow DOM.",
-				attr.href("https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_shadow_DOM")
-			),
-			` You can even specify css rules in them.`
+			`All styles on block elements are scoped by default using unique class names. You can even specify css rules in them.`
 		),
 		CSSProperties(),
 		SpecifyingStylesForChildElements(),

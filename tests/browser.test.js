@@ -16,12 +16,27 @@ const { attr, text, fragment } = nodes
 
 const sidebarST = state({ clicked: false })
 const numbersST = state(Array.from({ length: 2 }, (_, i) => i + 1))
-const style = {
-	lineHeight: "8px"
-}
 
 const app = div(
 	div(
+		css({ color: "red", display: "flex" }),
+		css.backgroundColor("purple"),
+		css.alignItems("center"),
+		css("::before")({
+			backgroundColor: "black", display: "block", width: "100px", height: "100px", content: "''"
+		}),
+		css("a")({ textDecoration: "none", color: "yellow" }),
+		css("a:hover")({ color: "fuchsia" }),
+		"abcd",
+		div(
+			span("anshbj"),
+			div(
+				a("abcd", attr.href("#"))
+			)
+		)
+	),
+	div(
+		a("efgh", attr.href("#")),
 		(_ = watch(sidebarST)) => (_ = when(sidebarST.clicked)) =>
 			aside(
 				(_ = attach()) => console.log("sidebar visible"),
@@ -34,12 +49,12 @@ const app = div(
 /*
 const data = state(['a', 'b', 'c', 'd'])
 div(
-	(changed = watch(data)) => null,    [✔]
-	(condition = when(x == y)) => null, [✔]
-	(event = on("click")) => null,      [✔]
-	([item, idx] = each(data)) => null, [✔]
-	(event = mount()) => null,			[✔]
-	(event = unmount()) => null,		[✔]
+	(changed = watch(data)) => null,       [✔]
+	(condition = when(x == y)) => null,    [✔]
+	(event = on("click")) => null,         [✔]
+	([item, idx] = each(data)) => null,    [✔]
+	(event = attach()) => null,            [✔]
+	(event = detach()) => null,            [✔]
 	(promise = awaitable.pending) => null,
 	(value = awaitable.then) => null,
 	(error = awaitable.catch) => null

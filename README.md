@@ -95,7 +95,7 @@ input(
 
 ## Styling Elements
 
-All styles on block elements are scoped by default using ShadowRoot. You can even specify css rules in them.
+All styles on block elements are scoped by default using unique class names. You can even specify css rules in them.
 
 ### CSS Properties
 

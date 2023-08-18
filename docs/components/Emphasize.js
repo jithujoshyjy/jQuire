@@ -1,12 +1,17 @@
-import { natives, nodes } from "https://cdn.jsdelivr.net/npm/jquire@1.4.4/src/jquire.min.js"
+import { natives } from "https://cdn.jsdelivr.net/npm/jquire@1.5.0/src/jquire.min.js"
 
 const { em } = natives
-const { attr } = nodes
 
 export default (...props) => {
-	const style = `color: var(--font-color); font-style: normal; background-color: var(--background-color-tertiary); padding: 0.1rem 0.45rem; border-radius: 0.2rem; margin: 0rem 0.3rem; font-family: monospace;`
-	return em(
-		...props,
-		attr.style(style)
-	)
+	const style = {
+		color: "var(--font-color)",
+		fontStyle: "normal",
+		backgroundColor: "var(--background-color-tertiary)",
+		padding: "0.1rem 0.45rem",
+		borderRadius: "0.2rem",
+		margin: "0rem 0.3rem",
+		fontFamily: "monospace",
+	}
+
+	return em(css(style), ...props)
 }
