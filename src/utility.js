@@ -1859,7 +1859,7 @@ export class JqElement {
 			attachStylesToStylesheet,
 		} = JqStyleNode
 
-		const isNonStylable = /style|script|template|link|meta|br|head|wbr|title|track/i.test(jqElement.name)
+		const isNonStylable = /^(?:style|script|template|link|meta|br|head|wbr|title|track)$/i.test(jqElement.name)
 
 		if (parentNode == null) return
 		maybeAttachStyleElementToHTMLParent(jqElement, parentNode, isNonStylable)

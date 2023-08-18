@@ -9,7 +9,8 @@ const {
 	div, input, button,
 	form, dialog, img,
 	main, nav, a, br, hr, ul, li,
-	footer, template, span, aside
+	footer, template, span, aside,
+	header
 } = natives
 
 const { attr, text, fragment } = nodes
@@ -36,6 +37,7 @@ const app = div(
 		)
 	),
 	div(
+		header(css.border("1px solid green")),
 		a("efgh", attr.href("#")),
 		(_ = watch(sidebarST)) => (_ = when(sidebarST.clicked)) =>
 			aside(
