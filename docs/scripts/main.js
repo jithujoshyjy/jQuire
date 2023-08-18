@@ -1,6 +1,6 @@
 import {
 	natives, nodes, on, state, each, watch, paths, css, when
-} from "https://cdn.jsdelivr.net/npm/jquire@1.5.0/src/jquire.min.js"
+} from "https://cdn.jsdelivr.net/npm/jquire@1.5.1/src/jquire.min.js"
 
 import highlight from "https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@latest/build/es/highlight.min.js"
 import javascript from "https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@latest/build/es/languages/javascript.min.js"
