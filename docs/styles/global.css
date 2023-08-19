@@ -41,40 +41,6 @@ body {
 	background-color: var(--background-color-primary);
 }
 
-:root h1 {
-	font-size: 2.25rem;
-}
-
-:root a {
-	color: var(--greenish-fountain-blue);
-}
-
-:root h2 {
-	font-size: 2rem;
-}
-
-:root h3 {
-	font-size: 1.75rem;
-}
-
-:root h4 {
-	font-size: 1.5rem;
-}
-
-:root h5 {
-	font-size: 1.25rem;
-}
-
-:root h6 {
-	font-size: 1rem;
-}
-
-:root button,
-:root input {
-	border: none;
-	background-color: transparent;
-}
-
 :root::-webkit-scrollbar {
 	width: 0.85rem;
 	border-radius: 0.35rem;

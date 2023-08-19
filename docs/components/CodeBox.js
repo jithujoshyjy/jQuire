@@ -41,8 +41,8 @@ export default (language = '', sourceCode = '', highlighter) => {
 	return div(
 		css(style),
 		css(`code.language-${language}`)(codeStyle),
-		css(`:host::-webkit-scrollbar`)(codeBoxScrollbarStyle),
-		css(`:host::-webkit-scrollbar-thumb`)(codeBoxScrollbarThumbStyle),
+		css(`::-webkit-scrollbar`)(codeBoxScrollbarStyle),
+		css(`::-webkit-scrollbar-thumb`)(codeBoxScrollbarThumbStyle),
 		pre(
 			codeBlock = code(
 				attr.class(`language-${language}`),

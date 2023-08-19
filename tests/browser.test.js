@@ -20,13 +20,13 @@ const numbersST = state(Array.from({ length: 2 }, (_, i) => i + 1))
 
 const app = div(
 	div(
-		css({ color: "red", display: "flex" }),
+		a("Qwerty", css({ textDecoration: "none", color: "yellow" }), attr.href("#")),
 		css.backgroundColor("purple"),
 		css.alignItems("center"),
-		css("::before")({
+		/* css("::before")({
 			backgroundColor: "black", display: "block", width: "100px", height: "100px", content: "''"
-		}),
-		css("a")({ textDecoration: "none", color: "yellow" }),
+		}), */
+		a("abcd", attr.href("#")),
 		css("a:hover")({ color: "fuchsia" }),
 		"abcd",
 		div(

@@ -203,8 +203,6 @@ const Navbar = () => {
 				css("input.search-field")(searchFieldStyle),
 				css("input.search-field:focus")(searchFieldFocusStyle),
 				css("ul.section-list")(sectionListStyle),
-				css(`ul.section-list::-webkit-scrollbar`)(sectionListScrollbarStyle),
-				css(`ul.section-list::-webkit-scrollbar-thumb`)(sectionListScrollbarThumbStyle),
 				css("ul.section-list > li")(sectionListItemStyle),
 				css("ul.section-list > li:hover")(sectionListItemHoverStyle),
 				css("a.go-to-section-link")(goToSectionLinkStyle),
@@ -216,6 +214,8 @@ const Navbar = () => {
 					attr.placeholder("Filter Headings")
 				),
 				ul(
+					css("::-webkit-scrollbar")(sectionListScrollbarStyle),
+					css("::-webkit-scrollbar-thumb")(sectionListScrollbarThumbStyle),
 					attr.class("section-list"),
 					(_ = watch(headingRefreshST)) => ([h] = each(headings)) =>
 						li(

@@ -3,6 +3,5 @@ import { natives, css } from "https://cdn.jsdelivr.net/npm/jquire@1.5.1/src/jqui
 const { a } = natives
 
 export default (...props) => {
-	const style = { color: "var(--greenish-fountain-blue)" }
-	return a(css(style), ...props)
+	return a(css.color("var(--greenish-fountain-blue)"), ...props)
 }
