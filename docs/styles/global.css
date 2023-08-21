@@ -1,4 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+@import url('https://cdn.jsdelivr.net/npm/highlight.js@latest/styles/github-dark.css') (prefers-color-scheme: dark);
+@import url('https://cdn.jsdelivr.net/npm/highlight.js@latest/styles/github.css') (prefers-color-scheme: light);
 
 :root {
 	font-size: 16px;

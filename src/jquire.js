@@ -5,10 +5,6 @@ import {
 	camelToKebab, JqCondition, JqLifecycle, JqPromise, JqWatch, OnAttachCallback, OnDetachCallback,
 } from "./utility.js"
 
-/**
- * @type {WeakMap<HTMLElement, HTMLStyleElement>}
- */
-const scopedStyleSheets = new WeakMap()
 const CustomElements = Symbol("CustomElements")
 
 /**

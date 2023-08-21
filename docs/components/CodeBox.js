@@ -1,5 +1,5 @@
-import { natives, nodes, css, state, watch } from "https://cdn.jsdelivr.net/npm/jquire@1.5.2/src/jquire.min.js"
-// import { natives, nodes, css, state, watch } from "../../src/jquire.min.js"
+import { natives, nodes, css, attach } from "https://cdn.jsdelivr.net/npm/jquire@1.5.2/src/jquire.min.js"
+// import { natives, nodes, css, attach } from "../../src/jquire.min.js"
 
 const { pre, code } = natives
 const { attr } = nodes
@@ -37,41 +37,17 @@ export default (language = '', sourceCode = '', highlighter) => {
 		border: "0.1rem solid var(--background-color-tertiary)"
 	}
 
-	const codeThemeLinkST = decideCodeTheme()
-	let codeBlock
-
 	return div(
 		css(style),
 		css(`code.language-${language}`)(codeStyle),
 		css(`::-webkit-scrollbar`)(codeBoxScrollbarStyle),
 		css(`::-webkit-scrollbar-thumb`)(codeBoxScrollbarThumbStyle),
 		pre(
-			codeBlock = code(
+			code(
 				attr.class(`language-${language}`),
 				sourceCode,
-				(_ = watch(codeThemeLinkST)) => highlighter.highlightElement(codeBlock.domNode)
+				(elm = attach()) => highlighter.highlightElement(elm.domNode)
 			)
 		)
 	)
-
-	function decideCodeTheme() {
-		const codeThemes = {
-			dark: "https://cdn.jsdelivr.net/npm/highlight.js@latest/styles/github-dark.css",
-			light: "https://cdn.jsdelivr.net/npm/highlight.js@latest/styles/github.css",
-		}
-
-		if (!window.matchMedia) return state({ codeThemeLink: codeThemes.dark })
-
-		const preferLightTheme = window.matchMedia("(prefers-color-scheme: light)").matches
-
-		const codeThemeLink = preferLightTheme ? codeThemes.light : codeThemes.dark
-		const codeThemeLinkST = state({ codeThemeLink })
-
-		window.matchMedia("(prefers-color-scheme: light)").addEventListener("change", event => {
-			const codeThemeLink = event.matches ? codeThemes.light : codeThemes.dark
-			codeThemeLinkST.codeThemeLink = codeThemeLink
-		})
-
-		return codeThemeLinkST
-	}
 }
