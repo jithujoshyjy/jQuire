@@ -1,6 +1,6 @@
 import {
 	natives, nodes, on, state, each, watch, paths, css, when
-} from "https://cdn.jsdelivr.net/npm/jquire@1.5.1/src/jquire.min.js"
+} from "https://cdn.jsdelivr.net/npm/jquire@1.5.2/src/jquire.min.js"
 
 // import {
 // 	natives, nodes, on, state, each, watch, paths, css, when
