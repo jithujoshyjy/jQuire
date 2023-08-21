@@ -2223,7 +2223,7 @@ const JqStyleNode = {
 
 		if (selector == ":JqCSSRule") return hashCls
 		if (selector.startsWith('@')) return selector
-		if(selector.startsWith("::")) return `${hashCls}${selector}`
+		if(selector.includes("::")) return `${hashCls}${selector}`
 
 		return `${hashCls} :where(${selector})`
 	}

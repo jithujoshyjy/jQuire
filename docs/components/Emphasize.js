@@ -1,4 +1,5 @@
 import { natives, css } from "https://cdn.jsdelivr.net/npm/jquire@1.5.1/src/jquire.min.js"
+// import { natives, css } from "../../src/jquire.min.js"
 
 const { em } = natives
 

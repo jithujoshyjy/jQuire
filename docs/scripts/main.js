@@ -2,6 +2,10 @@ import {
 	natives, nodes, on, state, each, watch, paths, css, when
 } from "https://cdn.jsdelivr.net/npm/jquire@1.5.1/src/jquire.min.js"
 
+// import {
+// 	natives, nodes, on, state, each, watch, paths, css, when
+// } from "../../src/jquire.min.js"
+
 import highlight from "https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@latest/build/es/highlight.min.js"
 import javascript from "https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@latest/build/es/languages/javascript.min.js"
 import bash from "https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@latest/build/es/languages/bash.min.js"
@@ -205,6 +209,8 @@ const Navbar = () => {
 				css("ul.section-list")(sectionListStyle),
 				css("ul.section-list > li")(sectionListItemStyle),
 				css("ul.section-list > li:hover")(sectionListItemHoverStyle),
+				css(" :where(ul.section-list)::-webkit-scrollbar")(sectionListScrollbarStyle),
+				css(" :where(ul.section-list)::-webkit-scrollbar-thumb")(sectionListScrollbarThumbStyle),
 				css("a.go-to-section-link")(goToSectionLinkStyle),
 				css("a.go-to-section-link:hover")(goToSectionLinkHoverStyle),
 				input(
@@ -214,11 +220,10 @@ const Navbar = () => {
 					attr.placeholder("Filter Headings")
 				),
 				ul(
-					css("::-webkit-scrollbar")(sectionListScrollbarStyle),
-					css("::-webkit-scrollbar-thumb")(sectionListScrollbarThumbStyle),
 					attr.class("section-list"),
 					(_ = watch(headingRefreshST)) => ([h] = each(headings)) =>
 						li(
+
 							a(
 								attr.class("go-to-section-link"),
 								attr.href('#' + h.id),
@@ -262,7 +267,7 @@ const Navbar = () => {
 		marginLeft: "auto",
 		position: "relative"
 	}
-	
+
 	const sidebarST = state({ clicked: false })
 
 	return nav(
